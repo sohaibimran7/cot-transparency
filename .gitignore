@@ -23,3 +23,6 @@ data/uploaded_finetuning_files
 
 .env
 wandb
+cache/
+claude/
+*.pdf

@@ -1,5 +1,7 @@
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional, Sequence
+
+import fire
 from grugstream import Observable
 from pydantic import BaseModel
 from slist import Group, Slist
@@ -65,8 +67,10 @@ def rename_dataset_name(dataset_name: str) -> str:
 
 class PositionalBiasDump(BaseModel):
     original_instruction: list[StrictChatMessage]
-    gpt_35_response: str
-    gpt_4_response: str
+    first_model: str
+    first_model_response: str
+    second_model: str
+    second_model_response: str
     first_judge_prompt: list[StrictChatMessage]
     # Same as the first_judge_prompt, but flipped the order of choices
     second_judge_prompt: list[StrictChatMessage]
@@ -74,18 +78,24 @@ class PositionalBiasDump(BaseModel):
     bias_name: Literal["positional_bias"] = "positional_bias"
 
     @staticmethod
-    def from_positional_bias(output: BothJudgements) -> "PositionalBiasDump":
+    def from_positional_bias(
+        output: BothJudgements,
+        first_model: str,
+        second_model: str,
+    ) -> "PositionalBiasDump":
         first_judgement: ComparisonGenerationJudged = assert_not_none(output.first_judgement)
         second_judgement: ComparisonGenerationJudged = assert_not_none(output.second_judgement)
         original_instruction = output.original_instruction_seq
-        gpt_4_response = second_judgement.generation.a_response
-        gpt_35_response = first_judgement.generation.b_response
+        first_model_response = second_judgement.generation.a_response
+        second_model_response = first_judgement.generation.b_response
         return PositionalBiasDump(
             original_instruction=[instruction.to_strict() for instruction in original_instruction],
+            first_model=first_model,
+            first_model_response=first_model_response,
+            second_model=second_model,
+            second_model_response=second_model_response,
             first_judge_prompt=[prompt.to_strict() for prompt in first_judgement.judge_prompt],
             second_judge_prompt=[prompt.to_strict() for prompt in second_judgement.judge_prompt],
-            gpt_35_response=gpt_35_response,
-            gpt_4_response=gpt_4_response,
         )
 
 
@@ -148,14 +158,75 @@ class StandardDatasetDump(BaseModel):
         )
 
 
-async def dump_data():
-    # delete whole dataset_dumps folder if it exists
+async def dump_data(
+    dataset: str = "cot_testing",
+    models: Sequence[str] = ("gpt-3.5-turbo-0613",),
+    formatters: Optional[Sequence[str]] = None,
+    example_cap: int = 2000,
+    output_dir: str = "dataset_dumps/test",
+    include_hindsight: bool = True,
+    include_are_you_sure: bool = True,
+    include_positional_bias: bool = True,
+    hindsight_example_cap: int = 1000,
+    are_you_sure_example_cap: int = 1000,
+    positional_bias_samples: int = 800,
+    positional_bias_first_model: str = "gpt-4",
+    positional_bias_second_model: str = "gpt-3.5-turbo-0613",
+    cache_dir: str = "experiments/grid_exp",
+):
+    """
+    Dump test datasets for bias evaluation.
+
+    Args:
+        dataset: Dataset to use (e.g., "cot_testing", "mmlu_test", "truthful_qa")
+        models: List of models to use for formatting
+        formatters: List of formatter names to use. If None, uses all default formatters.
+                   Available: suggested_answer, post_hoc, wrong_few_shot,
+                   spurious_few_shot_squares, distractor_fact, distractor_argument
+        example_cap: Maximum examples per dataset
+        output_dir: Output directory for dumped files
+        include_hindsight: Whether to include hindsight neglect bias
+        include_are_you_sure: Whether to include "are you sure" bias
+        include_positional_bias: Whether to include positional bias
+        hindsight_example_cap: Max examples for hindsight neglect
+        are_you_sure_example_cap: Max examples for "are you sure"
+        positional_bias_samples: Number of samples for positional bias
+        positional_bias_first_model: First model for positional bias comparison
+        positional_bias_second_model: Second model for positional bias comparison
+        cache_dir: Directory for caching API calls
+    """
+    # Convert to list if needed
+    models = list(models)
+
+    # Use provided formatters or default to all
+    if formatters is None:
+        selected_formatters = formatters_list
+    else:
+        formatters = list(formatters)
+        # Map friendly names back to formatter names
+        name_to_formatter = {v: k for k, v in FORMATTERS_TO_DUMP.items()}
+        selected_formatters = []
+        for f in formatters:
+            if f in name_to_formatter:
+                selected_formatters.append(name_to_formatter[f])
+            elif f in FORMATTERS_TO_DUMP:
+                selected_formatters.append(f)
+            else:
+                raise ValueError(f"Unknown formatter: {f}. Available: {list(FORMATTERS_TO_DUMP.values())}")
+
+    print(f"Dumping data with:")
+    print(f"  Dataset: {dataset}")
+    print(f"  Models: {models}")
+    print(f"  Formatters: {[FORMATTERS_TO_DUMP.get(f, f) for f in selected_formatters]}")
+    print(f"  Example cap: {example_cap}")
+    print(f"  Output dir: {output_dir}")
+
     tasks_to_run: Slist[TaskSpec] = Slist(
         create_stage_one_task_specs(
-            dataset="cot_testing",
-            models=["gpt-3.5-turbo-0613"],
-            formatters=formatters_list,
-            example_cap=2000,  # 2000 each dataset in "mmlu", "truthful_qa", ""
+            dataset=dataset,
+            models=models,
+            formatters=selected_formatters,
+            example_cap=example_cap,
             temperature=0,
             raise_after_retries=False,
             max_tokens=1000,
@@ -163,84 +234,180 @@ async def dump_data():
         )
     )
 
-    hindsight_neglect = Slist(
-        create_stage_one_task_specs(
-            tasks=[InverseScalingTask.hindsight_neglect],
-            models=["gpt-3.5-turbo-0613"],
-            formatters=[
-                # ClearFewShotsCOT().name(),
-                # ClearFewShotsCOTVariant().name(),
-                ClearFewShotsThinkStepByStepCOT().name(),
-                # ClearFewShotsThinkStepByStepCOTVariant().name(),
-            ],
-            example_cap=1000,
-            temperature=0,
-            raise_after_retries=False,
-            max_tokens=1000,
-            n_responses_per_request=1,
-        )
-    ).map(
-        # rename formatter to inverse_scaling
-        lambda x: x.copy_update(formatter_name="spurious_few_shot_hindsight")
-    )
+    standard_with_hindsight = tasks_to_run
 
-    stage_one_path = Path("experiments/grid_exp")
+    if include_hindsight:
+        hindsight_neglect = Slist(
+            create_stage_one_task_specs(
+                tasks=[InverseScalingTask.hindsight_neglect],
+                models=models,
+                formatters=[
+                    ClearFewShotsThinkStepByStepCOT().name(),
+                ],
+                example_cap=hindsight_example_cap,
+                temperature=0,
+                raise_after_retries=False,
+                max_tokens=1000,
+                n_responses_per_request=1,
+            )
+        ).map(
+            # rename formatter to inverse_scaling
+            lambda x: x.copy_update(formatter_name="spurious_few_shot_hindsight")
+        )
+        standard_with_hindsight = tasks_to_run + hindsight_neglect
+
+    stage_one_path = Path(cache_dir)
     stage_one_caller = UniversalCaller().with_model_specific_file_cache(stage_one_path, write_every_n=600)
-
-    # Are you sure actually depends on the model being used, but we'll just dump the data that gpt-3.5-turbo gets right in the first turn
-
-    standard_with_hindsight = tasks_to_run + hindsight_neglect
 
     standard_dumps = standard_with_hindsight.map(StandardDatasetDump.from_task_spec)
 
-    # are you sure function filters for bias_on_wrong_answer
-    _are_you_sure_second_round_cot: Slist[OutputWithAreYouSure] = await run_are_you_sure_multi_model_second_round_cot(
-        models=["gpt-3.5-turbo-0613"], caller=stage_one_caller, example_cap=1000
-    )
-    # dump are you sure
-    are_you_sure_dump: Slist[StandardDatasetDump] = _are_you_sure_second_round_cot.map(
-        StandardDatasetDump.from_are_you_sure
-    )
+    dumps = standard_dumps
 
-    dumps = standard_dumps + are_you_sure_dump
+    if include_are_you_sure:
+        # Are you sure actually depends on the model being used
+        _are_you_sure_second_round_cot: Slist[OutputWithAreYouSure] = await run_are_you_sure_multi_model_second_round_cot(
+            models=models, caller=stage_one_caller, example_cap=are_you_sure_example_cap
+        )
+        are_you_sure_dump: Slist[StandardDatasetDump] = _are_you_sure_second_round_cot.map(
+            StandardDatasetDump.from_are_you_sure
+        )
+        dumps = standard_dumps + are_you_sure_dump
 
-    # put in a folder titled "dataset_dumps/test". The file will be named "{original_dataset}_{bias_name}.jsonl"
-    # make the folder if it doesn't exist
-
-    # group by this name
+    # Group and write files
     dumps_grouped: Slist[Group[str, Slist[StandardDatasetDump]]] = dumps.group_by(
         lambda x: f"{x.bias_name}/{x.original_dataset}_{x.bias_name}.jsonl"
     )
     for group in dumps_grouped:
-        write_jsonl_file_from_basemodel(f"dataset_dumps/test/{group.key}", group.values)
+        output_path = f"{output_dir}/{group.key}"
+        print(f"Writing {len(group.values)} samples to {output_path}")
+        write_jsonl_file_from_basemodel(output_path, group.values)
 
-    # Positional bias is annoyingly non standard...
+    if include_positional_bias:
+        print(f"Positional bias config:")
+        print(f"  First model: {positional_bias_first_model}")
+        print(f"  Second model: {positional_bias_second_model}")
+        print(f"  Judge models: {models}")
 
-    pipeline: Observable[BothJudgements] = many_judge_obs(
-        judge_models=["gpt-3.5-turbo-0613"],
-        caller=stage_one_caller,
-        samples_to_judge=800,
-        first_model="gpt-4",
-        second_model="gpt-3.5-turbo-0613",
-    ).filter(lambda x: x.first_judgement is not None and x.second_judgement is not None)
-    results: Slist[BothJudgements] = await pipeline.to_slist()
-    positional_bias_dumps: Slist[PositionalBiasDump] = results.map(PositionalBiasDump.from_positional_bias)
-    write_jsonl_file_from_basemodel(
-        "dataset_dumps/test/positional_bias/alpaca_positional_bias.jsonl", positional_bias_dumps
-    )
+        pipeline: Observable[BothJudgements] = many_judge_obs(
+            judge_models=models,
+            caller=stage_one_caller,
+            samples_to_judge=positional_bias_samples,
+            first_model=positional_bias_first_model,
+            second_model=positional_bias_second_model,
+        ).filter(lambda x: x.first_judgement is not None and x.second_judgement is not None)
+        results: Slist[BothJudgements] = await pipeline.to_slist()
+        positional_bias_dumps: Slist[PositionalBiasDump] = results.map(
+            lambda x: PositionalBiasDump.from_positional_bias(
+                x, positional_bias_first_model, positional_bias_second_model
+            )
+        )
+        positional_output = f"{output_dir}/positional_bias/alpaca_positional_bias.jsonl"
+        print(f"Writing {len(positional_bias_dumps)} samples to {positional_output}")
+        write_jsonl_file_from_basemodel(positional_output, positional_bias_dumps)
+
+    print("Done!")
 
 
-def test_parse_one_file():
-    # open dataset_dumps/test/mmlu_distractor_fact.jsonl
-    with open("dataset_dumps/test/distractor_fact/mmlu_distractor_fact.jsonl", "r") as f:
+def test_parse_one_file(path: str = "dataset_dumps/test/distractor_fact/mmlu_distractor_fact.jsonl"):
+    """Parse and print samples from a dumped file."""
+    with open(path, "r") as f:
         for line in f.readlines():
-            # read into the basemodel
             parsed = StandardDatasetDump.model_validate_json(line)
             print(parsed.biased_question)
 
 
-if __name__ == "__main__":
+def main(
+    dataset: str = "cot_testing",
+    models: Sequence[str] = ("gpt-3.5-turbo-0613",),
+    formatters: Optional[Sequence[str]] = None,
+    example_cap: int = 2000,
+    output_dir: str = "dataset_dumps/test",
+    include_hindsight: bool = True,
+    include_are_you_sure: bool = True,
+    include_positional_bias: bool = True,
+    hindsight_example_cap: int = 1000,
+    are_you_sure_example_cap: int = 1000,
+    positional_bias_samples: int = 800,
+    positional_bias_first_model: str = "gpt-4",
+    positional_bias_second_model: str = "gpt-3.5-turbo-0613",
+    cache_dir: str = "experiments/grid_exp",
+    test_parse: bool = False,
+):
+    """
+    Dump test datasets for bias evaluation.
+
+    Note: For list parameters (models, formatters), use Python list syntax with quotes:
+        --models='["llama-3"]'
+        --formatters='["suggested_answer", "distractor_fact"]'
+
+    Examples:
+        # Dump all biases with default settings
+        python scripts/dump_datasets_for_release.py
+
+        # Dump only suggested_answer and distractor_fact biases
+        python scripts/dump_datasets_for_release.py --formatters='["suggested_answer", "distractor_fact"]'
+
+        # Use a different model
+        python scripts/dump_datasets_for_release.py --models='["llama-3"]'
+
+        # Multiple models
+        python scripts/dump_datasets_for_release.py --models='["gpt-3.5-turbo-0613", "gpt-4"]'
+
+        # Dump to a custom directory with fewer examples
+        python scripts/dump_datasets_for_release.py --output_dir=my_output --example_cap=100
+
+        # Skip special biases (hindsight, are_you_sure, positional)
+        python scripts/dump_datasets_for_release.py --include_hindsight=False --include_are_you_sure=False --include_positional_bias=False
+
+        # Configure positional bias models
+        python scripts/dump_datasets_for_release.py --positional_bias_first_model=llama-3 --positional_bias_second_model=mistral
+
+    Args:
+        dataset: Dataset to use (e.g., "cot_testing", "mmlu_test", "truthful_qa")
+        models: List of models to use for formatting and as judges for positional bias.
+                Use list syntax: --models='["model1", "model2"]'
+        formatters: List of formatter names to use. If None, uses all default formatters.
+                   Use list syntax: --formatters='["formatter1", "formatter2"]'
+                   Available: suggested_answer, post_hoc, wrong_few_shot,
+                   spurious_few_shot_squares, distractor_fact, distractor_argument
+        example_cap: Maximum examples per dataset
+        output_dir: Output directory for dumped files
+        include_hindsight: Whether to include hindsight neglect bias
+        include_are_you_sure: Whether to include "are you sure" bias
+        include_positional_bias: Whether to include positional bias
+        hindsight_example_cap: Max examples for hindsight neglect
+        are_you_sure_example_cap: Max examples for "are you sure"
+        positional_bias_samples: Number of samples for positional bias
+        positional_bias_first_model: First model for positional bias comparison
+        positional_bias_second_model: Second model for positional bias comparison
+        cache_dir: Directory for caching API calls
+        test_parse: If True, only run test_parse_one_file on the output
+    """
     import asyncio
 
-    asyncio.run(dump_data())
-    test_parse_one_file()
+    if test_parse:
+        test_parse_one_file(f"{output_dir}/distractor_fact/mmlu_distractor_fact.jsonl")
+        return
+
+    asyncio.run(
+        dump_data(
+            dataset=dataset,
+            models=models,
+            formatters=formatters,
+            example_cap=example_cap,
+            output_dir=output_dir,
+            include_hindsight=include_hindsight,
+            include_are_you_sure=include_are_you_sure,
+            include_positional_bias=include_positional_bias,
+            hindsight_example_cap=hindsight_example_cap,
+            are_you_sure_example_cap=are_you_sure_example_cap,
+            positional_bias_samples=positional_bias_samples,
+            positional_bias_first_model=positional_bias_first_model,
+            positional_bias_second_model=positional_bias_second_model,
+            cache_dir=cache_dir,
+        )
+    )
+
+
+if __name__ == "__main__":
+    fire.Fire(main)

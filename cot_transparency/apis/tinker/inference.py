@@ -72,7 +72,9 @@ class TinkerSamplingClient:
             )
         else:
             # Use base model
-            self.sampling_client = self.service_client.create_sampling_client(self.model)
+            self.sampling_client = self.service_client.create_sampling_client(
+                base_model=self.model
+            )
 
         # Get renderer and tokenizer for this model
         self.renderer, self.tokenizer = get_renderer_for_model(self.model)

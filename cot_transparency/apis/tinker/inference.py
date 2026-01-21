@@ -65,10 +65,9 @@ class TinkerSamplingClient:
     def setup(self) -> None:
         """Initialize sampling client and renderer."""
         if self.checkpoint:
-            # Load from checkpoint
-            self.sampling_client = self.service_client.create_sampling_client_from_checkpoint(
-                base_model=self.model,
-                checkpoint=self.checkpoint,
+            # Load from checkpoint path (tinker://...)
+            self.sampling_client = self.service_client.create_sampling_client(
+                model_path=self.checkpoint,
             )
         else:
             # Use base model

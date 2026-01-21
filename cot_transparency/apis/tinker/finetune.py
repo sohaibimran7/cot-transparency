@@ -153,9 +153,11 @@ class TinkerSFTTrainer:
                     if syncer:
                         syncer.run.log({"train/loss": avg_loss, "train/step": global_step})
 
-                    # Save checkpoint if requested
+                    # Save checkpoint if requested (skip near final - will be saved as final)
                     ckpt_cfg = self.config.checkpoint
-                    if ckpt_cfg.save_every_n_steps and global_step % ckpt_cfg.save_every_n_steps == 0:
+                    steps_remaining = total_steps - global_step
+                    near_final = steps_remaining <= ckpt_cfg.skip_near_final_steps
+                    if ckpt_cfg.save_every_n_steps and global_step % ckpt_cfg.save_every_n_steps == 0 and not near_final:
                         ckpt_name = build_checkpoint_name(self.config.experiment_name, ckpt_cfg.checkpoint_prefix, step=global_step)
                         ckpt_path = save_checkpoint(self.training_client, ckpt_name, ckpt_cfg.save_full_state)
                         checkpoint_paths.append(ckpt_path)

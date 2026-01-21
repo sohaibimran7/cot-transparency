@@ -42,8 +42,9 @@ class TinkerAdamParams(BaseModel):
 class CheckpointConfig(BaseModel):
     """Configuration for checkpointing during training."""
     save_every_n_steps: Optional[int] = None
-    save_full_state: bool = True  # If True, use save_state() for resumability; else save_weights_for_sampler()
+    save_full_state: bool = False  # If True, use save_state() for resumability; else save_weights_for_sampler()
     checkpoint_prefix: str = "checkpoint"
+    skip_near_final_steps: int = 0  # Skip intermediate checkpoints within N steps of final (avoids duplicates)
 
 
 def build_checkpoint_name(
@@ -87,7 +88,7 @@ def extract_loss_from_result(fwd_bwd_result: types.ForwardBackwardOutput, batch_
 def save_checkpoint(
     training_client: tinker.TrainingClient,
     name: str,
-    save_full_state: bool = True,
+    save_full_state: bool = False,
 ) -> str:
     """
     Save a checkpoint.

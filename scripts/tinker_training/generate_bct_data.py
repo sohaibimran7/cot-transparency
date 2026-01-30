@@ -195,6 +195,7 @@ def generate_samples(
     limit: Optional[int] = None,
     batch_size: int = 10,
     save_every: int = 10,
+    fresh: bool = False,
 ) -> None:
     """
     Generate control and BCT samples for a given file pair with incremental saving.
@@ -230,7 +231,10 @@ def generate_samples(
     # Checkpoint file for resuming
     checkpoint_file = control_output.parent / f".checkpoint_{control_output.name}"
 
-    # Load existing progress
+    # Load existing progress (or start fresh)
+    if fresh and checkpoint_file.exists():
+        checkpoint_file.unlink()
+        print("Starting fresh - deleted existing checkpoint")
     start_idx, completions = load_checkpoint(checkpoint_file)
 
     total_prompts = len(control_prompts)
@@ -301,6 +305,7 @@ def generate_instruct_samples(
     limit: Optional[int] = None,
     batch_size: int = 10,
     save_every: int = 10,
+    fresh: bool = False,
 ) -> None:
     """
     Generate instruction-following samples by sampling from the model with incremental saving.
@@ -328,7 +333,10 @@ def generate_instruct_samples(
     # Checkpoint file for resuming
     checkpoint_file = control_output.parent / f".checkpoint_{control_output.name}"
 
-    # Load existing progress
+    # Load existing progress (or start fresh)
+    if fresh and checkpoint_file.exists():
+        checkpoint_file.unlink()
+        print("Starting fresh - deleted existing checkpoint")
     start_idx, completions = load_checkpoint(checkpoint_file)
 
     total_prompts = len(prompts)
@@ -427,6 +435,11 @@ def main():
         help="Base directory for dataset dumps"
     )
     parser.add_argument(
+        "--source",
+        default=None,
+        help="Source subdirectory for input files (e.g., 'logiqa' to read from control_seed_42/logiqa/)"
+    )
+    parser.add_argument(
         "--seed",
         default="42",
         help="Seed identifier for the dataset (default: 42)"
@@ -466,6 +479,11 @@ def main():
         default=None,
         help="Optional checkpoint to load for the model"
     )
+    parser.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Start fresh, ignoring any existing checkpoint files"
+    )
     args = parser.parse_args()
 
     # Handle --list-models
@@ -485,14 +503,31 @@ def main():
     control_dir = base_dir / f"control_seed_{args.seed}"
     train_dir = base_dir / f"train_seed_{args.seed}"
 
+    # Source subdirectory for input files (e.g., 'logiqa')
+    if args.source:
+        source_control_dir = control_dir / args.source
+        source_train_dir = train_dir / args.source
+    else:
+        source_control_dir = control_dir
+        source_train_dir = train_dir
+
     model_name = sanitize_model_name(args.model)
-    control_output_dir = control_dir / model_name
-    train_output_dir = train_dir / model_name
+    # Output to source subdirectory within model dir when --source is specified
+    if args.source:
+        control_output_dir = control_dir / model_name / args.source
+        train_output_dir = train_dir / model_name / args.source
+    else:
+        control_output_dir = control_dir / model_name
+        train_output_dir = train_dir / model_name
 
     print(f"Model: {args.model}")
     print(f"Model dir name: {model_name}")
-    print(f"Control output: {control_output_dir}")
-    print(f"Train output: {train_output_dir}")
+    if args.source:
+        print(f"Source: {args.source}")
+    print(f"Input control dir: {source_control_dir}")
+    print(f"Input train dir: {source_train_dir}")
+    print(f"Output control dir: {control_output_dir}")
+    print(f"Output train dir: {train_output_dir}")
     print(f"Max tokens: {args.max_tokens}, Temperature: {args.temperature}")
     if args.limit:
         print(f"Limit: {args.limit} samples")
@@ -518,13 +553,14 @@ def main():
         print("=" * 60)
         generate_samples(
             client=client,
-            control_file=control_dir / "control_cot.jsonl",
-            bct_file=train_dir / "bct_cot.jsonl",
+            control_file=source_control_dir / "control_cot.jsonl",
+            bct_file=source_train_dir / "bct_cot.jsonl",
             control_output=control_output_dir / "control_cot.jsonl",
             bct_output=train_output_dir / "bct_cot.jsonl",
             limit=args.limit,
             batch_size=args.batch_size,
             save_every=args.save_every,
+            fresh=args.fresh,
         )
         print()
 
@@ -535,13 +571,14 @@ def main():
         print("=" * 60)
         generate_samples(
             client=client,
-            control_file=control_dir / "control_non_cot.jsonl",
-            bct_file=train_dir / "bct_non_cot.jsonl",
+            control_file=source_control_dir / "control_non_cot.jsonl",
+            bct_file=source_train_dir / "bct_non_cot.jsonl",
             control_output=control_output_dir / "control_non_cot.jsonl",
             bct_output=train_output_dir / "bct_non_cot.jsonl",
             limit=args.limit,
             batch_size=args.batch_size,
             save_every=args.save_every,
+            fresh=args.fresh,
         )
         print()
 
@@ -553,12 +590,13 @@ def main():
         instruct_limit = args.instruct_limit if args.instruct_limit is not None else args.limit
         generate_instruct_samples(
             client=client,
-            instruct_file=control_dir / "instruct_samples.jsonl",
+            instruct_file=source_control_dir / "instruct_samples.jsonl",
             control_output=control_output_dir / "instruct_samples.jsonl",
             train_output=train_output_dir / "instruct_samples.jsonl",
             limit=instruct_limit,
             batch_size=args.batch_size,
             save_every=args.save_every,
+            fresh=args.fresh,
         )
         print()
 

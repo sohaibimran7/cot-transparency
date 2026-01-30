@@ -11,6 +11,7 @@ from cot_transparency.data_models.data import (
     bbq,
     bbq_weak_evidence,
     hellaswag,
+    hle,
     logiqa,
     mmlu,
     openbook,
@@ -43,7 +44,7 @@ from cot_transparency.data_models.data.model_written_evals import (
 from cot_transparency.data_models.example_base import DataExampleBase
 from cot_transparency.json_utils.read_write import read_jsonl_file_into_basemodel
 
-COT_TESTING_TASKS = ["truthful_qa", "logiqa", "hellaswag", "mmlu_test"]
+COT_TESTING_TASKS = ["truthful_qa", "logiqa", "hellaswag", "mmlu_test", "hle"]
 # if you really want to test on these tasks, we leave out a validation set during finetuning
 # but in general, we don't recommend testing on these tasks.
 # Please use the COT testing tasks instead, which are totally distinct tasks
@@ -92,6 +93,9 @@ TASK_LIST = {
     "mmlu_easy": ["mmlu_easy_train", "mmlu_easy_test"],
     "karina": ["karina_hallucination"],
     "logiqa_train": ["logiqa_train"],
+    "hle_test": ["hle"],
+    "cross_dataset_train": ["logiqa_train"],  # Train on LogiQA
+    "cross_dataset_test": ["hle", "logiqa"],  # Test on HLE and LogiQA
     "inverse_scaling": InverseScalingTask.all_tasks(),
     "gsm": ["gsm_unbiased", "gsm_biased"],
     "bbq_full": ["bbq_ambig", "bbq_disambig"],
@@ -140,6 +144,8 @@ def get_list_of_examples(
             data = logiqa.eval()
         elif task == "logiqa_train":
             data = logiqa.train()
+        elif task == "hle":
+            data = hle.test()
         elif task == "mmlu":
             questions_per_task = 20
             data = mmlu.test(questions_per_task=questions_per_task)

@@ -6,6 +6,7 @@ from cot_transparency.data_models.data.bbh import BBH_TASK_LIST, MilesBBHRawData
 from cot_transparency.data_models.data.bbq import BBQ_TASK_LIST, BBQExample
 from cot_transparency.data_models.data.gsm import GSMBiased, GSMUnbiased
 from cot_transparency.data_models.data.hellaswag import HellaSwagExample
+from cot_transparency.data_models.data.hle import HLEExample
 from cot_transparency.data_models.data.inverse_scaling import InverseScalingExample, InverseScalingTask
 from cot_transparency.data_models.data.john_math import JohnMath
 from cot_transparency.data_models.data.karina_hallucination import KarinaHallucination
@@ -40,6 +41,8 @@ def task_name_to_data_example(task_name: str) -> Type[DataExampleBase]:
         return LogicQaExample
     elif task_name == "hellaswag":
         return HellaSwagExample
+    elif task_name == "hle":
+        return HLEExample
     elif task_name == "mmlu":
         return MMLUExample
     elif task_name == "mmlu_easy_train":

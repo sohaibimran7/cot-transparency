@@ -194,13 +194,15 @@ async def run(args):
             results["skipped"] += len(tasks)
         else:
             try:
-                await eval_async(
-                    tasks,
+                eval_kwargs = dict(
                     model=model,
                     log_dir=f"{log_dir}/{config.name}",
                     max_tasks=args.max_tasks,
                     fail_on_error=False,
                 )
+                if args.max_connections is not None:
+                    eval_kwargs["max_connections"] = args.max_connections
+                await eval_async(tasks, **eval_kwargs)
                 results["success"] += len(tasks)
             except Exception as e:
                 logger.error(f"Batch eval failed for {config.name}: {e}")
@@ -225,6 +227,7 @@ def main():
     # Execution
     parser.add_argument("--max-tokens", type=int, default=8192, help="Max tokens for generation")
     parser.add_argument("--max-tasks", type=int, default=10, help="Max parallel tasks")
+    parser.add_argument("--max-connections", type=int, default=None, help="Max concurrent model API connections (controls per-model concurrency)")
     parser.add_argument("--dry-run", action="store_true", help="Print tasks without running")
     parser.add_argument("--log-dir", default="logs/tinker_evals", help="Base directory for logs")
     parser.add_argument("--log-level", default="INFO", help="Logging level")

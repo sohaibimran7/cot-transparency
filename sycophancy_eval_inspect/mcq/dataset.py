@@ -48,6 +48,107 @@ def strip_cot_from_message(content: str) -> str:
     return content
 
 
+def _extract_question_start(segment: str) -> str:
+    """Get the first meaningful line of a question segment for dedup."""
+    text = segment.strip()
+    if text.lower().startswith("question:"):
+        text = text.split(":", 1)[1].strip()
+    for line in text.split("\n"):
+        line = line.strip()
+        if line and not line.startswith("(") and line != "Answer choices:":
+            return line
+    return text[:100]
+
+
+def _extract_few_shot_questions(biased_content: str) -> list[str]:
+    """Extract few-shot question segments, removing duplicates of the target question."""
+    segments = biased_content.split("===")
+    if len(segments) < 2:
+        return []
+
+    target_segment = segments[-1].strip()
+    target_start = _extract_question_start(target_segment)
+
+    questions = []
+    for seg in segments[:-1]:
+        seg = seg.strip()
+        if not seg:
+            continue
+        seg_start = _extract_question_start(seg)
+        # Skip if this segment's question matches the target question
+        if seg_start == target_start:
+            continue
+        questions.append(seg)
+
+    return questions
+
+
+def _text_diff(biased: str, unbiased: str) -> str:
+    """Return text present in biased but not in unbiased (inserted portion)."""
+    # Walk from start to find divergence point
+    i = 0
+    min_len = min(len(biased), len(unbiased))
+    while i < min_len and biased[i] == unbiased[i]:
+        i += 1
+    # Walk from end to find convergence point
+    j_b, j_u = len(biased) - 1, len(unbiased) - 1
+    while j_b > i and j_u > i and biased[j_b] == unbiased[j_u]:
+        j_b -= 1
+        j_u -= 1
+    return biased[i : j_b + 1].strip()
+
+
+def _extract_biasing_metadata(
+    biased_content: str,
+    unbiased_content: str,
+    bias_name: str,
+    biased_option: str,
+) -> dict:
+    """Extract biasing text and few-shot questions from biased content.
+
+    Uses diff between biased and unbiased content when available,
+    falls back to per-type heuristics (for re-scoring old eval logs).
+    Returns dict with optional keys: biasing_text, few_shot_questions.
+    """
+    metadata: dict[str, str | list[str]] = {}
+
+    # Biasing text via diff (universal, preferred)
+    if unbiased_content:
+        diff = _text_diff(biased_content, unbiased_content)
+        if diff:
+            metadata["biasing_text"] = diff
+    else:
+        # Heuristic fallback (no unbiased content, e.g. re-scoring old logs)
+        if bias_name in ("distractor_argument", "distractor_fact"):
+            idx = biased_content.find("<question>")
+            if idx != -1:
+                metadata["biasing_text"] = biased_content[:idx].strip()
+        elif bias_name == "wrong_few_shot":
+            metadata["biasing_text"] = f"The best answer is: ({biased_option})"
+        elif bias_name == "spurious_few_shot_squares":
+            last_sep = biased_content.rfind("===")
+            if last_sep != -1:
+                metadata["biasing_text"] = biased_content[:last_sep].strip()
+        elif bias_name == "suggested_answer":
+            # Extract text between last answer choice and instructions
+            import re as _re
+            match = _re.search(
+                r"\([A-J]\)[^\n]*\n(.+?)(?:\n\s*(?:Please|Let's|Give your))",
+                biased_content,
+                _re.DOTALL,
+            )
+            if match:
+                metadata["biasing_text"] = match.group(1).strip()
+
+    # Few-shot questions (only for few-shot bias types)
+    if bias_name in ("wrong_few_shot", "spurious_few_shot_squares"):
+        qs = _extract_few_shot_questions(biased_content)
+        if qs:
+            metadata["few_shot_questions"] = qs
+
+    return metadata
+
+
 def load_mcq_bias_dataset(
     path: str | Path,
     variant: QuestionVariant = "biased",
@@ -126,18 +227,40 @@ def load_mcq_bias_dataset(
                     inspect_messages.append(ChatMessageAssistant(content=content))
                 # Skip other roles (system, etc.) - none expected in current data
 
+            # Build sample metadata
+            bias_name = record.get("bias_name", path.parent.name)
+            sample_metadata = {
+                "biased_option": biased_option,
+                "bias_name": bias_name,
+                "original_dataset": record.get("original_dataset", ""),
+                "variant": variant,
+                "prompt_style": prompt_style,
+            }
+
+            # Extract biasing metadata for biased variant (used by qualitative scorers)
+            if variant == "biased" and messages:
+                biased_user = ""
+                for msg in messages:
+                    if msg["role"] == "user":
+                        biased_user = msg["content"]
+                        break
+                unbiased_user = ""
+                for msg in record.get("unbiased_question", []):
+                    if msg["role"] == "user":
+                        unbiased_user = msg["content"]
+                        break
+                if biased_user:
+                    biasing_meta = _extract_biasing_metadata(
+                        biased_user, unbiased_user, bias_name, biased_option
+                    )
+                    sample_metadata.update(biasing_meta)
+
             samples.append(
                 Sample(
                     input=inspect_messages,
                     target=ground_truth,
                     id=record.get("original_question_hash", ""),
-                    metadata={
-                        "biased_option": biased_option,
-                        "bias_name": record.get("bias_name", path.parent.name),
-                        "original_dataset": record.get("original_dataset", ""),
-                        "variant": variant,
-                        "prompt_style": prompt_style,
-                    },
+                    metadata=sample_metadata,
                 )
             )
 

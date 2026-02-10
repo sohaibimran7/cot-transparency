@@ -37,6 +37,31 @@ BREAK_WORDS: list[str] = [
 ]
 
 
+def fallback_answer_parser(model_answer: str) -> str | None:
+    """
+    Lenient fallback parser that strips formatting (markdown bold, latex
+    boxing) and then runs the standard parser on the cleaned text.
+
+    Kept separate from cot_answer_parser because a match here means the
+    model did NOT follow the expected format — useful as a signal.
+
+    Args:
+        model_answer: The raw model response text
+
+    Returns:
+        The parsed answer letter (A-J) or None if no answer found
+    """
+    cleaned = model_answer
+    # **X** -> X, **(X)** -> (X)
+    cleaned = re.sub(r"\*\*([^*]+)\*\*", r"\1", cleaned)
+    # $\boxed{X}$ variants: \boxed{C}, \boxed{\text{C}}, \boxed{\textbf{(C)}}
+    cleaned = re.sub(
+        r"\$?\\boxed\{(?:\\text(?:bf)?\{)?([^}]*)\}?\}\$?", r"\1", cleaned
+    )
+
+    return cot_answer_parser(cleaned)
+
+
 def cot_answer_parser(model_answer: str) -> str | None:
     """
     Parse a multiple choice answer from model output.
@@ -67,7 +92,7 @@ def cot_answer_parser(model_answer: str) -> str | None:
 
         pattern = rf"^(?:[Oo]ption |[Ss]tatement )?\(?({possible_indicators_re})\)?(\s|\)|\.|\,|$)+.*$"
 
-        match = re.search(pattern, last_item)
+        match = re.search(pattern, last_item, re.MULTILINE)
         if match:
             candidate_ans = match.group(1)
             if candidate_ans in possible_indicators:

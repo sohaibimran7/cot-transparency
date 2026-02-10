@@ -12,7 +12,13 @@ from sycophancy_eval_inspect.mcq.dataset import (
     QuestionVariant,
     load_mcq_bias_dataset,
 )
-from sycophancy_eval_inspect.mcq.scorer import mcq_bias_scorer
+from sycophancy_eval_inspect.mcq.scorer import (
+    bias_acknowledged_scorer,
+    few_shot_confusion_scorer,
+    mcq_bias_scorer,
+    mcq_bias_scorer_fallback,
+    options_considered_scorer,
+)
 
 
 def load_hashes_from_file(path: str | Path) -> set[str]:
@@ -103,6 +109,12 @@ def mcq_bias_eval(
     return Task(
         dataset=dataset,
         solver=[generate()],
-        scorer=mcq_bias_scorer(),
+        scorer=[
+            mcq_bias_scorer(),
+            mcq_bias_scorer_fallback(),
+            options_considered_scorer(),
+            bias_acknowledged_scorer(),
+            few_shot_confusion_scorer(),
+        ],
         metadata=metadata,
     )

@@ -60,16 +60,16 @@ TRAINING_TYPE_ORDER = [
 
 TRAINING_TYPE_NAMES = {
     "base": "Base",
-    "control": "Ctrl",
-    "rlct_control_step50": "RLCtrl",
-    "bct_old_20k": "BCT_old_20k",
-    "bct_mti_1k": "BCT_mti_1k",
-    "bct_mti_4k": "BCT_mti_4k",
-    "bct_mt_2k": "BCT_mt_2k",
-    "bct_mt_b16_2k": "BCT_mt_b16_2k",
-    "bct_mti_b16_4k": "BCT_mti_b16_4k",
-    "rlct_step50": "RLs50",
-    "rlct_step200": "RLs200",
+    "control": "Control SFT",
+    "rlct_control_step50": "RL Control",
+    "bct_old_20k": "BCT 20k (old)",
+    "bct_mti_1k": "BCT MTI 1k",
+    "bct_mti_4k": "BCT MTI 4k",
+    "bct_mt_2k": "BCT MT 2k",
+    "bct_mt_b16_2k": "BCT MT b16 2k",
+    "bct_mti_b16_4k": "BCT MTI b16 4k",
+    "rlct_step50": "RLCT s50",
+    "rlct_step200": "RLCT s200",
 }
 
 # Maps scorer name → {score_value_key: column_name}
@@ -112,44 +112,42 @@ METRIC_DISPLAY = {
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
+_DIR_TO_TRAINING_TYPE = {
+    "base": "base",
+    "control": "control",
+    "rl-control-s50": "rlct_control_step50",
+    "bct-old-20k": "bct_old_20k",
+    "bct-mti-1k": "bct_mti_1k",
+    "bct-mti-4k": "bct_mti_4k",
+    "bct-mt-2k": "bct_mt_2k",
+    "bct-mt-b16-2k": "bct_mt_b16_2k",
+    "bct-mti-b16-4k": "bct_mti_b16_4k",
+    "bct-mti-r32-4k": None,  # Exclude r32
+    "rlct-s50": "rlct_step50",
+    "rlct-s200": "rlct_step200",
+}
+
+
 def _get_training_type_from_dir(dir_name: str) -> str | None:
-    """Extract training type from directory name."""
-    if "base" in dir_name:
-        return "base"
-    elif "rlct_control" in dir_name or "rlct-control" in dir_name:
-        return "rlct_control_step50"
-    elif "rlct_step50" in dir_name or "rlct-step50" in dir_name:
-        return "rlct_step50"
-    elif "rlct_step200" in dir_name or "rlct-s200" in dir_name:
-        return "rlct_step200"
-    elif "_s4" in dir_name or "-s4" in dir_name:
-        return "bct_mti_1k"
-    elif "bct_mti_b16_4k" in dir_name:
-        return "bct_mti_b16_4k"
-    elif "bct_mt_b16_2k" in dir_name:
-        return "bct_mt_b16_2k"
-    elif "bct_mt_final" in dir_name or "bct_mt-final" in dir_name:
-        return "bct_mt_2k"
-    elif "mti_r32" in dir_name:
-        return None  # Exclude r32 from analysis
-    elif "_final" in dir_name or "-final" in dir_name:
-        return "bct_mti_4k"
-    elif "llama-fireworks-bct" in dir_name or dir_name == "llama-fireworks-bct":
-        return "bct_old_20k"
-    elif "control" in dir_name:
-        return "control"
-    return None
+    """Extract training type from directory name.
+
+    Expected naming: {model}-{suffix} where suffix is a key in _DIR_TO_TRAINING_TYPE.
+    """
+    # Strip model prefix (e.g. "llama-" or "gpt-")
+    n = dir_name.lower()
+    for prefix in ("llama-", "gpt-"):
+        if n.startswith(prefix):
+            n = n[len(prefix):]
+            break
+    return _DIR_TO_TRAINING_TYPE.get(n)
 
 
 def _get_model_family_from_dir(dir_name: str) -> str | None:
-    """Extract model family from directory name."""
+    """Extract model family from directory name (expects {model}-... prefix)."""
     lower = dir_name.lower()
-    if "llama" in lower:
-        return "llama"
-    elif "gpt" in lower:
-        return "gpt"
-    elif "rlct" in lower or "bct" in lower:
-        return "llama"  # Default: RLCT/BCT experiments without explicit model family are llama
+    for prefix in ("llama", "gpt"):
+        if lower.startswith(prefix):
+            return prefix
     return None
 
 

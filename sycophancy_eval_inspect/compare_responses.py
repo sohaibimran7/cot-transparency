@@ -20,22 +20,18 @@ from inspect_ai.analysis import SampleMessages, SampleScores, SampleSummary, sam
 
 # Training type detection from log path
 def _get_training_type(log_path: str) -> str:
-    """Extract training type from the log file path."""
+    """Extract training type from the log file path.
+
+    Delegates to visualize_results._get_training_type_from_dir for consistency.
+    Falls back to simple keyword matching if import fails.
+    """
+    from sycophancy_eval_inspect.visualize_results import _get_training_type_from_dir
+
     parts = Path(log_path).parts
-    # Find the model subdirectory (parent of the .eval file, child of cot_100samples or similar)
     for part in parts:
-        if "base" in part:
-            return "base"
-        elif "rlct_control" in part or "rlct-control" in part:
-            return "rlct_control_step50"
-        elif "rlct_step50" in part or "rlct-step50" in part:
-            return "rlct_step50"
-        elif "rlct_step200" in part or "rlct-step200" in part:
-            return "rlct_step200"
-        elif "bct" in part:
-            return "bct"
-        elif "control" in part:
-            return "control"
+        result = _get_training_type_from_dir(part)
+        if result is not None:
+            return result
     return "unknown"
 
 

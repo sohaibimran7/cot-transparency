@@ -41,13 +41,13 @@ class ModelConfig:
 
 MODEL_CONFIGS = [
     # Llama models
-    ModelConfig("llama-fireworks-base", "accounts/sohaib/deployments/dh6uv0yu", ["cot", "no_cot"]),
-    ModelConfig("llama-fireworks-bct", "accounts/sohaib/models/llama-bct-train#accounts/sohaib/deployments/dh6uv0yu", ["cot", "no_cot"]),
-    ModelConfig("llama-fireworks-control", "accounts/sohaib/models/llama-bct-control#accounts/sohaib/deployments/dh6uv0yu", ["cot", "no_cot"]),
+    ModelConfig("llama-base", "accounts/sohaib/deployments/dh6uv0yu", ["cot", "no_cot"]),
+    ModelConfig("llama-bct-old-20k", "accounts/sohaib/models/llama-bct-train#accounts/sohaib/deployments/dh6uv0yu", ["cot", "no_cot"]),
+    ModelConfig("llama-control", "accounts/sohaib/models/llama-bct-control#accounts/sohaib/deployments/dh6uv0yu", ["cot", "no_cot"]),
     # GPT models (trained on all datasets)
-    ModelConfig("gpt-fireworks-base", "accounts/sohaib/deployments/dftlbcrz", ["no_cot"]),
-    ModelConfig("gpt-fireworks-bct", "accounts/sohaib/models/gpt-bct-train-cleaned#accounts/sohaib/deployments/hahpsd3w", ["no_cot"]),
-    ModelConfig("gpt-fireworks-control", "accounts/sohaib/models/gpt-bct-control-cleaned#accounts/sohaib/deployments/fggq4iw1", ["no_cot"]),
+    ModelConfig("gpt-base", "accounts/sohaib/deployments/dftlbcrz", ["no_cot"]),
+    ModelConfig("gpt-bct", "accounts/sohaib/models/gpt-bct-train-cleaned#accounts/sohaib/deployments/hahpsd3w", ["no_cot"]),
+    ModelConfig("gpt-control", "accounts/sohaib/models/gpt-bct-control-cleaned#accounts/sohaib/deployments/fggq4iw1", ["no_cot"]),
     # GPT models (trained on logiqa only)
     ModelConfig("gpt-logiqa-bct", "accounts/sohaib/models/bct-logiqa-train#accounts/sohaib/deployments/dgwgw67g", ["no_cot"]),
     ModelConfig("gpt-logiqa-control", "accounts/sohaib/models/bct-logiqa-control#accounts/sohaib/deployments/uf9yup8s", ["no_cot"]),

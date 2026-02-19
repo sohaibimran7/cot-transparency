@@ -259,9 +259,10 @@ class ConsistencyReward(RewardFunction):
 class RLTrainer:
     """RL Trainer for consistency training."""
 
-    def __init__(self, config: RLConfig, reward_function: Optional[RewardFunction] = None):
+    def __init__(self, config: RLConfig, reward_function: Optional[RewardFunction] = None, resume_from: Optional[str] = None):
         self.config = config
         self.reward_function = reward_function or ConsistencyReward()
+        self.resume_from = resume_from
         self.service_client = tinker.ServiceClient()
         self.training_client: tinker.TrainingClient | None = None
         self.sampling_client: tinker.SamplingClient | None = None
@@ -276,6 +277,17 @@ class RLTrainer:
             base_model=self.config.model,
             **self.config.lora.model_dump(),
         )
+
+        # Load checkpoint if resuming from a previous training run
+        if self.resume_from:
+            if "/weights/" in self.resume_from and "/sampler_weights/" not in self.resume_from:
+                print(f"Loading full state (weights + optimizer) from: {self.resume_from}")
+                self.training_client.load_state_with_optimizer(self.resume_from).result()
+            else:
+                print(f"Loading weights (optimizer will reset) from: {self.resume_from}")
+                self.training_client.load_state(self.resume_from).result()
+            print("Checkpoint loaded successfully")
+
         self.renderer, self.tokenizer = get_renderer_and_tokenizer(self.config.model)
         self.sampling_client = self.training_client.save_weights_and_get_sampling_client(
             name=f"{self.config.experiment_name}_{self.config.run_name}_sampler"
@@ -631,6 +643,13 @@ class RLTrainer:
 
                 advantages = self._normalize_advantages(all_rewards)
 
+                # Skip empty batches: if all advantages are zero (constant rewards),
+                # forward_backward produces zero gradients — waste of compute.
+                if not advantages or all(abs(a) < 1e-8 for a in advantages):
+                    logger.log_metrics({"train/skipped_empty_batch": 1}, step=global_step)
+                    global_step += 1
+                    continue
+
                 # Create training batch using cookbook's trajectory_to_data
                 batch_data = [self._create_rl_datum(prompt, s, adv) for (prompt, s), adv in zip(all_grad_data, advantages)]
 
@@ -830,6 +849,7 @@ async def train_consistency_rl(
     initial_reference_rates: Optional[dict[int, float]] = None,
     show_cost_estimate: bool = True,
     answer_parser: Optional[Callable[[str], Optional[str]]] = None,
+    resume_from: Optional[str] = None,
 ) -> str:
     """
     Run RL consistency training.
@@ -846,6 +866,7 @@ async def train_consistency_rl(
         answer_parser: Optional function to parse answers from responses.
                       If provided, parse rate will be tracked and logged.
                       Should return the parsed answer string or None if parsing failed.
+        resume_from: Tinker checkpoint path to load weights from before training.
 
     Returns:
         Path to final checkpoint
@@ -859,7 +880,7 @@ async def train_consistency_rl(
         if cost:
             print(cost)
 
-    trainer = RLTrainer(config=cfg, reward_function=reward_function)
+    trainer = RLTrainer(config=cfg, reward_function=reward_function, resume_from=resume_from)
     trainer.setup()
     return await trainer.train(situations, perturbation_fns, trait_classifier, initial_reference_rates, answer_parser)
 
@@ -874,6 +895,7 @@ def train_consistency_rl_sync(
     initial_reference_rates: Optional[dict[int, float]] = None,
     show_cost_estimate: bool = True,
     answer_parser: Optional[Callable[[str], Optional[str]]] = None,
+    resume_from: Optional[str] = None,
 ) -> str:
     """Synchronous wrapper for train_consistency_rl."""
     return asyncio.run(train_consistency_rl(
@@ -886,4 +908,5 @@ def train_consistency_rl_sync(
         initial_reference_rates=initial_reference_rates,
         show_cost_estimate=show_cost_estimate,
         answer_parser=answer_parser,
+        resume_from=resume_from,
     ))

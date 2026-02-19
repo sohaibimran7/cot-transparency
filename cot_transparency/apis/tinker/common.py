@@ -95,5 +95,5 @@ def get_recommended_lr(model: str, is_lora: bool = True, fallback: float = 1e-4)
     """
     try:
         return hyperparam_utils.get_lr(model, is_lora=is_lora)
-    except KeyError:
+    except (KeyError, AssertionError, OSError):
         return fallback

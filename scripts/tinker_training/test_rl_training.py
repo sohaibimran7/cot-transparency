@@ -77,6 +77,7 @@ def main():
     parser.add_argument("--ref_perturbations", type=int, nargs="+", default=[0], help="Perturbation indices for reference rate")
     parser.add_argument("--train_perturbations", type=int, nargs="+", default=[1], help="Perturbation indices for training")
     parser.add_argument("--control", action="store_true", help="Control run: use unbiased perturbation for both ref and train")
+    parser.add_argument("--resume_from", type=str, default=None, help="Tinker checkpoint path to load before training (tinker://...)")
     args = parser.parse_args()
 
     # Load samples from both datasets
@@ -181,7 +182,7 @@ def main():
     print(f"Situations: {len(situations)}")
     print(f"Perturbations: {pert_desc}")
 
-    trainer = RLTrainer(config=config)
+    trainer = RLTrainer(config=config, resume_from=args.resume_from)
     trainer.setup()
 
     final_checkpoint = asyncio.run(

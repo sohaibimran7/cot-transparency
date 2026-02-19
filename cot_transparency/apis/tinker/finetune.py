@@ -81,6 +81,7 @@ async def train_sft(
     file_path: Path,
     config: Optional[SFTConfig] = None,
     max_samples: Optional[int] = None,
+    resume_from: Optional[str] = None,
 ) -> str:
     """
     Run SFT training from JSONL file.
@@ -89,6 +90,9 @@ async def train_sft(
         file_path: Path to JSONL file with {"messages": [...]} format
         config: Training configuration (uses defaults if not provided)
         max_samples: Limit number of samples (None = use all)
+        resume_from: Tinker checkpoint path to load weights from before training.
+            Use a state_path (tinker://...weights/...) for full optimizer resume,
+            or a sampler_path (tinker://...sampler_weights/...) for weights-only.
 
     Returns:
         Final checkpoint path
@@ -129,6 +133,21 @@ async def train_sft(
         **cfg.lora.model_dump(),
     )
     renderer, _ = get_renderer_and_tokenizer(cfg.model)
+
+    # Load checkpoint if resuming from a previous training run
+    if resume_from:
+        if "/weights/" in resume_from and "/sampler_weights/" not in resume_from:
+            # Full state path — load weights + optimizer state
+            print(f"Loading full state (weights + optimizer) from: {resume_from}")
+            future = await training_client.load_state_with_optimizer_async(resume_from)
+            await future.result_async()
+        else:
+            # Sampler-only or unknown path — load weights only, optimizer resets
+            print(f"Loading weights (optimizer will reset) from: {resume_from}")
+            future = await training_client.load_state_async(resume_from)
+            await future.result_async()
+        print("Checkpoint loaded successfully")
+        logger.log_hparams({"resume_from": resume_from})
 
     checkpoint_paths: list[str] = []
     global_step = 0
@@ -238,6 +257,7 @@ def train_sft_sync(
     file_path: Path,
     config: Optional[SFTConfig] = None,
     max_samples: Optional[int] = None,
+    resume_from: Optional[str] = None,
 ) -> str:
     """Synchronous wrapper for train_sft."""
-    return asyncio.run(train_sft(file_path, config, max_samples))
+    return asyncio.run(train_sft(file_path, config, max_samples, resume_from))

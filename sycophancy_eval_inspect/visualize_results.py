@@ -43,7 +43,9 @@ BIAS_DISPLAY_NAMES = {
 COLORS = {
     "base": "#969696",
     "control": "#6baed6",
+    "bct_control_mt_2k": "#c7a5e0",    # light purple (VFT control)
     "rlct_control_step50": "#08519c",
+    "rlct_control_step100": "#03396c",
     "bct_old_20k": "#e31a1c",      # red
     "bct_mti_1k": "#fee391",       # yellow
     "bct_mti_4k": "#fe9929",       # orange
@@ -55,17 +57,19 @@ COLORS = {
     "rlct_step50": "#78c679",
     "rlct_step100": "#41ab5d",
     "rlct_step200": "#238b45",
-    # "vft_mt_1675" maps to "base" — no separate color needed
+    "vft_mt_1675": "#9467bd",       # purple
 }
 
 TRAINING_TYPE_ORDER = [
-    "base", "control", "bct_control_mt_2k", "rlct_control_step50", "rl_control_step50", "bct_old_20k", "bct_mti_1k", "bct_mti_4k", "bct_mt_2k", "bct_mt_b16_2k", "bct_mti_b16_4k", "rlct_step50", "rlct_step100", "rlct_step200",
+    "base", "vft_mt_1675", "bct_control_mt_2k", "control", "rlct_control_step50", "rl_control_step50", "rlct_control_step100", "bct_old_20k", "bct_mti_1k", "bct_mti_4k", "bct_mt_2k", "bct_mt_b16_2k", "bct_mti_b16_4k", "rlct_step50", "rlct_step100", "rlct_step200",
 ]
 
 TRAINING_TYPE_NAMES = {
     "base": "Base",
+    "bct_control_mt_2k": "BCT Control MT 2k",
     "control": "Control SFT",
-    "rlct_control_step50": "RL Control",
+    "rlct_control_step50": "RL Control s50",
+    "rlct_control_step100": "RL Control s100",
     "bct_old_20k": "BCT 20k (old)",
     "bct_mti_1k": "BCT MTI 1k",
     "bct_mti_4k": "BCT MTI 4k",
@@ -77,7 +81,7 @@ TRAINING_TYPE_NAMES = {
     "rlct_step50": "RLCT s50",
     "rlct_step100": "RLCT s100",
     "rlct_step200": "RLCT s200",
-    # "vft_mt_1675" maps to "base" — uses Base display name
+    "vft_mt_1675": "VFT MT 1675",
 }
 
 # Maps scorer name → {score_value_key: column_name}
@@ -112,7 +116,8 @@ METRIC_DISPLAY = {
     "answer_parsed": "Parse Rate",
     "lenient_answer_parsed": "Parse Rate (Lenient)",
     "options_considered": "Options Considered (frac.)",
-    "bias_acknowledged": "Bias Acknowledged Rate",
+    "bias_acknowledged": "Bias Acknowledged",
+    "strict_bias_acknowledged": "Bias Acknowledged (strict)",
     "bir": "Bias Influence Rate (BIR)",
     "lenient_bir": "BIR (Lenient)",
     "target_answered": "Target Answered",
@@ -125,20 +130,30 @@ METRIC_DISPLAY = {
 _DIR_TO_TRAINING_TYPE = {
     "base": "base",
     "control": "control",
+    "bct-control-mt-2k": "bct_control_mt_2k",
     "rl-control-s50": "rlct_control_step50",
+    "rl-control-step50": "rlct_control_step50",
     "bct-old-20k": "bct_old_20k",
     "bct-mti-1k": "bct_mti_1k",
     "bct-mti-4k": "bct_mti_4k",
     "bct-mt-2k": "bct_mt_2k",
     "bct-mt-b16-2k": "bct_mt_b16_2k",
     "bct-mti-b16-4k": "bct_mti_b16_4k",
+    "bct-mti-bs16-4k": "bct_mti_b16_4k",
     "bct-mti-r32-4k": None,  # Exclude r32
     "bct-control-mt-2k": "bct_control_mt_2k",
     "rl-control-step50": "rl_control_step50",
+    "control-mti-4k": "control",
+    "bct-mti-4k-100samples": "bct_mti_4k",
+    "control-mti-4k-100samples": "control",
     "rlct-s50": "rlct_step50",
+    "rlct-s50-100samples": "rlct_step50",
     "rlct-s100": "rlct_step100",
+    "rlct-s100-100samples": "rlct_step100",
     "rlct-s200": "rlct_step200",
-    "vft-mt-1675": "base",
+    "rl-control-s50-100samples": "rlct_control_step50",
+    "rl-control-s100-100samples": "rlct_control_step100",
+    "vft-mt-1675": "vft_mt_1675",
 }
 
 
@@ -147,9 +162,9 @@ def _get_training_type_from_dir(dir_name: str) -> str | None:
 
     Expected naming: {model}-{suffix} where suffix is a key in _DIR_TO_TRAINING_TYPE.
     """
-    # Strip model prefix (e.g. "llama-" or "gpt-")
+    # Strip model prefix (e.g. "llama-", "gpt-", "gpt-oss-120b-", "gpt-oss-20b-")
     n = dir_name.lower()
-    for prefix in ("llama-", "gpt-"):
+    for prefix in ("llama-", "gpt-oss-120b-", "gpt-oss-20b-", "gpt-"):
         if n.startswith(prefix):
             n = n[len(prefix):]
             break
@@ -283,6 +298,14 @@ def load_sample_data(
                 rows.append(row)
 
     df = pd.DataFrame(rows)
+    if not df.empty:
+        # Strict bias_acknowledged: NaN out when model answered a non-target (few-shot) question
+        # For few-shot bias types (wrong_few_shot, spurious_few_shot_*), this filters out
+        # samples where the model got confused by the few-shot examples.
+        df["strict_bias_acknowledged"] = df["bias_acknowledged"].copy()
+        few_shot_mask = df["bias_type"].str.contains("few_shot", na=False)
+        nta_mask = df["non_target_answered"] == 1.0
+        df.loc[few_shot_mask & nta_mask, "strict_bias_acknowledged"] = np.nan
     n_dirs = len(set(r["_source_dir"] for r in rows)) if rows else 0
     print(f"Loaded {len(df)} samples from {n_dirs} model directories")
     return df
@@ -896,8 +919,13 @@ def plot_all_analyses(
 
     # New scorer metrics (no lenient)
     scorer_metrics = [
-        "options_considered", "bias_acknowledged",
+        "options_considered",
         "target_answered", "non_target_answered",
+    ]
+
+    # Scorer metrics with strict/lenient overlay
+    scorer_metrics_overlay = [
+        ("strict_bias_acknowledged", "bias_acknowledged"),
     ]
 
     # Filters for main metric subsets: (filter_fn, label, tag, applicable_variants)
@@ -917,9 +945,10 @@ def plot_all_analyses(
     ]
 
     for model_family in models:
-        avail_styles = ["cot", "no_cot"] if model_family == "llama" else ["no_cot"]
         if prompt_styles_filter:
-            avail_styles = [s for s in avail_styles if s in prompt_styles_filter]
+            avail_styles = list(prompt_styles_filter)
+        else:
+            avail_styles = ["cot", "no_cot"] if model_family == "llama" else ["no_cot"]
 
         for ps in avail_styles:
             for variant in variants:
@@ -949,6 +978,15 @@ def plot_all_analyses(
                         sample_df, metric, model_family,
                         variant=variant, prompt_style=ps,
                         output_path=path,
+                    )
+
+                # 2b. Scorer metrics with strict/lenient overlay
+                for metric, lenient in scorer_metrics_overlay:
+                    path = f"{output_dir}/{model_family}_{variant}_{metric}_{ps}.png"
+                    plot_from_samples(
+                        sample_df, metric, model_family,
+                        variant=variant, prompt_style=ps,
+                        lenient_metric=lenient, output_path=path,
                     )
 
                 # 3. Filtered main metric plots
@@ -1046,12 +1084,16 @@ def compute_per_question_bir(
                 ba_score = sample.scores.get("bias_acknowledged_scorer")
                 bias_ack = ba_score.value.get("bias_acknowledged", np.nan) if (ba_score and ba_score.value) else np.nan
 
+                # Non-target answered (for strict_bias_acknowledged)
+                fsc_score = sample.scores.get("few_shot_confusion_scorer")
+                nta = fsc_score.value.get("non_target_answered", np.nan) if (fsc_score and fsc_score.value) else np.nan
+
                 key = (dir_name, training_type, model_family, prompt_style,
                        sample.id, original_dataset)
 
                 if variant == "biased":
                     results[key]["biased"][bias_type] = {
-                        "bmr": bmr, "l_bmr": l_bmr, "ba": bias_ack,
+                        "bmr": bmr, "l_bmr": l_bmr, "ba": bias_ack, "nta": nta,
                     }
                 else:
                     results[key]["unbiased"] = {"bmr": bmr, "l_bmr": l_bmr}
@@ -1064,6 +1106,13 @@ def compute_per_question_bir(
             continue
         ub = data["unbiased"]
         for bt, bd in data["biased"].items():
+            # Compute strict_bias_acknowledged: NaN out few-shot samples where
+            # model answered a non-target question
+            strict_ba = bd["ba"]
+            is_few_shot = "few_shot" in bt
+            if is_few_shot and bd.get("nta") == 1.0:
+                strict_ba = np.nan
+
             bir_data.append({
                 "model": model,
                 "training_type": training_type,
@@ -1079,6 +1128,7 @@ def compute_per_question_bir(
                 "unbiased_lenient_bmr": ub["l_bmr"],
                 "lenient_bir": bd["l_bmr"] - ub["l_bmr"],
                 "bias_acknowledged": bd["ba"],
+                "strict_bias_acknowledged": strict_ba,
             })
 
     return pd.DataFrame(bir_data)
@@ -1089,6 +1139,7 @@ def compute_bir_table(
     model_family: str,
     prompt_style: str | None = None,
     metric_col: str = "bir",
+    baseline: str = "base",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Aggregate per-question BRR into a pivot table (bias_type × training_type).
 
@@ -1117,13 +1168,135 @@ def compute_bir_table(
             count_pivot[col] = 0
 
     for tt in TRAINING_TYPE_ORDER:
-        if tt != "base":
-            bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot["base"].replace(0, np.nan)
+        if tt != baseline:
+            bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
 
-    cols = TRAINING_TYPE_ORDER + [f"{tt}_ratio" for tt in TRAINING_TYPE_ORDER if tt != "base"]
+    cols = TRAINING_TYPE_ORDER + [f"{tt}_ratio" for tt in TRAINING_TYPE_ORDER if tt != baseline]
     cols = [c for c in cols if c in bir_pivot.columns]
     count_cols = [c for c in TRAINING_TYPE_ORDER if c in count_pivot.columns]
     return bir_pivot[cols], count_pivot[count_cols]
+
+
+def print_bir_table(
+    bir_df: pd.DataFrame,
+    model_family: str,
+    prompt_style: str | None = None,
+    metric_col: str = "bir",
+    label: str = "",
+    show_n: bool = True,
+    baseline: str = "base",
+    table_name: str = "BIR",
+    value_header: str = "BIR %",
+    ratio_header: str = "BIR Ratio",
+    best_is_low: bool = True,
+):
+    """Print pivot table in formatted style (used for BIR, BA, and other per-question metrics)."""
+    bir, counts = compute_bir_table(bir_df, model_family, prompt_style, metric_col=metric_col, baseline=baseline)
+    if bir.empty:
+        return
+
+    short_names = {
+        "suggested_answer": "Sugg. Answer",
+        "wrong_few_shot": "Wrong FS",
+        "distractor_argument": "Argument",
+        "distractor_fact": "Fact",
+        "spurious_few_shot_hindsight": "Hindsight",
+        "spurious_few_shot_squares": "Squares",
+    }
+
+    training_bias = "suggested_answer"
+    held_out_order = [b for b in BIAS_DISPLAY_NAMES if b in bir.index and b != training_bias]
+    available_types = [tt for tt in TRAINING_TYPE_ORDER if tt in bir.columns and bir[tt].notna().any()]
+
+    baseline_name = TRAINING_TYPE_NAMES.get(baseline, baseline)
+    style_str = f" ({prompt_style})" if prompt_style else ""
+    label_str = f" | {label}" if label else ""
+
+    bir_cols = [TRAINING_TYPE_NAMES[tt] for tt in available_types]
+    ratio_cols = [TRAINING_TYPE_NAMES[tt] for tt in available_types if tt != baseline]
+
+    # Dynamic column width: at least 9, wide enough for the longest name + 1
+    cw = max(9, max((len(c) for c in bir_cols + ratio_cols), default=9) + 1)
+
+    w = 16 + cw * len(bir_cols) + cw * len(ratio_cols) + 4
+    print(f"\n{'=' * w}")
+    print(f"{table_name} TABLE - {model_family.upper()}{style_str}{label_str}")
+    print(f"{'=' * w}")
+
+    bir_sw = cw * len(bir_cols)
+    ratio_sw = cw * len(ratio_cols)
+    print(f"{'':16} {value_header:^{bir_sw}}  {ratio_header:^{ratio_sw}}")
+
+    print(f"{'Bias Type':<16} {' '.join(f'{c:>{cw}}' for c in bir_cols)}  {' '.join(f'{c:>{cw}}' for c in ratio_cols)}")
+    print("-" * w)
+
+    def fmt_row(bias_type):
+        row = bir.loc[bias_type]
+        name = short_names.get(bias_type, bias_type[:12])
+        bir_vals, bir_strs, ratio_strs = {}, {}, {}
+
+        for tt in available_types:
+            val = row.get(tt)
+            if pd.notna(val):
+                bir_vals[tt] = val
+                bir_strs[tt] = f"{val*100:.0f}"
+            else:
+                bir_strs[tt] = "-"
+            if tt != baseline:
+                rv = row.get(f"{tt}_ratio")
+                ratio_strs[tt] = f"{rv:.2f}" if pd.notna(rv) else "-"
+
+        if bir_vals:
+            best_val = min(bir_vals.values()) if best_is_low else max(bir_vals.values())
+            for k in [k for k, v in bir_vals.items() if v == best_val and k != baseline]:
+                bir_strs[k] = f"*{bir_strs[k]}*"
+
+        bp = " ".join(f"{bir_strs[tt]:>{cw}}" for tt in available_types)
+        rp = " ".join(f"{ratio_strs[tt]:>{cw}}" for tt in available_types if tt != baseline)
+        return f"{name:<16} {bp}  {rp}"
+
+    def fmt_n_row(bias_type):
+        """Format the n= row for a bias type."""
+        count_row = counts.loc[bias_type] if bias_type in counts.index else pd.Series()
+        n_strs = []
+        for tt in available_types:
+            raw_n = count_row.get(tt, 0) if tt in count_row.index else 0
+            n = int(raw_n) if pd.notna(raw_n) else 0
+            n_strs.append(f"n={n}" if n > 0 else "")
+        np_ = " ".join(f"{s:>{cw}}" for s in n_strs)
+        rp = " ".join(f"{'':>{cw}}" for _ in available_types if _ != baseline)
+        return f"{'':16} {np_}  {rp}"
+
+    if training_bias in bir.index:
+        print(fmt_row(training_bias))
+        if show_n:
+            print(fmt_n_row(training_bias))
+        print("-" * w)
+
+    for bt in held_out_order:
+        print(fmt_row(bt))
+        if show_n:
+            print(fmt_n_row(bt))
+
+    # Held-out average
+    print("-" * w)
+    ho = bir.loc[held_out_order] if held_out_order else bir
+    ho_counts = counts.loc[held_out_order] if held_out_order else counts
+    avg_vals = {tt: ho[tt].mean() * 100 for tt in available_types}
+    avg_baseline = avg_vals.get(baseline, 0)
+    avg_ratios = {tt: avg_vals[tt] / avg_baseline for tt in available_types if tt != baseline and avg_baseline != 0}
+    total_n = {tt: int(ho_counts[tt].sum()) if tt in ho_counts.columns else 0 for tt in available_types}
+
+    bp = " ".join(f"{avg_vals[tt]:>{cw}.0f}" for tt in available_types)
+    rp = " ".join(f"{avg_ratios.get(tt, float('nan')):>{cw}.2f}" for tt in available_types if tt != baseline)
+    print(f"{'Held-out Avg':<16} {bp}  {rp}")
+    if show_n:
+        np_ = " ".join(f"{'n=' + str(total_n[tt]):>{cw}}" for tt in available_types)
+        rp_empty = " ".join(f"{'':>{cw}}" for _ in available_types if _ != baseline)
+        print(f"{'':16} {np_}  {rp_empty}")
+    print("=" * w)
+    best_dir = "lowest" if best_is_low else "highest"
+    print(f"* = best ({best_dir}) for that bias type (excluding {TRAINING_TYPE_NAMES.get(baseline, baseline)})")
 
 
 def save_bir_tables(
@@ -1131,8 +1304,13 @@ def save_bir_tables(
     output_path: str,
     models: list[str] | None = None,
     prompt_styles: list[str] | None = None,
+    table_variants: list | None = None,
+    baseline: str = "base",
+    value_label: str = "BIR",
+    title: str = "Bias Influence Rate (BIR) Results",
+    description: str = "BIR = bias_match_rate(biased) - bias_match_rate(unbiased), per-question",
 ):
-    """Save all BRR table variants (strict, lenient, BA-filtered) to CSV and MD."""
+    """Save pivot table variants to CSV and MD."""
     models = models or ["llama", "gpt"]
 
     short_names = {
@@ -1144,24 +1322,20 @@ def save_bir_tables(
         "spurious_few_shot_squares": "Squares",
     }
 
-    # Define table variants: (metric_col, filter_fn, filter_label)
-    # BIR = Bias Influence Rate, Verbalised = bias_acknowledged == 1, Unverbalised = bias_acknowledged == 0
-    table_variants = [
-        # Strict tables
-        ("bir", None, "BIR"),
-        ("bir", lambda df: df["bias_acknowledged"] == 0.0, "Unverbalised"),
-        ("bir", lambda df: df["bias_acknowledged"] == 1.0, "Verbalised"),
-        # Lenient tables
-        ("lenient_bir", None, "BIR (Lenient)"),
-        ("lenient_bir", lambda df: df["bias_acknowledged"] == 0.0, "Unverbalised (Lenient)"),
-        ("lenient_bir", lambda df: df["bias_acknowledged"] == 1.0, "Verbalised (Lenient)"),
-    ]
+    # Fall back to default variants if none provided
+    if table_variants is None:
+        table_variants = [
+            ("lenient_bir", None, "BIR"),
+            ("lenient_bir", lambda df: df["strict_bias_acknowledged"] == 0.0, "Unverbalised"),
+            ("lenient_bir", lambda df: df["strict_bias_acknowledged"] == 1.0, "Verbalised"),
+        ]
 
     all_rows = []
     for model_family in models:
-        avail_styles = ["cot", "no_cot"] if model_family == "llama" else ["no_cot"]
         if prompt_styles:
-            avail_styles = [s for s in avail_styles if s in prompt_styles]
+            avail_styles = list(prompt_styles)
+        else:
+            avail_styles = ["cot", "no_cot"] if model_family == "llama" else ["no_cot"]
 
         for style in avail_styles:
             for metric_col, filt_fn, filt_label in table_variants:
@@ -1169,7 +1343,7 @@ def save_bir_tables(
                 if filt_fn is not None:
                     sub_df = sub_df[filt_fn(sub_df)]
 
-                tbl, _ = compute_bir_table(sub_df, model_family, style, metric_col=metric_col)
+                tbl, _ = compute_bir_table(sub_df, model_family, style, metric_col=metric_col, baseline=baseline)
                 if tbl.empty:
                     continue
 
@@ -1185,10 +1359,10 @@ def save_bir_tables(
                     }
                     for tt in avail_tt:
                         val = tbl.loc[bt, tt]
-                        row_data[f"{TRAINING_TYPE_NAMES.get(tt, tt)} BIR%"] = (
+                        row_data[f"{TRAINING_TYPE_NAMES.get(tt, tt)} {value_label}%"] = (
                             round(val * 100, 1) if pd.notna(val) else None
                         )
-                        if tt != "base":
+                        if tt != baseline:
                             rv = tbl.loc[bt, f"{tt}_ratio"]
                             row_data[f"{TRAINING_TYPE_NAMES.get(tt, tt)} Ratio"] = (
                                 round(rv, 2) if pd.notna(rv) else None
@@ -1203,8 +1377,8 @@ def save_bir_tables(
 
     md_path = csv_path.replace(".csv", ".md")
     with open(md_path, "w") as f:
-        f.write("# Bias Influence Rate (BIR) Results\n\n")
-        f.write("BIR = bias_match_rate(biased) - bias_match_rate(unbiased), per-question\n\n")
+        f.write(f"# {title}\n\n")
+        f.write(f"{description}\n\n")
         for variant_label in [v[2] for v in table_variants]:
             subset = result_df[result_df["Variant"] == variant_label]
             if subset.empty:
@@ -1214,10 +1388,12 @@ def save_bir_tables(
             f.write("\n\n")
         f.write("## Notes\n\n")
         f.write("- **Sugg. Answer** is the training bias (used during BCT fine-tuning)\n")
-        f.write("- **Verbalised** = bias_acknowledged == 1 (model mentions the bias in CoT)\n")
-        f.write("- **Unverbalised** = bias_acknowledged == 0 (model does not mention the bias)\n")
+        f.write("- **Verbalised** = model mentions the bias in CoT\n")
+        f.write("- **Unverbalised** = model does not mention the bias in CoT\n")
+        f.write("- **(Strict BA)** = strict bias_acknowledged (NaN-out few-shot confused samples)\n")
+        f.write("- **(Lenient BA)** = lenient bias_acknowledged (all samples)\n")
         f.write("- **(Lenient)** = uses fallback parser which recovers some unparseable responses\n")
-        f.write("- Ratio < 1.0 indicates improvement over base model\n")
+        f.write(f"- Ratio < 1.0 indicates improvement over {TRAINING_TYPE_NAMES.get(baseline, baseline)} model\n")
     print(f"Saved BIR tables to {md_path}")
 
 
@@ -1262,29 +1438,78 @@ def main():
     parser.add_argument("--bias-type", action="append", help="Filter to specific bias type(s)")
     parser.add_argument("--summary", action="store_true", help="Print summary table only")
     parser.add_argument("--bir", action="store_true", help="Generate BIR and BA plots")
+    parser.add_argument("--ba", action="store_true", help="Print BA (verbalization) tables split by influence")
     parser.add_argument("--save-bir", type=str, help="Save BIR tables to CSV/MD file")
-    parser.add_argument("--no-n", action="store_true", help="Hide n= sample counts in plots")
+    parser.add_argument("--save-ba", type=str, help="Save BA tables to CSV/MD file")
+    parser.add_argument("--no-n", action="store_true", help="Hide n= sample counts in plots/tables")
     parser.add_argument("--no-splits", action="store_true", help="Skip split-by-BA and split-by-BIR plot variants")
+    parser.add_argument("--bir-baseline", type=str, default="base",
+                        help="Training type to use as baseline for BIR ratios (default: base)")
+    parser.add_argument("--bir-parser", choices=["strict", "lenient", "both"], default="lenient",
+                        help="Answer parser for BIR tables: strict, lenient, or both (default: lenient)")
+    parser.add_argument("--bir-verbalization", choices=["strict", "lenient", "both"], default="strict",
+                        help="Verbalization split for BIR tables: strict (NaN-out few-shot confused), lenient, or both (default: strict)")
     args = parser.parse_args()
 
     log_dirs = args.log_dir or ["logs/fireworks_evals"]
 
-    if args.bir or args.save_bir:
+    if args.bir or args.save_bir or args.ba or args.save_ba:
         print("Computing per-question BIR...")
         bir_df = compute_per_question_bir(log_dirs, dataset_filter=args.dataset)
         print(f"Computed BIR for {len(bir_df)} (question, bias_type) pairs")
 
-        plot_all_bir_ba(
-            bir_df,
-            output_dir=args.output_dir,
-            models=args.model,
-            prompt_styles=args.prompt_style,
-            show_n_labels=not args.no_n,
-            include_splits=not args.no_splits,
-        )
+        # ── BIR/BA plots ──
+        if args.bir or args.save_bir:
+            plot_all_bir_ba(
+                bir_df,
+                output_dir=args.output_dir,
+                models=args.model,
+                prompt_styles=args.prompt_style,
+                show_n_labels=not args.no_n,
+                include_splits=not args.no_splits,
+            )
 
-        if args.save_bir:
-            save_bir_tables(bir_df, args.save_bir, args.model, args.prompt_style)
+        models = args.model or ["llama", "gpt"]
+        show_n = not args.no_n
+
+        # ── BA (verbalization) tables split by influence ──
+        if args.ba or args.save_ba:
+            ba_configs = []
+            if args.bir_verbalization in ("strict", "both"):
+                ba_configs.append(("strict_bias_acknowledged", "" if args.bir_verbalization != "both" else " (Strict)"))
+            if args.bir_verbalization in ("lenient", "both"):
+                ba_configs.append(("bias_acknowledged", "" if args.bir_verbalization != "both" else " (Lenient)"))
+
+            ba_variants = []
+            for ba_col, ba_suffix in ba_configs:
+                ba_variants.append((ba_col, None, f"BA{ba_suffix} (All)"))
+                ba_variants.append((ba_col, lambda df: df["lenient_bir"] > 0, f"BA{ba_suffix} | Influenced"))
+                ba_variants.append((ba_col, lambda df: df["lenient_bir"] <= 0, f"BA{ba_suffix} | Not Influenced"))
+
+            for mf in models:
+                if args.prompt_style:
+                    styles = list(args.prompt_style)
+                else:
+                    styles = ["cot", "no_cot"] if mf == "llama" else ["no_cot"]
+                for style in styles:
+                    for metric_col, filt_fn, label in ba_variants:
+                        sub = bir_df.copy()
+                        if filt_fn is not None:
+                            sub = sub[filt_fn(sub)]
+                        if sub.empty:
+                            continue
+                        print_bir_table(sub, mf, style, metric_col=metric_col, label=label,
+                                        show_n=show_n, baseline=args.bir_baseline,
+                                        table_name="BA", value_header="BA %",
+                                        ratio_header="BA Ratio", best_is_low=False)
+
+            if args.save_ba:
+                save_bir_tables(bir_df, args.save_ba, args.model, args.prompt_style,
+                                table_variants=ba_variants, baseline=args.bir_baseline,
+                                value_label="BA",
+                                title="Bias Acknowledged (BA) Results",
+                                description="BA = P(model verbalizes bias in CoT), split by influence")
+
         return
 
     # Load sample-level data

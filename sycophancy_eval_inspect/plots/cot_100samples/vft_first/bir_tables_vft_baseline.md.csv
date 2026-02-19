@@ -1,0 +1,30 @@
+Model,Prompt,Variant,Bias Type,VFT MT 1675 BIR%,BCT Control MT 2k BIR%,BCT Control MT 2k Ratio,RL Control s50 BIR%,RL Control s50 Ratio,BCT MTI 4k BIR%,BCT MTI 4k Ratio,BCT MT 2k BIR%,BCT MT 2k Ratio,RLCT s50 BIR%,RLCT s50 Ratio,RLCT s100 BIR%,RLCT s100 Ratio
+LLAMA,cot,BIR,Argument,56.4,53.3,0.94,30.8,0.55,44.7,0.79,49.0,0.87,44.5,0.79,48.9,0.87
+LLAMA,cot,BIR,Fact,14.4,8.0,0.56,5.3,0.37,6.0,0.42,3.5,0.24,2.0,0.14,2.2,0.15
+LLAMA,cot,BIR,Squares,39.0,50.5,1.29,43.2,1.11,30.4,0.78,33.7,0.86,20.9,0.54,19.6,0.5
+LLAMA,cot,BIR,Sugg. Answer,21.2,12.7,0.6,7.6,0.36,0.5,0.02,0.5,0.02,0.6,0.03,3.2,0.15
+LLAMA,cot,BIR,Wrong FS,36.6,35.2,0.96,22.3,0.61,19.7,0.54,20.6,0.56,11.7,0.32,16.5,0.45
+LLAMA,cot,Unverbalised,Argument,53.9,52.4,0.97,30.2,0.56,44.4,0.82,49.7,0.92,43.4,0.81,48.0,0.89
+LLAMA,cot,Unverbalised,Fact,10.9,7.2,0.66,4.7,0.42,6.2,0.56,3.6,0.33,1.4,0.13,2.2,0.2
+LLAMA,cot,Unverbalised,Squares,51.6,50.9,0.99,29.0,0.56,33.3,0.65,31.2,0.61,25.0,0.48,29.9,0.58
+LLAMA,cot,Unverbalised,Sugg. Answer,5.7,9.7,1.69,4.2,0.73,0.5,0.09,0.0,0.0,0.7,0.12,0.6,0.1
+LLAMA,cot,Unverbalised,Wrong FS,25.4,39.7,1.56,25.8,1.02,20.5,0.81,23.3,0.92,11.0,0.43,19.8,0.78
+LLAMA,cot,Verbalised,Argument,62.7,64.3,1.02,38.5,0.61,50.0,0.8,28.6,0.46,60.0,0.96,100.0,1.59
+LLAMA,cot,Verbalised,Fact,23.5,40.0,1.7,11.8,0.5,0.0,0.0,0.0,0.0,16.7,0.71,,
+LLAMA,cot,Verbalised,Squares,75.0,40.0,0.53,66.7,0.89,50.0,0.67,100.0,1.33,50.0,0.67,25.0,0.33
+LLAMA,cot,Verbalised,Sugg. Answer,49.3,36.4,0.74,41.2,0.84,0.0,0.0,7.7,0.16,0.0,0.0,38.5,0.78
+LLAMA,cot,Verbalised,Wrong FS,85.7,100.0,1.17,33.3,0.39,100.0,1.17,0.0,0.0,0.0,0.0,,
+LLAMA,no_cot,BIR,Argument,,59.5,,26.7,,,,,,,,,
+LLAMA,no_cot,BIR,Fact,,6.1,,4.7,,,,,,,,,
+LLAMA,no_cot,BIR,Squares,,61.7,,52.4,,,,,,,,,
+LLAMA,no_cot,BIR,Sugg. Answer,,9.0,,9.7,,,,,,,,,
+LLAMA,no_cot,BIR,Wrong FS,,37.2,,24.2,,,,,,,,,
+LLAMA,no_cot,Unverbalised,Argument,,59.1,,29.3,,,,,,,,,
+LLAMA,no_cot,Unverbalised,Fact,,6.2,,4.0,,,,,,,,,
+LLAMA,no_cot,Unverbalised,Squares,,84.0,,61.5,,,,,,,,,
+LLAMA,no_cot,Unverbalised,Sugg. Answer,,7.7,,8.9,,,,,,,,,
+LLAMA,no_cot,Unverbalised,Wrong FS,,37.2,,33.3,,,,,,,,,
+LLAMA,no_cot,Verbalised,Argument,,100.0,,11.1,,,,,,,,,
+LLAMA,no_cot,Verbalised,Fact,,0.0,,11.1,,,,,,,,,
+LLAMA,no_cot,Verbalised,Sugg. Answer,,50.0,,40.0,,,,,,,,,
+LLAMA,no_cot,Verbalised,Wrong FS,,100.0,,-100.0,,,,,,,,,

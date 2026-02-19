@@ -50,12 +50,16 @@ COLORS = {
     "bct_mt_2k": "#daa520",        # golden
     "bct_mt_b16_2k": "#d2b48c",    # light brown (tan)
     "bct_mti_b16_4k": "#8b4513",   # dark brown (saddle brown)
+    "bct_control_mt_2k": "#b3cde3",  # light blue
+    "rl_control_step50": "#a6d854",  # lime green
     "rlct_step50": "#78c679",
+    "rlct_step100": "#41ab5d",
     "rlct_step200": "#238b45",
+    # "vft_mt_1675" maps to "base" — no separate color needed
 }
 
 TRAINING_TYPE_ORDER = [
-    "base", "control", "rlct_control_step50", "bct_old_20k", "bct_mti_1k", "bct_mti_4k", "bct_mt_2k", "bct_mt_b16_2k", "bct_mti_b16_4k", "rlct_step50", "rlct_step200",
+    "base", "control", "bct_control_mt_2k", "rlct_control_step50", "rl_control_step50", "bct_old_20k", "bct_mti_1k", "bct_mti_4k", "bct_mt_2k", "bct_mt_b16_2k", "bct_mti_b16_4k", "rlct_step50", "rlct_step100", "rlct_step200",
 ]
 
 TRAINING_TYPE_NAMES = {
@@ -68,8 +72,12 @@ TRAINING_TYPE_NAMES = {
     "bct_mt_2k": "BCT MT 2k",
     "bct_mt_b16_2k": "BCT MT b16 2k",
     "bct_mti_b16_4k": "BCT MTI b16 4k",
+    "bct_control_mt_2k": "BCT Control MT 2k",
+    "rl_control_step50": "RL Control s50",
     "rlct_step50": "RLCT s50",
+    "rlct_step100": "RLCT s100",
     "rlct_step200": "RLCT s200",
+    # "vft_mt_1675" maps to "base" — uses Base display name
 }
 
 # Maps scorer name → {score_value_key: column_name}
@@ -104,7 +112,9 @@ METRIC_DISPLAY = {
     "answer_parsed": "Parse Rate",
     "lenient_answer_parsed": "Parse Rate (Lenient)",
     "options_considered": "Options Considered (frac.)",
-    "bias_acknowledged": "Bias Acknowledged",
+    "bias_acknowledged": "Bias Acknowledged Rate",
+    "bir": "Bias Influence Rate (BIR)",
+    "lenient_bir": "BIR (Lenient)",
     "target_answered": "Target Answered",
     "non_target_answered": "Non-Target Answered",
 }
@@ -123,8 +133,12 @@ _DIR_TO_TRAINING_TYPE = {
     "bct-mt-b16-2k": "bct_mt_b16_2k",
     "bct-mti-b16-4k": "bct_mti_b16_4k",
     "bct-mti-r32-4k": None,  # Exclude r32
+    "bct-control-mt-2k": "bct_control_mt_2k",
+    "rl-control-step50": "rl_control_step50",
     "rlct-s50": "rlct_step50",
+    "rlct-s100": "rlct_step100",
     "rlct-s200": "rlct_step200",
+    "vft-mt-1675": "base",
 }
 
 
@@ -342,9 +356,15 @@ def plot_grouped_bars(
     baseline_stderr=None,
     show_random_line=False,
     show_n_labels=True,
+    ylim=None,
     output_path=None,
 ):
-    """Draw grouped bar chart with optional lenient overlay."""
+    """Draw grouped bar chart with optional lenient overlay.
+
+    Args:
+        ylim: Tuple (ymin, ymax) for y-axis limits. If None, auto-scales
+              from data with padding. Pass (0, 1.15) for standard 0-1 metrics.
+    """
     bias_order = [b for b in BIAS_DISPLAY_NAMES if b in pivot_val.index]
     if not bias_order:
         return
@@ -450,7 +470,20 @@ def plot_grouped_bars(
     ax.set_title(title)
     ax.set_xticks(x + width * (n_types - 1) / 2)
     ax.set_xticklabels([BIAS_DISPLAY_NAMES.get(b, b) for b in bias_order], rotation=45, ha="right")
-    ax.set_ylim(0, 1.15)
+    if ylim is not None:
+        ax.set_ylim(*ylim)
+    else:
+        # Auto-scale: gather all plotted values to find range
+        all_vals = pivot_val.to_numpy(dtype=float).flatten()
+        if lenient_pivot_val is not None:
+            all_vals = np.concatenate([all_vals, lenient_pivot_val.to_numpy(dtype=float).flatten()])
+        all_vals = all_vals[~np.isnan(all_vals)]
+        if len(all_vals) > 0:
+            ymin = min(0, np.min(all_vals) - 0.05)
+            ymax = max(1.15, np.max(all_vals) + 0.15)
+            ax.set_ylim(ymin, ymax)
+        else:
+            ax.set_ylim(0, 1.15)
 
     if baseline_mean is not None:
         ax.axhline(y=baseline_mean, color="gray", linestyle=":", linewidth=2,
@@ -555,8 +588,286 @@ def plot_from_samples(
         baseline_stderr=baseline_stderr,
         show_random_line=(metric in ("correct", "lenient_correct")),
         show_n_labels=show_n_labels,
+        ylim=(0, 1.15),
         output_path=output_path,
     )
+
+
+# ── BIR / BA plotting ────────────────────────────────────────────────────
+
+
+def plot_metric_bars(
+    df: pd.DataFrame,
+    metric_col: str,
+    model_family: str,
+    prompt_style: str | None = None,
+    lenient_metric_col: str | None = None,
+    sample_filter=None,
+    filter_label: str = "",
+    show_n_labels: bool = True,
+    output_path: str | None = None,
+):
+    """Plot grouped bars for a metric from per-question data (e.g. BIR or BA).
+
+    Works on any DataFrame with columns: model_family, prompt_style,
+    bias_type, training_type, and the metric column(s).
+    """
+    mask = df["model_family"] == model_family
+    if prompt_style:
+        mask &= df["prompt_style"] == prompt_style
+    filtered = df[mask].copy()
+
+    if sample_filter is not None:
+        filtered = filtered[sample_filter(filtered)]
+
+    if filtered.empty:
+        return
+
+    # Aggregate strict metric
+    agg = aggregate_samples(filtered, metric_col, ["bias_type", "training_type"])
+    mean_col = f"{metric_col}_mean"
+    err_col = f"{metric_col}_stderr"
+    pivot_val = agg.pivot(index="bias_type", columns="training_type", values=mean_col)
+    pivot_err = agg.pivot(index="bias_type", columns="training_type", values=err_col)
+    pivot_n = agg.pivot(index="bias_type", columns="training_type", values="n_valid")
+
+    # Aggregate lenient metric
+    l_pivot_val = l_pivot_err = l_pivot_n = None
+    if lenient_metric_col and lenient_metric_col in filtered.columns:
+        l_agg = aggregate_samples(filtered, lenient_metric_col, ["bias_type", "training_type"])
+        l_pivot_val = l_agg.pivot(
+            index="bias_type", columns="training_type",
+            values=f"{lenient_metric_col}_mean",
+        )
+        l_pivot_err = l_agg.pivot(
+            index="bias_type", columns="training_type",
+            values=f"{lenient_metric_col}_stderr",
+        )
+        l_pivot_n = l_agg.pivot(
+            index="bias_type", columns="training_type", values="n_valid",
+        )
+
+    ylabel = METRIC_DISPLAY.get(metric_col, metric_col)
+    title_parts = [model_family.upper(), ylabel]
+    if prompt_style:
+        title_parts.append(f"({prompt_style})")
+    if filter_label:
+        title_parts.append(f"[{filter_label}]")
+    title = " - ".join(title_parts[:2])
+    if len(title_parts) > 2:
+        title += " " + " ".join(title_parts[2:])
+
+    plot_grouped_bars(
+        pivot_val, pivot_err, pivot_n,
+        lenient_pivot_val=l_pivot_val,
+        lenient_pivot_err=l_pivot_err,
+        lenient_pivot_n=l_pivot_n,
+        title=title,
+        ylabel=ylabel,
+        show_n_labels=show_n_labels,
+        output_path=output_path,
+    )
+
+
+def plot_metric_ratio(
+    df: pd.DataFrame,
+    metric_col: str,
+    model_family: str,
+    baseline_type: str = "base",
+    prompt_style: str | None = None,
+    sample_filter=None,
+    filter_label: str = "",
+    output_path: str | None = None,
+):
+    """Plot ratio-to-baseline bars with % change annotations.
+
+    Shows metric[training_type] / metric[baseline_type] for each bias type,
+    with a horizontal line at 1.0 and "-32%" / "+15%" labels above bars.
+    """
+    mask = df["model_family"] == model_family
+    if prompt_style:
+        mask &= df["prompt_style"] == prompt_style
+    filtered = df[mask].copy()
+
+    if sample_filter is not None:
+        filtered = filtered[sample_filter(filtered)]
+
+    if filtered.empty:
+        return
+
+    agg = aggregate_samples(filtered, metric_col, ["bias_type", "training_type"])
+    mean_col = f"{metric_col}_mean"
+    pivot_mean = agg.pivot(index="bias_type", columns="training_type", values=mean_col)
+
+    if baseline_type not in pivot_mean.columns:
+        return
+
+    # Compute ratio to baseline
+    baseline_vals = pivot_mean[baseline_type].replace(0, np.nan)
+    training_types = [t for t in TRAINING_TYPE_ORDER
+                      if t in pivot_mean.columns and t != baseline_type]
+    if not training_types:
+        return
+
+    bias_order = [b for b in BIAS_DISPLAY_NAMES if b in pivot_mean.index]
+    if not bias_order:
+        return
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    x = np.arange(len(bias_order))
+    n_types = len(training_types)
+    width = 0.8 / max(n_types, 1)
+
+    for i, tt in enumerate(training_types):
+        ratios = []
+        for bt in bias_order:
+            base_val = baseline_vals.get(bt, np.nan)
+            tt_val = pivot_mean.loc[bt, tt] if bt in pivot_mean.index else np.nan
+            if pd.notna(base_val) and pd.notna(tt_val) and base_val != 0:
+                ratios.append(tt_val / base_val)
+            else:
+                ratios.append(np.nan)
+
+        ratios_arr = np.array(ratios, dtype=float)
+        bar_pos = x + i * width
+        color = COLORS.get(tt, "#999999")
+
+        ax.bar(bar_pos, ratios_arr, width, label=TRAINING_TYPE_NAMES.get(tt, tt),
+               color=color)
+
+        # Add % change annotations
+        for j, (pos, ratio) in enumerate(zip(bar_pos, ratios_arr)):
+            if np.isnan(ratio):
+                continue
+            pct_change = (ratio - 1.0) * 100
+            sign = "+" if pct_change >= 0 else ""
+            label_text = f"{sign}{pct_change:.0f}%"
+            text_y = ratio + 0.03 if ratio >= 1.0 else ratio - 0.03
+            va = "bottom" if ratio >= 1.0 else "top"
+            ax.text(pos, text_y, label_text, ha="center", va=va,
+                    fontsize=7, rotation=90)
+
+    # Reference line at 1.0 (no change)
+    ax.axhline(y=1.0, color="gray", linestyle="--", linewidth=1.5,
+               alpha=0.7, label=f"No change (= {baseline_type})")
+
+    ylabel = f"{METRIC_DISPLAY.get(metric_col, metric_col)} Ratio (vs {TRAINING_TYPE_NAMES.get(baseline_type, baseline_type)})"
+    title_parts = [model_family.upper(), f"{METRIC_DISPLAY.get(metric_col, metric_col)} Ratio"]
+    if prompt_style:
+        title_parts.append(f"({prompt_style})")
+    if filter_label:
+        title_parts.append(f"[{filter_label}]")
+    title = " - ".join(title_parts[:2])
+    if len(title_parts) > 2:
+        title += " " + " ".join(title_parts[2:])
+
+    ax.set_xlabel("Bias Type")
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.set_xticks(x + width * (n_types - 1) / 2)
+    ax.set_xticklabels([BIAS_DISPLAY_NAMES.get(b, b) for b in bias_order],
+                       rotation=45, ha="right")
+    ax.legend(loc="upper right")
+    plt.tight_layout()
+
+    if output_path:
+        plt.savefig(output_path, dpi=150, bbox_inches="tight")
+        print(f"Saved: {output_path}")
+    else:
+        plt.show()
+    plt.close()
+
+
+def plot_all_bir_ba(
+    bir_df: pd.DataFrame,
+    output_dir: str = "plots",
+    models: list[str] | None = None,
+    prompt_styles: list[str] | None = None,
+    show_n_labels: bool = True,
+    include_splits: bool = True,
+):
+    """Generate all BIR and BA plots with symmetrical structure.
+
+    BIR plots: main, split by BA (verbalised/unverbalised), ratio-to-base.
+    BA plots: main, split by BIR (influenced/not_influenced), ratio-to-base.
+    """
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    models = models or sorted(bir_df["model_family"].unique())
+
+    # Define splits: (filter_fn, label, file_tag)
+    ba_splits = [
+        (lambda df: df["bias_acknowledged"] == 1.0, "Verbalised", "verbalised"),
+        (lambda df: df["bias_acknowledged"] == 0.0, "Unverbalised", "unverbalised"),
+    ]
+    bir_splits = [
+        (lambda df: df["bir"] > 0, "Influenced (BIR > 0)", "influenced"),
+        (lambda df: df["bir"] <= 0, "Not Influenced (BIR ≤ 0)", "not_influenced"),
+    ]
+
+    for mf in models:
+        avail_styles = ["cot", "no_cot"] if mf == "llama" else ["no_cot"]
+        if prompt_styles:
+            avail_styles = [s for s in avail_styles if s in prompt_styles]
+
+        for ps in avail_styles:
+            # ── BIR plots ──
+            # Main BIR (with lenient overlay)
+            plot_metric_bars(
+                bir_df, "bir", mf, prompt_style=ps,
+                lenient_metric_col="lenient_bir",
+                show_n_labels=show_n_labels,
+                output_path=f"{output_dir}/{mf}_bir_{ps}.png",
+            )
+            # BIR ratio-to-base
+            plot_metric_ratio(
+                bir_df, "bir", mf, prompt_style=ps,
+                output_path=f"{output_dir}/{mf}_bir_ratio_{ps}.png",
+            )
+
+            # BIR split by BA
+            if include_splits:
+                for filt_fn, label, tag in ba_splits:
+                    plot_metric_bars(
+                        bir_df, "bir", mf, prompt_style=ps,
+                        lenient_metric_col="lenient_bir",
+                        sample_filter=filt_fn, filter_label=label,
+                        show_n_labels=show_n_labels,
+                        output_path=f"{output_dir}/{mf}_bir_{ps}_{tag}.png",
+                    )
+                    plot_metric_ratio(
+                        bir_df, "bir", mf, prompt_style=ps,
+                        sample_filter=filt_fn, filter_label=label,
+                        output_path=f"{output_dir}/{mf}_bir_ratio_{ps}_{tag}.png",
+                    )
+
+            # ── BA plots ──
+            # Main BA
+            plot_metric_bars(
+                bir_df, "bias_acknowledged", mf, prompt_style=ps,
+                show_n_labels=show_n_labels,
+                output_path=f"{output_dir}/{mf}_ba_{ps}.png",
+            )
+            # BA ratio-to-base
+            plot_metric_ratio(
+                bir_df, "bias_acknowledged", mf, prompt_style=ps,
+                output_path=f"{output_dir}/{mf}_ba_ratio_{ps}.png",
+            )
+
+            # BA split by BIR
+            if include_splits:
+                for filt_fn, label, tag in bir_splits:
+                    plot_metric_bars(
+                        bir_df, "bias_acknowledged", mf, prompt_style=ps,
+                        sample_filter=filt_fn, filter_label=label,
+                        show_n_labels=show_n_labels,
+                        output_path=f"{output_dir}/{mf}_ba_{ps}_{tag}.png",
+                    )
+                    plot_metric_ratio(
+                        bir_df, "bias_acknowledged", mf, prompt_style=ps,
+                        sample_filter=filt_fn, filter_label=label,
+                        output_path=f"{output_dir}/{mf}_ba_ratio_{ps}_{tag}.png",
+                    )
 
 
 def plot_all_analyses(
@@ -815,118 +1126,6 @@ def compute_bir_table(
     return bir_pivot[cols], count_pivot[count_cols]
 
 
-def print_bir_table(
-    bir_df: pd.DataFrame,
-    model_family: str,
-    prompt_style: str | None = None,
-    metric_col: str = "bir",
-    label: str = "",
-    show_n: bool = True,
-):
-    """Print BRR table in formatted style."""
-    bir, counts = compute_bir_table(bir_df, model_family, prompt_style, metric_col=metric_col)
-    if bir.empty:
-        return
-
-    short_names = {
-        "suggested_answer": "Sugg. Answer",
-        "wrong_few_shot": "Wrong FS",
-        "distractor_argument": "Argument",
-        "distractor_fact": "Fact",
-        "spurious_few_shot_hindsight": "Hindsight",
-        "spurious_few_shot_squares": "Squares",
-    }
-
-    training_bias = "suggested_answer"
-    held_out_order = [b for b in BIAS_DISPLAY_NAMES if b in bir.index and b != training_bias]
-    available_types = [tt for tt in TRAINING_TYPE_ORDER if tt in bir.columns and bir[tt].notna().any()]
-
-    style_str = f" ({prompt_style})" if prompt_style else ""
-    label_str = f" | {label}" if label else ""
-
-    bir_cols = [TRAINING_TYPE_NAMES[tt] for tt in available_types]
-    ratio_cols = [TRAINING_TYPE_NAMES[tt] for tt in available_types if tt != "base"]
-
-    w = 16 + 9 * len(bir_cols) + 9 * len(ratio_cols) + 4
-    print(f"\n{'=' * w}")
-    print(f"BIR TABLE - {model_family.upper()}{style_str}{label_str}")
-    print(f"{'=' * w}")
-
-    bir_sw = 9 * len(bir_cols)
-    ratio_sw = 9 * len(ratio_cols)
-    print(f"{'':16} {'BIR %':^{bir_sw}}  {'BIR Ratio':^{ratio_sw}}")
-
-    print(f"{'Bias Type':<16} {' '.join(f'{c:>9}' for c in bir_cols)}  {' '.join(f'{c:>9}' for c in ratio_cols)}")
-    print("-" * w)
-
-    def fmt_row(bias_type):
-        row = bir.loc[bias_type]
-        name = short_names.get(bias_type, bias_type[:12])
-        bir_vals, bir_strs, ratio_strs = {}, {}, {}
-
-        for tt in available_types:
-            val = row.get(tt)
-            if pd.notna(val):
-                bir_vals[tt] = val
-                bir_strs[tt] = f"{val*100:.0f}"
-            else:
-                bir_strs[tt] = "-"
-            if tt != "base":
-                rv = row.get(f"{tt}_ratio")
-                ratio_strs[tt] = f"{rv:.2f}" if pd.notna(rv) else "-"
-
-        if bir_vals:
-            min_bir = min(bir_vals.values())
-            for k in [k for k, v in bir_vals.items() if v == min_bir and k != "base"]:
-                bir_strs[k] = f"*{bir_strs[k]}*"
-
-        bp = " ".join(f"{bir_strs[tt]:>9}" for tt in available_types)
-        rp = " ".join(f"{ratio_strs[tt]:>9}" for tt in available_types if tt != "base")
-        return f"{name:<16} {bp}  {rp}"
-
-    def fmt_n_row(bias_type):
-        """Format the n= row for a bias type."""
-        count_row = counts.loc[bias_type] if bias_type in counts.index else pd.Series()
-        n_strs = []
-        for tt in available_types:
-            raw_n = count_row.get(tt, 0) if tt in count_row.index else 0
-            n = int(raw_n) if pd.notna(raw_n) else 0
-            n_strs.append(f"n={n}" if n > 0 else "")
-        np_ = " ".join(f"{s:>9}" for s in n_strs)
-        rp = " ".join(f"{'':>9}" for _ in available_types if _ != "base")
-        return f"{'':16} {np_}  {rp}"
-
-    if training_bias in bir.index:
-        print(fmt_row(training_bias))
-        if show_n:
-            print(fmt_n_row(training_bias))
-        print("-" * w)
-
-    for bt in held_out_order:
-        print(fmt_row(bt))
-        if show_n:
-            print(fmt_n_row(bt))
-
-    # Held-out average
-    print("-" * w)
-    ho = bir.loc[held_out_order] if held_out_order else bir
-    ho_counts = counts.loc[held_out_order] if held_out_order else counts
-    avg_vals = {tt: ho[tt].mean() * 100 for tt in available_types}
-    avg_base = avg_vals.get("base", 0)
-    avg_ratios = {tt: avg_vals[tt] / avg_base for tt in available_types if tt != "base" and avg_base != 0}
-    total_n = {tt: int(ho_counts[tt].sum()) if tt in ho_counts.columns else 0 for tt in available_types}
-
-    bp = " ".join(f"{avg_vals[tt]:>9.0f}" for tt in available_types)
-    rp = " ".join(f"{avg_ratios.get(tt, float('nan')):>9.2f}" for tt in available_types if tt != "base")
-    print(f"{'Held-out Avg':<16} {bp}  {rp}")
-    if show_n:
-        np_ = " ".join(f"{'n=' + str(total_n[tt]):>9}" for tt in available_types)
-        rp_empty = " ".join(f"{'':>9}" for _ in available_types if _ != "base")
-        print(f"{'':16} {np_}  {rp_empty}")
-    print("=" * w)
-    print("* = best (lowest) for that bias type (excluding base)")
-
-
 def save_bir_tables(
     bir_df: pd.DataFrame,
     output_path: str,
@@ -1062,9 +1261,10 @@ def main():
     parser.add_argument("--dataset", action="append", help="Filter to specific dataset(s)")
     parser.add_argument("--bias-type", action="append", help="Filter to specific bias type(s)")
     parser.add_argument("--summary", action="store_true", help="Print summary table only")
-    parser.add_argument("--bir", action="store_true", help="Print BIR tables (BIR + Verbalised + Unverbalised)")
+    parser.add_argument("--bir", action="store_true", help="Generate BIR and BA plots")
     parser.add_argument("--save-bir", type=str, help="Save BIR tables to CSV/MD file")
-    parser.add_argument("--no-n", action="store_true", help="Hide n= sample counts in BIR tables")
+    parser.add_argument("--no-n", action="store_true", help="Hide n= sample counts in plots")
+    parser.add_argument("--no-splits", action="store_true", help="Skip split-by-BA and split-by-BIR plot variants")
     args = parser.parse_args()
 
     log_dirs = args.log_dir or ["logs/fireworks_evals"]
@@ -1074,35 +1274,14 @@ def main():
         bir_df = compute_per_question_bir(log_dirs, dataset_filter=args.dataset)
         print(f"Computed BIR for {len(bir_df)} (question, bias_type) pairs")
 
-        models = args.model or ["llama", "gpt"]
-
-        # Define BIR table variants: BIR (all), Unverbalised (BA=0), Verbalised (BA=1)
-        # Strict tables first, then lenient tables
-        bir_variants = [
-            # Strict tables
-            ("bir", None, "BIR"),
-            ("bir", lambda df: df["bias_acknowledged"] == 0.0, "Unverbalised"),
-            ("bir", lambda df: df["bias_acknowledged"] == 1.0, "Verbalised"),
-            # Lenient tables
-            ("lenient_bir", None, "BIR (Lenient)"),
-            ("lenient_bir", lambda df: df["bias_acknowledged"] == 0.0, "Unverbalised (Lenient)"),
-            ("lenient_bir", lambda df: df["bias_acknowledged"] == 1.0, "Verbalised (Lenient)"),
-        ]
-
-        show_n = not args.no_n
-
-        for mf in models:
-            styles = ["cot", "no_cot"] if mf == "llama" else ["no_cot"]
-            if args.prompt_style:
-                styles = [s for s in styles if s in args.prompt_style]
-            for style in styles:
-                for metric_col, filt_fn, label in bir_variants:
-                    sub = bir_df.copy()
-                    if filt_fn is not None:
-                        sub = sub[filt_fn(sub)]
-                    if sub.empty:
-                        continue
-                    print_bir_table(sub, mf, style, metric_col=metric_col, label=label, show_n=show_n)
+        plot_all_bir_ba(
+            bir_df,
+            output_dir=args.output_dir,
+            models=args.model,
+            prompt_styles=args.prompt_style,
+            show_n_labels=not args.no_n,
+            include_splits=not args.no_splits,
+        )
 
         if args.save_bir:
             save_bir_tables(bir_df, args.save_bir, args.model, args.prompt_style)

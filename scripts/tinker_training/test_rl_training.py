@@ -77,6 +77,7 @@ def main():
     parser.add_argument("--ref_perturbations", type=int, nargs="+", default=[0], help="Perturbation indices for reference rate")
     parser.add_argument("--train_perturbations", type=int, nargs="+", default=[1], help="Perturbation indices for training")
     parser.add_argument("--control", action="store_true", help="Control run: use unbiased perturbation for both ref and train")
+    parser.add_argument("--refresh_policy_every_n_steps", type=int, default=1, help="Refresh sampling policy every N steps")
     parser.add_argument("--resume_from", type=str, default=None, help="Tinker checkpoint path to load before training (tinker://...)")
     args = parser.parse_args()
 
@@ -151,7 +152,7 @@ def main():
         loop=TrainingLoopConfig(
             situations_per_group=1,
             gradient_accumulation_steps=1,
-            refresh_policy_every_n_steps=1,  # Refresh every step
+            refresh_policy_every_n_steps=args.refresh_policy_every_n_steps,
             n_epochs=1,
         ),
         generation=GenerationConfig(

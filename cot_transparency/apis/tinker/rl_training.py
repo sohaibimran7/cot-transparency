@@ -28,7 +28,10 @@ Usage:
 import asyncio
 import hashlib
 import json
+import logging
 import random
+import sys
+import traceback
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -46,7 +49,7 @@ from tinker_cookbook.utils.ml_log import setup_logging
 from tinker_cookbook.rl.metrics import compute_kl_sample_train, incorporate_kl_penalty
 from tinker_cookbook.rl.data_processing import trajectory_to_data
 from tinker_cookbook.rl.types import Trajectory, Transition
-from tinker_cookbook.rl.train import forward_backward as cookbook_forward_backward
+from tinker_cookbook.rl.train import forward_backward as cookbook_forward_backward, remove_mask
 from tinker_cookbook.completers import TokensWithLogprobs
 
 from cot_transparency.apis.tinker.common import (
@@ -64,6 +67,36 @@ from cot_transparency.apis.tinker.pricing import (
     estimate_training_cost,
     TrainingCostEstimate,
 )
+
+
+_log = logging.getLogger(__name__)
+
+
+class _SafeFileWrapper:
+    """Wraps a file object to silently handle BrokenPipeError.
+
+    When running as a background process, the parent may close its pipe
+    (e.g., Claude Code session refresh). tqdm and print calls then raise
+    BrokenPipeError. This wrapper swallows those errors so training can
+    continue uninterrupted.
+    """
+    def __init__(self, fp):
+        self._fp = fp
+
+    def write(self, s):
+        try:
+            return self._fp.write(s)
+        except BrokenPipeError:
+            return 0
+
+    def flush(self):
+        try:
+            self._fp.flush()
+        except BrokenPipeError:
+            pass
+
+    def __getattr__(self, name):
+        return getattr(self._fp, name)
 
 
 def _resolve_indices(indices: list[int] | str, n_total: int) -> list[int]:
@@ -111,6 +144,7 @@ class TrainingLoopConfig(BaseModel):
     situations_per_group: int = 1
     gradient_accumulation_steps: int = 1
     refresh_policy_every_n_steps: int = 10
+    max_concurrent_base_samples: int = 2  # Max base sampling tasks in flight at once
     n_epochs: int = 1
 
 
@@ -166,6 +200,18 @@ class Sample:
     trait_value: float
     perturbation_idx: int
     parsed_successfully: bool = True  # Track if answer was parsed
+
+
+@dataclass
+class SampleResult:
+    """Pre-computed result from _collect_samples.
+    Rates are computed inside _collect_samples so the full sample data
+    can be freed early. Only gradient samples retain tokens/logprobs."""
+    grad_samples: list["Sample"]          # Gradient samples (with tokens/logprobs)
+    rates: dict[int, float]               # Trait rate per perturbation index
+    rate_counts: dict[int, int]           # Number of parsed samples per perturbation
+    n_total: int                          # Total raw samples (all perturbations)
+    n_parsed: int                         # Parsed samples (all perturbations)
 
 
 @dataclass
@@ -334,8 +380,18 @@ class RLTrainer:
         trait_classifier: Callable[[str, dict], float],
         use_base_model: bool = False,
         answer_parser: Optional[Callable[[str], Optional[str]]] = None,
-    ) -> dict[int, list[Sample]]:
-        """Collect samples for training step (async, parallelized across perturbations)."""
+        rates_only: bool = False,
+    ) -> SampleResult:
+        """Collect samples and compute rates in one pass.
+
+        Rates are computed internally so the full sample data (tokens/logprobs
+        for all 64 samples) can be freed immediately. Only the gradient-selected
+        subset retains tokens/logprobs.
+
+        Args:
+            rates_only: If True, skip gradient sample selection and return empty
+                grad_samples. Used for base sampling where only rates are needed.
+        """
         n_perts = len(perturbation_fns)
         training_idx = set(self.config.training.get_indices(n_perts))
         ref_idx = set(self.config.reference_rate.get_indices(n_perts))
@@ -387,7 +443,30 @@ class RLTrainer:
 
         # Run all perturbation sampling in parallel
         results = await asyncio.gather(*[sample_for_perturbation(idx) for idx in all_idx])
-        return dict(results)
+        all_samples = dict(results)
+
+        # Compute rates from the full sample set
+        rates, rate_counts = self._compute_rates(all_samples, list(all_idx))
+
+        # Count totals before dropping full sample data
+        n_total = sum(len(s_list) for s_list in all_samples.values())
+        n_parsed = sum(sum(1 for s in s_list if s.parsed_successfully) for s_list in all_samples.values())
+
+        # Select gradient samples (only these keep tokens/logprobs)
+        if rates_only:
+            grad_samples = []
+        else:
+            grad_samples = self._select_gradient_samples(all_samples, list(training_idx))
+
+        # all_samples (with full token/logprob data for all 64×n_perts samples)
+        # goes out of scope here and can be GC'd immediately.
+        return SampleResult(
+            grad_samples=grad_samples,
+            rates=rates,
+            rate_counts=rate_counts,
+            n_total=n_total,
+            n_parsed=n_parsed,
+        )
 
     def _compute_rates(self, samples: dict[int, list[Sample]], indices: list[int]) -> tuple[dict[int, float], dict[int, int]]:
         """Compute trait rates, only using successfully parsed samples.
@@ -480,18 +559,14 @@ class RLTrainer:
         parsed_samples = 0
 
         async def estimate_for_situation(sit_idx: int, situation: dict, parser: Optional[Callable[[str], Optional[str]]] = None) -> tuple[int, float, int, int]:
-            samples = await self._collect_samples(situation, perturbation_fns, trait_classifier, use_base_model=True, answer_parser=parser)
-
-            # Count parse stats
-            n_total = sum(len(s_list) for s_list in samples.values())
-            n_parsed = sum(sum(1 for s in s_list if s.parsed_successfully) for s_list in samples.values())
-
-            rates, _ = self._compute_rates(samples, ref_indices)
-            rate_values = [rates[idx] for idx in ref_indices if idx in rates]
+            result = await self._collect_samples(situation, perturbation_fns, trait_classifier,
+                                                 use_base_model=True, answer_parser=parser,
+                                                 rates_only=True)
+            rate_values = [result.rates[idx] for idx in ref_indices if idx in result.rates]
             rate = ref_cfg.aggregate_rates(rate_values) if ref_cfg.aggregation and rate_values else (
                 sum(rate_values) / len(rate_values) if rate_values else 0.5
             )
-            return sit_idx, rate, n_total, n_parsed
+            return sit_idx, rate, result.n_total, result.n_parsed
 
         # Submit all tasks and let Tinker handle queueing
         results = await asyncio.gather(*[
@@ -547,13 +622,55 @@ class RLTrainer:
             config=self.config.model_dump(),
         )
 
+        try:
+            return await self._train_loop(
+                logger, log_dir, situations, perturbation_fns,
+                trait_classifier, initial_reference_rates, answer_parser,
+            )
+        except Exception:
+            tb = traceback.format_exc()
+            _log.error("Training failed with exception:\n%s", tb)
+            # Log error to WandB so it's visible in the dashboard
+            try:
+                logger.log_metrics({"train/error": tb}, step=None)
+            except Exception:
+                pass
+            # Ensure WandB marks this run as failed (exit_code=1)
+            try:
+                import wandb
+                if wandb.run is not None:
+                    wandb.finish(exit_code=1)
+            except Exception:
+                pass
+            raise
+
+    async def _train_loop(
+        self,
+        logger,
+        log_dir: Path,
+        situations: list[dict],
+        perturbation_fns: list[Callable],
+        trait_classifier: Callable,
+        initial_reference_rates: dict | None,
+        answer_parser: Callable | None,
+    ):
+        """Inner training loop, separated for error handling in train()."""
+        # Protect stdout/stderr from BrokenPipeError when running as a
+        # background process whose parent has closed its pipe.
+        sys.stdout = _SafeFileWrapper(sys.stdout)
+        sys.stderr = _SafeFileWrapper(sys.stderr)
+
         n_situations = len(situations)
         n_perts = len(perturbation_fns)
         training_idx = self.config.training.get_indices(n_perts)
         ref_idx = self.config.reference_rate.get_indices(n_perts)
 
+        # Lazy initial reference rates: computed on first encounter of each
+        # situation by sampling from the base model concurrently with policy
+        # sampling, instead of blocking upfront on all situations.
         if initial_reference_rates is None:
-            initial_reference_rates = await self.estimate_initial_reference_rates(situations, perturbation_fns, trait_classifier, answer_parser)
+            initial_reference_rates = {}
+        ref_cfg = self.config.reference_rate
 
         sit_per_group = self.config.loop.situations_per_group
         n_groups = (n_situations + sit_per_group - 1) // sit_per_group
@@ -589,29 +706,127 @@ class RLTrainer:
             random.shuffle(shuffled)
             groups = [shuffled[i:i + sit_per_group] for i in range(0, n_situations, sit_per_group)]
 
-            pbar = tqdm(groups, desc=f"Epoch {epoch + 1}")
-            for group_idx in pbar:
-                # Collect samples and compute rates (parallelized across situations in group)
-                async def collect_for_situation(sit_idx: int):
-                    situation = situations[sit_idx]
-                    p_ref_init = initial_reference_rates.get(sit_idx, 0.5)
-                    samples = await self._collect_samples(situation, perturbation_fns, trait_classifier, answer_parser=answer_parser)
-                    p_hat, n_hat = self._compute_rates(samples, training_idx)
-                    ref_rates, n_ref = self._compute_rates(samples, ref_idx)
-                    rate_vals = [ref_rates[i] for i in ref_idx if i in ref_rates]
-                    p_ref = self.config.reference_rate.aggregate_rates(rate_vals) if self.config.reference_rate.aggregation and rate_vals else (
-                        sum(rate_vals) / len(rate_vals) if rate_vals else p_ref_init
-                    )
-                    grad_samples = self._select_gradient_samples(samples, training_idx)
-                    # Return raw sample counts for parse rate calculation (before filtering)
-                    n_total = sum(len(s_list) for s_list in samples.values())
-                    n_parsed = sum(sum(1 for s in s_list if s.parsed_successfully) for s_list in samples.values())
-                    # Sum up parsed sample counts for rate calculations
-                    n_ref_total = sum(n_ref.values())
-                    n_hat_total = sum(n_hat.values())
-                    return (sit_idx, situation, grad_samples, p_hat, p_ref, p_ref_init, n_total, n_parsed, n_ref_total, n_hat_total)
+            # ── Background base sampling ──────────────────────────────────
+            # Base sampling computes p_ref_init (one-time per situation).
+            # To avoid competing with policy sampling for GPU time, base
+            # tasks are fired during training waits (when the GPU is busy
+            # with fwd_bwd) and resolved lazily when their result is needed.
+            pending_base_tasks: dict[int, asyncio.Task] = {}
 
-                group_data = await asyncio.gather(*[collect_for_situation(sit_idx) for sit_idx in group_idx])
+            def _resolve_base_rate(sit_idx: int, base_result: SampleResult):
+                """Extract and cache p_ref_init from base model sample result.
+                Rates are already computed inside _collect_samples, so this just
+                aggregates the reference perturbation rates into a single float."""
+                base_rate_vals = [base_result.rates[i] for i in ref_idx if i in base_result.rates]
+                initial_reference_rates[sit_idx] = (
+                    ref_cfg.aggregate_rates(base_rate_vals) if ref_cfg.aggregation and base_rate_vals
+                    else (sum(base_rate_vals) / len(base_rate_vals) if base_rate_vals else 0.5)
+                )
+
+            # Target situation list for base watcher — updated as training progresses
+            base_target_sits: list[int] = []
+
+            def _drain_completed_base_tasks():
+                """Prune completed base tasks and resolve their rates."""
+                done_keys = [k for k, t in pending_base_tasks.items() if t.done()]
+                for k in done_keys:
+                    _resolve_base_rate(k, pending_base_tasks.pop(k).result())
+
+            def _fill_base_slots():
+                """Launch base tasks up to the concurrency limit.
+                Iterates base_target_sits and fills any free slots."""
+                if global_step == 0:
+                    return
+                max_concurrent = self.config.loop.max_concurrent_base_samples
+                for idx in base_target_sits:
+                    if len(pending_base_tasks) >= max_concurrent:
+                        break
+                    if idx not in initial_reference_rates and idx not in pending_base_tasks:
+                        pending_base_tasks[idx] = asyncio.create_task(
+                            self._collect_samples(situations[idx], perturbation_fns, trait_classifier,
+                                                  use_base_model=True, answer_parser=answer_parser,
+                                                  rates_only=True)
+                        )
+
+            async def _base_watcher():
+                """Background task: auto-refills base sampling slots as tasks complete.
+                Runs continuously so that during long training awaits, completed base
+                tasks are immediately replaced without waiting for the next call site."""
+                while True:
+                    _drain_completed_base_tasks()
+                    _fill_base_slots()
+                    await asyncio.sleep(0.001)  # 1ms poll interval
+
+            base_watcher_task: asyncio.Task | None = None
+
+            # Sampling helper (extracted for pipelining)
+            async def collect_for_situation(sit_idx: int):
+                situation = situations[sit_idx]
+
+                # Step 0: policy == base model, so policy samples give the
+                # exact base rate. No extra API call needed.
+                need_base = sit_idx not in initial_reference_rates
+                if need_base and global_step == 0:
+                    result = await self._collect_samples(situation, perturbation_fns, trait_classifier, answer_parser=answer_parser)
+                    init_rate_vals = [result.rates[i] for i in ref_idx if i in result.rates]
+                    initial_reference_rates[sit_idx] = (
+                        ref_cfg.aggregate_rates(init_rate_vals) if ref_cfg.aggregation and init_rate_vals
+                        else (sum(init_rate_vals) / len(init_rate_vals) if init_rate_vals else 0.5)
+                    )
+                else:
+                    # Policy-only sampling. Base sampling (if needed) runs
+                    # separately during training waits — see _launch_base_tasks.
+                    result = await self._collect_samples(situation, perturbation_fns, trait_classifier, answer_parser=answer_parser)
+
+                    # If a base task completed in the background, resolve it now
+                    if need_base and sit_idx in pending_base_tasks:
+                        base_task = pending_base_tasks.pop(sit_idx)
+                        if base_task.done():
+                            _resolve_base_rate(sit_idx, base_task.result())
+                        else:
+                            # Not done yet — will be awaited before reward computation
+                            pending_base_tasks[sit_idx] = base_task
+
+                # p_ref_init may not be available yet (base task still running).
+                # Return None as placeholder; resolved before reward computation.
+                p_ref_init = initial_reference_rates.get(sit_idx, None)
+                p_hat = {i: result.rates[i] for i in training_idx if i in result.rates}
+                n_hat = {i: result.rate_counts[i] for i in training_idx if i in result.rate_counts}
+                ref_rate_vals = [result.rates[i] for i in ref_idx if i in result.rates]
+                p_ref = ref_cfg.aggregate_rates(ref_rate_vals) if ref_cfg.aggregation and ref_rate_vals else (
+                    sum(ref_rate_vals) / len(ref_rate_vals) if ref_rate_vals else (p_ref_init if p_ref_init is not None else 0.5)
+                )
+                n_ref_total = sum(result.rate_counts[i] for i in ref_idx if i in result.rate_counts)
+                n_hat_total = sum(n_hat.values())
+                return (sit_idx, situation, result.grad_samples, p_hat, p_ref, p_ref_init,
+                        result.n_total, result.n_parsed, n_ref_total, n_hat_total)
+
+            async def sample_group(group_idx):
+                return await asyncio.gather(*[collect_for_situation(sit_idx) for sit_idx in group_idx])
+
+            # Pipelined loop: prefetch up to `refresh_policy_every_n_steps`
+            # groups ahead. Samples in the queue are at most queue_size steps
+            # off-policy, which never exceeds the refresh interval.
+            # We never discard samples — instead we pause prefetching when
+            # the queue is full, and refill after each step or refresh.
+            max_prefetch = self.config.loop.refresh_policy_every_n_steps or len(groups)
+            prefetch_queue: list[asyncio.Task] = []  # tasks producing group_data
+
+            def _fill_prefetch_queue(from_group: int) -> int:
+                """Kick off sampling tasks up to the staleness budget."""
+                while len(prefetch_queue) < max_prefetch and from_group < len(groups):
+                    prefetch_queue.append(
+                        asyncio.create_task(sample_group(groups[from_group]))
+                    )
+                    from_group += 1
+                return from_group
+
+            next_to_prefetch = _fill_prefetch_queue(0)
+
+            pbar = tqdm(groups, desc=f"Epoch {epoch + 1}")
+            for i_group, group_idx in enumerate(pbar):
+                # Pop the next ready group from the queue
+                group_data = await prefetch_queue.pop(0)
 
                 # Calculate parse rate across all RAW samples (before filtering)
                 total_samples = 0
@@ -631,6 +846,20 @@ class RLTrainer:
                     print(f"\n⚠️  WARNING: Low parse rate ({parse_rate:.1%}) at step {global_step + 1}. "
                           f"Consider increasing max_new_tokens (currently {self.config.generation.max_new_tokens}).")
 
+                # Resolve any pending base tasks for situations in this group.
+                # Base tasks run during training waits; if one hasn't finished,
+                # await it now (rare — training is typically 10x slower).
+                resolved_group_data = []
+                for row in group_data:
+                    sit_idx, situation, grad_samples, p_hat, p_ref, p_ref_init, n_total, n_parsed, n_ref_total, n_hat_total = row
+                    if p_ref_init is None:
+                        if sit_idx in pending_base_tasks:
+                            base_samples = await pending_base_tasks.pop(sit_idx)
+                            _resolve_base_rate(sit_idx, base_samples)
+                        p_ref_init = initial_reference_rates.get(sit_idx, 0.5)
+                    resolved_group_data.append((sit_idx, situation, grad_samples, p_hat, p_ref, p_ref_init, n_total, n_parsed, n_ref_total, n_hat_total))
+                group_data = resolved_group_data
+
                 # Compute rewards and advantages
                 all_rewards, all_grad_data = [], []
                 for sit_idx, situation, grad_samples, p_hat, p_ref, p_ref_init, _, _, _, _ in group_data:
@@ -646,8 +875,30 @@ class RLTrainer:
                 # Skip empty batches: if all advantages are zero (constant rewards),
                 # forward_backward produces zero gradients — waste of compute.
                 if not advantages or all(abs(a) < 1e-8 for a in advantages):
-                    logger.log_metrics({"train/skipped_empty_batch": 1}, step=global_step)
                     global_step += 1
+                    logger.log_metrics({"train/skipped_empty_batch": 1}, step=global_step)
+                    # Still save checkpoints on schedule even when batch is empty
+                    ckpt_cfg = self.config.checkpoint
+                    steps_remaining = total_steps - global_step
+                    near_final = steps_remaining <= ckpt_cfg.skip_near_final_steps
+                    if ckpt_cfg.save_every_n_steps and global_step % ckpt_cfg.save_every_n_steps == 0 and not near_final:
+                        name = build_checkpoint_name(self.config.experiment_name, self.config.run_name, step=global_step)
+                        kind = "both" if ckpt_cfg.save_state else "sampler"
+                        paths = await checkpoint_utils.save_checkpoint_async(
+                            self.training_client,
+                            name=name,
+                            log_path=str(log_dir),
+                            loop_state={"epoch": epoch, "step": global_step},
+                            kind=kind,
+                        )
+                        checkpoint_path = paths.get("sampler_path") or paths.get("state_path")
+                        checkpoint_paths.append(checkpoint_path)
+                        logger.log_metrics({"checkpoint": checkpoint_path}, step=global_step)
+                    # No training happened so no policy change. Refill queue
+                    # since skipped steps don't consume staleness budget.
+                    next_to_prefetch = _fill_prefetch_queue(next_to_prefetch)
+                    # Update base watcher target — it will auto-fill slots
+                    base_target_sits = [s for g in groups[i_group + 1:] for s in g]
                     continue
 
                 # Create training batch using cookbook's trajectory_to_data
@@ -663,18 +914,44 @@ class RLTrainer:
                         kl_discount_factor=self.config.kl_discount_factor,
                     )
 
-                # Use cookbook's forward_backward which properly removes mask before training
-                # and returns logprobs directly as torch tensors
-                training_logprobs = await cookbook_forward_backward(
-                    self.training_client, batch_data, loss_fn=self.config.loss_fn
+                # Submit forward_backward (removes mask, computes gradients)
+                fwd_bwd_future = await self.training_client.forward_backward_async(
+                    [remove_mask(d) for d in batch_data], loss_fn=self.config.loss_fn
                 )
                 accumulated_grads += 1
 
-                # Optimizer step
+                # Pipeline: submit optim_step on the SAME clock cycle as fwd_bwd.
+                # The server queues optim_step behind fwd_bwd, so both execute in
+                # one round-trip instead of two sequential ones.
+                optim_future = None
                 if accumulated_grads >= self.config.loop.gradient_accumulation_steps:
                     optim_future = await self.training_client.optim_step_async(adam_params)
-                    await optim_future.result_async()
                     accumulated_grads = 0
+
+                # Refill prefetch queue NOW — while fwd_bwd + optim run on the
+                # server, new sampling tasks can execute concurrently.
+                next_to_prefetch = _fill_prefetch_queue(next_to_prefetch)
+
+                # Update base watcher target and ensure it's running.
+                # The watcher auto-refills base slots as tasks complete, so
+                # during long training awaits, freed slots get filled immediately
+                # instead of waiting for the next explicit call site.
+                base_target_sits = [s for g in groups[i_group + 1:] for s in g]
+                if base_watcher_task is None or base_watcher_task.done():
+                    base_watcher_task = asyncio.create_task(_base_watcher())
+
+                # Await results — both complete in one clock cycle.
+                # During these awaits, the base watcher keeps running and
+                # auto-replenishes completed base tasks.
+                fwd_bwd_result = await fwd_bwd_future.result_async()
+                if optim_future is not None:
+                    await optim_future.result_async()
+
+                # Extract training logprobs from fwd_bwd result
+                training_logprobs = [
+                    output["logprobs"].to_torch()
+                    for output in fwd_bwd_result.loss_fn_outputs
+                ]
 
                 global_step += 1
 
@@ -761,6 +1038,15 @@ class RLTrainer:
                     checkpoint_path = paths.get("sampler_path") or paths.get("state_path")
                     checkpoint_paths.append(checkpoint_path)
                     logger.log_metrics({"checkpoint": checkpoint_path}, step=global_step)
+
+            # End of epoch — cancel the base watcher
+            if base_watcher_task is not None and not base_watcher_task.done():
+                base_watcher_task.cancel()
+                try:
+                    await base_watcher_task
+                except asyncio.CancelledError:
+                    pass
+                base_watcher_task = None
 
         # Final optimizer step for any remaining gradients
         if accumulated_grads > 0:

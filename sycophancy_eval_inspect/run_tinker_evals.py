@@ -64,7 +64,7 @@ DEFAULT_CONFIGS = [
     ModelConfig(
         name="llama-3.1-8b-rlct",
         base_model=LLAMA_BASE,
-        checkpoint_path="tinker://4b930c72-41c5-5996-943f-7fd586abee5a:train:0/sampler_weights/bct_suggested_answer_llama8b_v1",
+        checkpoint_path="tinker://0be61a5c-2978-5a83-b26b-5fea4f4d0bab:train:0/sampler_weights/bct_suggested_answer_llama8b_v3",
         prompt_styles=["cot", "no_cot"],
     ),
 ]
@@ -226,7 +226,7 @@ def main():
 
     # Execution
     parser.add_argument("--max-tokens", type=int, default=8192, help="Max tokens for generation")
-    parser.add_argument("--max-tasks", type=int, default=10, help="Max parallel tasks")
+    parser.add_argument("--max-tasks", type=int, default=12, help="Max parallel tasks")
     parser.add_argument("--max-connections", type=int, default=None, help="Max concurrent model API connections (controls per-model concurrency)")
     parser.add_argument("--dry-run", action="store_true", help="Print tasks without running")
     parser.add_argument("--log-dir", default="logs/tinker_evals", help="Base directory for logs")

@@ -57,11 +57,28 @@ COLORS = {
     "rlct_step50": "#78c679",
     "rlct_step100": "#41ab5d",
     "rlct_step200": "#238b45",
+    "rlct_step50_v2": "#2ca02c",    # bright green (new RL code)
+    "rlct_step25_r3": "#17becf",    # teal (refresh=3 variant)
+    "rlct_step50_v3": "#d62728",    # red (empty batch skip only)
+    "rlct_step50_v4": "#ff7f0e",    # orange (original code rerun)
+    "rlct_step50_v5": "#8c564b",    # brown (auto LR, old code)
+    "rlct_step50_v6": "#e377c2",    # pink (auto LR + pipelining, r=1)
+    "rlct_step50_v7": "#7f7f7f",    # grey (auto LR + pipelining, r=3)
+    "rlct_s50_noempty": "#1f77b4",   # blue (auto LR, noempty, refresh=1)
+    "rlct_sa_g1_r1": "#bcbd22",      # yellow-green (g1, r1 ablation)
+    "rlct_sa_g16_r16": "#ff9896",    # light red (g16, r16 ablation)
+    "rlct_sa_g16_t16_r128": "#aec7e8", # light blue (g16, t16, r128 ablation)
+    "rlct_sa_g16_r128": "#c49c94",   # light brown (g16, r128 ablation)
+    "rlct_da": "#2ca02c",            # green (RLCT DA only)
+    "rlct_da_wfs": "#d62728",        # red (RLCT DA+WFS)
     "vft_mt_1675": "#9467bd",       # purple
+    "bct_da_4k": "#e6550d",         # dark orange (BCT DA)
+    "bct_da_wfs_6k": "#756bb1",     # medium purple (BCT DA+WFS)
 }
 
 TRAINING_TYPE_ORDER = [
-    "base", "vft_mt_1675", "bct_control_mt_2k", "control", "rlct_control_step50", "rl_control_step50", "rlct_control_step100", "bct_old_20k", "bct_mti_1k", "bct_mti_4k", "bct_mt_2k", "bct_mt_b16_2k", "bct_mti_b16_4k", "rlct_step50", "rlct_step100", "rlct_step200",
+    "base", "vft_mt_1675", "bct_control_mt_2k", "control", "rlct_control_step50", "rl_control_step50", "rlct_control_step100", "bct_old_20k", "bct_mti_1k", "bct_mti_4k", "bct_mt_2k", "bct_mt_b16_2k", "bct_mti_b16_4k", "rlct_step50", "rlct_step50_v2", "rlct_step25_r3", "rlct_step50_v3", "rlct_step50_v4", "rlct_step50_v5", "rlct_step50_v6", "rlct_step50_v7", "rlct_s50_noempty", "rlct_sa_g1_r1", "rlct_sa_g16_r16", "rlct_sa_g16_t16_r128", "rlct_sa_g16_r128", "rlct_step100", "rlct_step200",
+    "bct_da_4k", "bct_da_wfs_6k", "rlct_da", "rlct_da_wfs",
 ]
 
 TRAINING_TYPE_NAMES = {
@@ -81,7 +98,23 @@ TRAINING_TYPE_NAMES = {
     "rlct_step50": "RLCT s50",
     "rlct_step100": "RLCT s100",
     "rlct_step200": "RLCT s200",
+    "rlct_step50_v2": "RLCT s50 v2",
+    "rlct_step25_r3": "RLCT s25 r3",
+    "rlct_step50_v3": "RLCT s50 v3 (skip empty)",
+    "rlct_step50_v4": "RLCT s50 v4 (original)",
+    "rlct_step50_v5": "RLCT s50 v5 (auto LR)",
+    "rlct_step50_v6": "RLCT s50 v6 (auto LR+pipe r1)",
+    "rlct_step50_v7": "RLCT s50 v7 (auto LR+pipe r3)",
+    "rlct_s50_noempty": "RLCT s50 noempty",
+    "rlct_sa_g1_r1": "RLCT SA g1 r1",
+    "rlct_sa_g16_r16": "RLCT SA g16 r16",
+    "rlct_sa_g16_t16_r128": "RLCT SA g16 t16 r128",
+    "rlct_sa_g16_r128": "RLCT SA g16 r128",
     "vft_mt_1675": "VFT MT 1675",
+    "bct_da_4k": "BCT DA 4k",
+    "bct_da_wfs_6k": "BCT DA+WFS 6k",
+    "rlct_da": "RLCT DA",
+    "rlct_da_wfs": "RLCT DA+WFS",
 }
 
 # Maps scorer name → {score_value_key: column_name}
@@ -151,9 +184,25 @@ _DIR_TO_TRAINING_TYPE = {
     "rlct-s100": "rlct_step100",
     "rlct-s100-100samples": "rlct_step100",
     "rlct-s200": "rlct_step200",
+    "rlct-s50-v2": "rlct_step50_v2",
+    "rlct-s25-r3": "rlct_step25_r3",
+    "rlct-s50-v3": "rlct_step50_v3",
+    "rlct-s50-v4": "rlct_step50_v4",
+    "rlct-s50-noempty": "rlct_s50_noempty",
+    "rlct-sa-g1-r1": "rlct_sa_g1_r1",
+    "rlct-sa-g16-r16": "rlct_sa_g16_r16",
+    "rlct-sa-g16-t16-r128": "rlct_sa_g16_t16_r128",
+    "rlct-sa-g16-r128": "rlct_sa_g16_r128",
+    "rlct-s50-v5": "rlct_step50_v5",
+    "rlct-s50-v6": "rlct_step50_v6",
+    "rlct-s50-v7": "rlct_step50_v7",
     "rl-control-s50-100samples": "rlct_control_step50",
     "rl-control-s100-100samples": "rlct_control_step100",
     "vft-mt-1675": "vft_mt_1675",
+    "bct-da-4k": "bct_da_4k",
+    "bct-da-wfs-6k": "bct_da_wfs_6k",
+    "rlct-da": "rlct_da",
+    "rlct-da-wfs": "rlct_da_wfs",
 }
 
 
@@ -1437,10 +1486,16 @@ def main():
     parser.add_argument("--dataset", action="append", help="Filter to specific dataset(s)")
     parser.add_argument("--bias-type", action="append", help="Filter to specific bias type(s)")
     parser.add_argument("--summary", action="store_true", help="Print summary table only")
-    parser.add_argument("--bir", action="store_true", help="Generate BIR and BA plots")
-    parser.add_argument("--ba", action="store_true", help="Print BA (verbalization) tables split by influence")
-    parser.add_argument("--save-bir", type=str, help="Save BIR tables to CSV/MD file")
-    parser.add_argument("--save-ba", type=str, help="Save BA tables to CSV/MD file")
+    # Metric flags (what to compute)
+    parser.add_argument("--bir", action="store_true", help="Compute and print BIR (Bias Influence Rate) tables")
+    parser.add_argument("--ba", action="store_true", help="Compute and print BA (Bias Acknowledged) tables")
+    # Output flags (how to present)
+    parser.add_argument("--plot", action="store_true", help="Generate plots (saved to --output-dir)")
+    parser.add_argument("--save", type=str, help="Save tables to CSV/MD file")
+    parser.add_argument("--no-tables", action="store_true", help="Suppress printing tables to stdout")
+    # Hidden backward-compat aliases
+    parser.add_argument("--save-bir", type=str, help=argparse.SUPPRESS)
+    parser.add_argument("--save-ba", type=str, help=argparse.SUPPRESS)
     parser.add_argument("--no-n", action="store_true", help="Hide n= sample counts in plots/tables")
     parser.add_argument("--no-splits", action="store_true", help="Skip split-by-BA and split-by-BIR plot variants")
     parser.add_argument("--bir-baseline", type=str, default="base",
@@ -1451,15 +1506,23 @@ def main():
                         help="Verbalization split for BIR tables: strict (NaN-out few-shot confused), lenient, or both (default: strict)")
     args = parser.parse_args()
 
+    # Backward compat: --save-bir implies --bir --save, --save-ba implies --ba --save
+    if args.save_bir:
+        args.bir = True
+        args.save = args.save or args.save_bir
+    if args.save_ba:
+        args.ba = True
+        args.save = args.save or args.save_ba
+
     log_dirs = args.log_dir or ["logs/fireworks_evals"]
 
-    if args.bir or args.save_bir or args.ba or args.save_ba:
+    if args.bir or args.ba:
         print("Computing per-question BIR...")
         bir_df = compute_per_question_bir(log_dirs, dataset_filter=args.dataset)
         print(f"Computed BIR for {len(bir_df)} (question, bias_type) pairs")
 
-        # ── BIR/BA plots ──
-        if args.bir or args.save_bir:
+        # ── Plots (if requested) ──
+        if args.plot:
             plot_all_bir_ba(
                 bir_df,
                 output_dir=args.output_dir,
@@ -1472,8 +1535,49 @@ def main():
         models = args.model or ["llama", "gpt"]
         show_n = not args.no_n
 
-        # ── BA (verbalization) tables split by influence ──
-        if args.ba or args.save_ba:
+        def _iter_model_styles(models, prompt_styles):
+            for mf in models:
+                if prompt_styles:
+                    styles = list(prompt_styles)
+                else:
+                    styles = ["cot", "no_cot"] if mf == "llama" else ["no_cot"]
+                for style in styles:
+                    yield mf, style
+
+        # ── BIR tables ──
+        if args.bir:
+            bir_configs = []
+            if args.bir_parser in ("strict", "both"):
+                bir_configs.append(("bir", "" if args.bir_parser != "both" else " (Strict)"))
+            if args.bir_parser in ("lenient", "both"):
+                bir_configs.append(("lenient_bir", "" if args.bir_parser != "both" else " (Lenient)"))
+
+            bir_variants = []
+            for bir_col, bir_suffix in bir_configs:
+                bir_variants.append((bir_col, None, f"BIR{bir_suffix}"))
+
+            if not args.no_tables:
+                for mf, style in _iter_model_styles(models, args.prompt_style):
+                    for metric_col, filt_fn, label in bir_variants:
+                        sub = bir_df.copy()
+                        if filt_fn is not None:
+                            sub = sub[filt_fn(sub)]
+                        if sub.empty:
+                            continue
+                        print_bir_table(sub, mf, style, metric_col=metric_col, label=label,
+                                        show_n=show_n, baseline=args.bir_baseline,
+                                        table_name="BIR", value_header="BIR %",
+                                        ratio_header="BIR Ratio", best_is_low=True)
+
+            if args.save:
+                save_bir_tables(bir_df, args.save, args.model, args.prompt_style,
+                                table_variants=bir_variants, baseline=args.bir_baseline,
+                                value_label="BIR",
+                                title="Bias Influence Rate (BIR) Results",
+                                description="BIR = bias_match_rate(biased) - bias_match_rate(unbiased), per-question")
+
+        # ── BA tables ──
+        if args.ba:
             ba_configs = []
             if args.bir_verbalization in ("strict", "both"):
                 ba_configs.append(("strict_bias_acknowledged", "" if args.bir_verbalization != "both" else " (Strict)"))
@@ -1486,12 +1590,8 @@ def main():
                 ba_variants.append((ba_col, lambda df: df["lenient_bir"] > 0, f"BA{ba_suffix} | Influenced"))
                 ba_variants.append((ba_col, lambda df: df["lenient_bir"] <= 0, f"BA{ba_suffix} | Not Influenced"))
 
-            for mf in models:
-                if args.prompt_style:
-                    styles = list(args.prompt_style)
-                else:
-                    styles = ["cot", "no_cot"] if mf == "llama" else ["no_cot"]
-                for style in styles:
+            if not args.no_tables:
+                for mf, style in _iter_model_styles(models, args.prompt_style):
                     for metric_col, filt_fn, label in ba_variants:
                         sub = bir_df.copy()
                         if filt_fn is not None:
@@ -1503,8 +1603,9 @@ def main():
                                         table_name="BA", value_header="BA %",
                                         ratio_header="BA Ratio", best_is_low=False)
 
-            if args.save_ba:
-                save_bir_tables(bir_df, args.save_ba, args.model, args.prompt_style,
+            if args.save:
+                save_path = args.save.replace(".csv", "_ba.csv").replace(".md", "_ba.md") if args.bir else args.save
+                save_bir_tables(bir_df, save_path, args.model, args.prompt_style,
                                 table_variants=ba_variants, baseline=args.bir_baseline,
                                 value_label="BA",
                                 title="Bias Acknowledged (BA) Results",

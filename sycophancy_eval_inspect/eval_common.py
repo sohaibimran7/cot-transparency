@@ -203,6 +203,12 @@ def add_hash_filter_args(parser: argparse.ArgumentParser) -> None:
         default=None,
         help="Load pre-computed hashes from JSON file instead of computing them",
     )
+    parser.add_argument(
+        "--save-hash-file",
+        type=str,
+        default=None,
+        help="Save computed hashes to this path (overrides default common_hashes.json in log dir)",
+    )
 
 
 def add_common_eval_args(parser: argparse.ArgumentParser) -> None:
@@ -296,9 +302,18 @@ def prepare_evaluation(
         hash_filter = load_hash_filter_from_file(hash_file)
     elif not skip_hash_filter:
         logger.info("Computing common hashes across bias types...")
-        save_path = None
-        if log_base_dir:
+        save_hash_file = getattr(args, 'save_hash_file', None)
+        if save_hash_file:
+            save_path = Path(save_hash_file)
+        elif log_base_dir:
             save_path = Path(log_base_dir) / "common_hashes.json"
+            if save_path.exists():
+                raise FileExistsError(
+                    f"Hash file already exists at {save_path}. "
+                    f"Use --hash-file to load it, or specify a different path with --save-hash-file."
+                )
+        else:
+            save_path = None
 
         hash_filter = compute_hash_filter(
             datasets=datasets,

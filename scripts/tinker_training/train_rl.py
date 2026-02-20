@@ -5,37 +5,31 @@ Launch RLCT runs with flexible bias type, dataset, and hyperparameter configurat
 Supports single-bias, multi-bias, and control runs.
 
 Usage:
-    # Single bias
+    # Single bias, 100 total situations (50 per dataset)
     python scripts/tinker_training/train_rl.py \\
-        --model openai/gpt-oss-120b \\
-        --bias-types distractor_argument \\
-        --experiment-name rl-distractor-argument \\
-        --run-name gpt-rlct-da-s50 \\
-        --lr 1e-4
+        --bias-types suggested_answer \\
+        --experiment-name rl_test \\
+        --run-name llama-rlct-sa-s100
 
-    # Multi-bias
+    # Multi-bias, 200 total situations (50 per dataset x bias_type combo)
     python scripts/tinker_training/train_rl.py \\
-        --model openai/gpt-oss-120b \\
         --bias-types distractor_argument,wrong_few_shot \\
+        --n-samples 200 \\
         --experiment-name rl-da-wfs \\
-        --run-name gpt-rlct-da-wfs-s50 \\
-        --lr 1e-4
+        --run-name gpt-rlct-da-wfs-s200
 
     # Control run
     python scripts/tinker_training/train_rl.py \\
-        --model openai/gpt-oss-120b \\
         --bias-types distractor_argument \\
         --experiment-name rl-distractor-argument \\
-        --run-name gpt-rl-control-da-s50 \\
-        --lr 1e-4 --control
+        --run-name gpt-rl-control-da-s100 --control
 
-    # Group size sweep
+    # Explicit LR (default: auto from Tinker's get_recommended_lr)
     python scripts/tinker_training/train_rl.py \\
-        --model openai/gpt-oss-120b \\
         --bias-types distractor_argument \\
         --experiment-name rl-distractor-argument \\
-        --run-name gpt-rlct-da-g8 \\
-        --lr 1e-4 --situations-per-group 8
+        --run-name gpt-rlct-da-s100 \\
+        --lr 1e-4
 """
 
 import asyncio
@@ -71,7 +65,14 @@ DATASET_ALIASES = {
 
 
 def load_situations(bias_types: list[str], datasets: list[str], n_samples: int) -> list[dict]:
-    """Load and concatenate situations from all bias_type x dataset combinations."""
+    """Load and concatenate situations from all bias_type x dataset combinations.
+
+    Args:
+        n_samples: Total number of situations to load, split evenly across
+            all bias_type x dataset combinations.
+    """
+    n_combos = len(bias_types) * len(datasets)
+    per_combo = n_samples // n_combos if n_combos > 0 else n_samples
     situations = []
     for bias_type in bias_types:
         for dataset in datasets:
@@ -83,7 +84,7 @@ def load_situations(bias_types: list[str], datasets: list[str], n_samples: int) 
             with open(path) as f:
                 for line in f:
                     loaded.append(json.loads(line))
-                    if len(loaded) >= n_samples:
+                    if len(loaded) >= per_combo:
                         break
             situations.extend(loaded)
             print(f"  Loaded {len(loaded)} situations from {path.name}")
@@ -114,7 +115,7 @@ def main():
     parser.add_argument("--model", default="meta-llama/Llama-3.1-8B-Instruct", help="Base model name")
     parser.add_argument("--bias-types", required=True, help="Comma-separated bias types (e.g. distractor_argument,wrong_few_shot)")
     parser.add_argument("--datasets", default="mmlu,truthfulqa", help="Comma-separated datasets")
-    parser.add_argument("--n-samples", type=int, default=50, help="Max situations per dataset per bias type")
+    parser.add_argument("--n-samples", type=int, default=100, help="Total number of situations (split evenly across dataset x bias_type combinations)")
     parser.add_argument("--data-dir", default=None, help="Override default dataset_dumps/test directory")
 
     # === Naming ===
@@ -122,7 +123,7 @@ def main():
     parser.add_argument("--run-name", required=True, help="Run name (used in checkpoint path)")
 
     # === Optimiser ===
-    parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate (pass explicitly for unknown models)")
+    parser.add_argument("--lr", type=float, default=None, help="Learning rate (default: auto from Tinker's get_recommended_lr)")
     parser.add_argument("--lr-schedule", default="constant", choices=["constant", "linear", "cosine"])
     parser.add_argument("--lora-rank", type=int, default=8)
     parser.add_argument("--kl-coef", type=float, default=0.05)
@@ -157,9 +158,11 @@ def main():
     datasets = [d.strip() for d in args.datasets.split(",")]
     n_grad = args.n_grad_samples or args.n_train_samples
 
-    # Load situations
-    print(f"\nLoading situations for bias_types={bias_types}, datasets={datasets}, n_samples={args.n_samples}:")
+    # Load situations — n_samples is the TOTAL, split evenly across combinations
     data_dir = Path(args.data_dir) if args.data_dir else PROJECT_ROOT / "dataset_dumps" / "test"
+    n_combos = len(bias_types) * len(datasets)
+    per_combo = args.n_samples // n_combos if n_combos > 0 else args.n_samples
+    print(f"\nLoading situations: {args.n_samples} total across {n_combos} combos ({per_combo} per combo)")
 
     situations = []
     for bias_type in bias_types:
@@ -172,7 +175,7 @@ def main():
             with open(path) as f:
                 for line in f:
                     loaded.append(json.loads(line))
-                    if len(loaded) >= args.n_samples:
+                    if len(loaded) >= per_combo:
                         break
             situations.extend(loaded)
             print(f"  Loaded {len(loaded)} from {path.name}")

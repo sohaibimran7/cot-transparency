@@ -16,7 +16,7 @@ Generate plots, BIR (Bias Influence Rate) tables, and summary statistics from sy
 
 **Confirm with the user:**
 1. Which log directory/directories to analyze
-2. What output to generate: plots, BIR tables, summary, or all
+2. What output to generate: BIR tables, BA tables, plots, summary, or combination
 3. Any filters: model family, variant, prompt style, dataset, bias type
 4. Output directory for plots (default: `sycophancy_eval_inspect/plots/`)
 
@@ -24,25 +24,48 @@ Generate plots, BIR (Bias Influence Rate) tables, and summary statistics from sy
 
 ## Command templates
 
-### Generate all plots
-```bash
-python -m sycophancy_eval_inspect.visualize_results \
-    --log-dir LOG_DIR \
-    --output-dir sycophancy_eval_inspect/plots/OUTPUT_NAME
-```
-
-### BIR tables (Bias Influence Rate)
+### Print BIR tables (Bias Influence Rate)
 ```bash
 python -m sycophancy_eval_inspect.visualize_results \
     --log-dir LOG_DIR \
     --bir
 ```
 
-### Save BIR tables to file
+### Print BA tables (Bias Acknowledged)
 ```bash
 python -m sycophancy_eval_inspect.visualize_results \
     --log-dir LOG_DIR \
-    --bir --save-bir sycophancy_eval_inspect/plots/OUTPUT_NAME/bir_tables.md
+    --ba
+```
+
+### Print both BIR and BA tables
+```bash
+python -m sycophancy_eval_inspect.visualize_results \
+    --log-dir LOG_DIR \
+    --bir --ba
+```
+
+### Generate plots (no tables)
+```bash
+python -m sycophancy_eval_inspect.visualize_results \
+    --log-dir LOG_DIR \
+    --bir --plot --no-tables \
+    --output-dir sycophancy_eval_inspect/plots/OUTPUT_NAME
+```
+
+### Tables + plots together
+```bash
+python -m sycophancy_eval_inspect.visualize_results \
+    --log-dir LOG_DIR \
+    --bir --ba --plot \
+    --output-dir sycophancy_eval_inspect/plots/OUTPUT_NAME
+```
+
+### Save tables to file
+```bash
+python -m sycophancy_eval_inspect.visualize_results \
+    --log-dir LOG_DIR \
+    --bir --save sycophancy_eval_inspect/plots/OUTPUT_NAME/bir_tables
 ```
 
 ### Summary table only
@@ -56,8 +79,8 @@ python -m sycophancy_eval_inspect.visualize_results \
 ```bash
 python -m sycophancy_eval_inspect.visualize_results \
     --log-dir LOG_DIR \
+    --bir \
     --model llama \
-    --variant biased \
     --prompt-style cot \
     --dataset mmlu \
     --bias-type suggested_answer
@@ -67,24 +90,48 @@ python -m sycophancy_eval_inspect.visualize_results \
 ```bash
 python -m sycophancy_eval_inspect.visualize_results \
     --log-dir DIR1 --log-dir DIR2 \
-    --output-dir sycophancy_eval_inspect/plots/combined
+    --bir --ba
 ```
 
 ## Key flags
 
+### Metric flags (what to compute)
+| Flag | Description |
+|------|-------------|
+| `--bir` | Compute and print BIR (Bias Influence Rate) tables |
+| `--ba` | Compute and print BA (Bias Acknowledged) tables |
+
+### Output flags (how to present)
+| Flag | Description |
+|------|-------------|
+| `--plot` | Generate plots (saved to `--output-dir`) |
+| `--save PATH` | Save tables to CSV/MD file |
+| `--no-tables` | Suppress printing tables to stdout (use with `--plot`) |
+| `--output-dir DIR` | Output directory for plots (default: `plots`) |
+
+### Filter flags
 | Flag | Description |
 |------|-------------|
 | `--log-dir DIR` | Eval log directory (repeatable for multiple) |
-| `--output-dir DIR` | Output directory for plots |
 | `--model MODEL` | Filter by model family: `llama` or `gpt` (repeatable) |
 | `--variant VAR` | Filter: `biased` or `unbiased` (repeatable) |
 | `--prompt-style STYLE` | Filter: `cot` or `no_cot` (repeatable) |
 | `--dataset DS` | Filter by dataset name (repeatable) |
 | `--bias-type BIAS` | Filter by bias type (repeatable) |
-| `--summary` | Print summary table only |
-| `--bir` | Print BIR tables |
-| `--save-bir FILE` | Save BIR tables to CSV/MD |
-| `--no-n` | Hide sample counts in BIR tables |
+
+### Table configuration flags
+| Flag | Description |
+|------|-------------|
+| `--no-n` | Hide sample counts in tables |
+| `--bir-baseline TYPE` | Baseline for ratio computation (default: `base`) |
+| `--bir-parser MODE` | BIR parser: `strict`, `lenient`, or `both` (default: `lenient`) |
+| `--bir-verbalization MODE` | BA verbalization: `strict`, `lenient`, or `both` (default: `strict`) |
+
+### Other flags
+| Flag | Description |
+|------|-------------|
+| `--summary` | Print summary table only (uses sample-level data, not BIR) |
+| `--no-splits` | Skip split-by-BA and split-by-BIR plot variants |
 
 ## Registering new models
 

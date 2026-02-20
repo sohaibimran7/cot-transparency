@@ -31,10 +31,12 @@ Launch supervised fine-tuning (SFT/BCT) or RL consistency training (RLCT) via th
 
 ## Known issues
 
-### Learning rate for unknown models
-`get_recommended_lr()` in `common.py` crashes with `AssertionError` for models not in `hyperparam_utils` (e.g., `openai/gpt-oss-120b`). **Always pass `--lr` explicitly** for non-Llama models:
+### Auto LR (Llama/Qwen only)
+`get_recommended_lr()` uses the formula: `5e-5 × 10 × (2000/hidden_size)^exponent` where exponent is 0.781 (Llama) or 0.0775 (Qwen). For Llama-3.1-8B this gives **~0.000286**.
+
+For models not in `hyperparam_utils` (e.g., `openai/gpt-oss-120b`), it crashes with `AssertionError`. **Always pass `--lr` explicitly** for non-Llama/Qwen models:
 ```bash
---lr 1e-4   # Standard LoRA fallback
+--lr 1e-4   # Standard LoRA fallback for GPT-OSS
 ```
 
 ## Naming convention
@@ -42,10 +44,12 @@ Launch supervised fine-tuning (SFT/BCT) or RL consistency training (RLCT) via th
 Follow the pattern from `sycophancy_eval_inspect/logs/cot_100samples/`:
 - `{model}-{method}-{details}` e.g. `gpt-bct-mti-4k`, `llama-rlct-s50`
 - `mti` = mmlu+truthfulqa+instruct, `mt` = mmlu+truthfulqa only
-- `4k` = ~4000 samples, `s50` = 50 situations per dataset
+- `4k` = ~4000 samples, `s50` = 50 total situations
 - Control runs: `gpt-control-mti-4k`, `gpt-rl-control-s50`
 
-The `--run-name` for SFT and `--run_name` for RL should match the eval `--name` flag.
+The `--run-name` should NOT include checkpoint step info (e.g., don't use `-s50`). Steps are appended automatically by `build_checkpoint_name()` → `{experiment_name}_{run_name}_step{N}`.
+
+The eval `--name` flag should be `{model}-{experiment}_{run}_step{N}` to match the checkpoint label.
 
 ## SFT (BCT / VFT) Training
 
@@ -110,6 +114,20 @@ checkpoint = asyncio.run(train_sft(Path("data/train.jsonl"), config=config))
 
 RL Consistency Training — GRPO rate-matching to reduce sycophancy without labels.
 
+### Preferred CLI: `train_rl.py`
+Use the unified RL CLI script rather than `test_rl_training.py`:
+```bash
+python scripts/tinker_training/train_rl.py \
+    --model meta-llama/Llama-3.1-8B-Instruct \
+    --bias-types suggested_answer \
+    --datasets mmlu,truthfulqa \
+    --n-samples 50 \
+    --experiment-name rl_suggested_answer \
+    --run-name llama-rlct-sa \
+    --lora-rank 8 --refresh-every 1 --checkpoint-every 50 -y
+```
+Note: No `--lr` for Llama — auto LR (~0.000286) is preferred. Only pass `--lr` explicitly for non-Llama/Qwen models.
+
 ### Config defaults
 ```python
 RLConfig(
@@ -145,28 +163,37 @@ RLConfig(
 2. **Perturbation functions**: Map situation -> prompt (unbiased and biased variants)
 3. **Trait classifier**: Detect whether model follows biased suggestion
 
-### Command pattern
-```bash
-python scripts/tinker_training/test_rl_training.py \
-    --model meta-llama/Llama-3.1-8B-Instruct \
-    --n_samples 50 \
-    --experiment_name rl_test \
-    --run_name suggested_answer
-```
-
-Add `--control` for control run (both perturbations use unbiased prompts).
-
 ### Key RL flags
 | Flag | Description |
 |------|-------------|
-| `--n_samples N` | Samples per dataset |
 | `--model MODEL` | Base model |
-| `--experiment_name NAME` | Experiment name |
-| `--run_name NAME` | Run name |
+| `--bias-types TYPES` | Comma-separated bias types (e.g. `suggested_answer,wrong_few_shot`) |
+| `--datasets DATASETS` | Comma-separated datasets (default: `mmlu,truthfulqa`) |
+| `--n-samples N` | Total situations (split evenly across dataset × bias_type combos, default: 100) |
+| `--experiment-name NAME` | Experiment name |
+| `--run-name NAME` | Run name (used in checkpoint path and eval `--name`) |
+| `--lr RATE` | Learning rate (default: auto from Tinker's `get_recommended_lr`; pass explicitly for non-Llama models) |
+| `--lr-schedule SCHED` | `constant`, `linear`, or `cosine` |
+| `--lora-rank N` | LoRA rank (default: 8) |
+| `--kl-coef FLOAT` | KL penalty coefficient (default: 0.05) |
+| `--loss-fn FN` | `ppo` or `reinforce` |
+| `--n-ref-samples N` | Samples for reference rate estimation (default: 128) |
+| `--n-train-samples N` | Samples for training rate estimation (default: 128) |
+| `--n-grad-samples N` | Samples for gradient (default: same as `--n-train-samples`) |
+| `--temperature FLOAT` | Sampling temperature (default: 1.0) |
+| `--max-new-tokens N` | Max generation tokens (default: 8192) |
+| `--situations-per-group N` | Situations per gradient step (default: 1) |
+| `--gradient-accumulation-steps N` | Gradient accumulation (default: 1) |
+| `--refresh-every N` | Refresh sampling policy every N steps (default: 1). Higher values enable deeper prefetch pipelining but use slightly staler samples. |
+| `--checkpoint-every N` | Save checkpoint every N steps (default: 50) |
+| `--save-state` | Save full optimizer state for resuming |
 | `--control` | Control run (unbiased for both ref and train) |
-| `--ref_perturbations IDX` | Perturbation indices for reference rate |
-| `--train_perturbations IDX` | Perturbation indices for training |
-| `--dry_run` | Load data only, don't train |
+| `--resume-from PATH` | Tinker checkpoint to resume from |
+| `--dry-run` | Load data and print config, don't train |
+| `-y` | Skip confirmation prompt |
+
+### Legacy script
+`test_rl_training.py` is the older RL script with fewer CLI options. Use `train_rl.py` for new runs.
 
 ## Resuming from a checkpoint (e.g., obfuscation: BCT/RLCT on VFT)
 
@@ -196,10 +223,12 @@ python scripts/tinker_training/train_sft.py \
 
 ### RLCT example (RLCT on VFT)
 ```bash
-python scripts/tinker_training/test_rl_training.py \
+python scripts/tinker_training/train_rl.py \
     --model meta-llama/Llama-3.1-8B-Instruct \
-    --resume_from "tinker://...weights/vft-suggested-answer_train" \
-    --experiment_name rlct-on-vft --run_name suggested_answer
+    --resume-from "tinker://...weights/vft-suggested-answer_train" \
+    --bias-types suggested_answer \
+    --experiment-name rlct-on-vft --run-name suggested_answer \
+    --lr 1e-4 -y
 ```
 
 ## Key modules

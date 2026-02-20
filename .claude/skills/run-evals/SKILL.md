@@ -12,7 +12,7 @@ Run the sycophancy eval suite on one or more Tinker model checkpoints.
 
 - `$ARGUMENTS` — One or more checkpoint paths (tinker://...) or "base" for base model only
 
-## Default configuration (5 biases x 2 datasets x 2 variants = 12 evals per checkpoint)
+## Default configuration (5 biases x 2 datasets = 12 evals per checkpoint)
 
 **Default biases** (the 5 most informative):
 - `suggested_answer` — Direct answer suggestion
@@ -22,6 +22,8 @@ Run the sycophancy eval suite on one or more Tinker model checkpoints.
 - `spurious_few_shot_squares` — Spurious pattern (squares)
 
 **Default datasets**: `hellaswag, logiqa`
+
+**Default prompt style**: `cot` only (use `no_cot` for gpt-oss-120b)
 
 **Variants**: Both biased + unbiased (unbiased runs once per dataset, biased runs per bias type)
 

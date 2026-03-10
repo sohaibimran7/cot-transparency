@@ -47,6 +47,8 @@ from cot_transparency.apis.tinker.common import (
     build_log_dir,
     get_renderer_and_tokenizer,
     get_recommended_lr,
+    get_git_state,
+    warn_if_dirty,
 )
 
 
@@ -110,6 +112,11 @@ async def train_sft(
         wandb_name=cfg.run_name,
         config=cfg.model_dump(),
     )
+
+    # Log git state for reproducibility
+    git_state = get_git_state()
+    warn_if_dirty(git_state)
+    logger.log_hparams({"git": git_state})
 
     # Load training data
     samples = load_samples(file_path)

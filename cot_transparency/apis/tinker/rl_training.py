@@ -60,6 +60,8 @@ from cot_transparency.apis.tinker.common import (
     build_checkpoint_name,
     build_log_dir,
     get_recommended_lr,
+    get_git_state,
+    warn_if_dirty,
 )
 from cot_transparency.apis.tinker.pricing import (
     get_pricing,
@@ -621,6 +623,12 @@ class RLTrainer:
             wandb_name=self.config.run_name,
             config=self.config.model_dump(),
         )
+
+        # Log git state for reproducibility — ensures we can always
+        # reconstruct the exact code that ran, even with uncommitted changes.
+        git_state = get_git_state()
+        warn_if_dirty(git_state)
+        logger.log_hparams({"git": git_state})
 
         try:
             return await self._train_loop(

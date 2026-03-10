@@ -4,6 +4,7 @@ Common utilities for Tinker API training modules.
 Shared code between SFT and RL training.
 """
 
+import subprocess
 from typing import Optional
 
 from pydantic import BaseModel
@@ -85,6 +86,52 @@ def build_log_dir(base_dir: str, experiment_name: str, run_name: str) -> str:
     Example: "logs/bct_debug/control/"
     """
     return f"{base_dir}/{experiment_name}/{run_name}"
+
+
+def get_git_state() -> dict:
+    """Capture current git state for reproducibility logging.
+
+    Returns a dict with commit SHA, branch, dirty flag, changed files list,
+    and the full diff of uncommitted changes (truncated to 50k chars).
+    Degrades gracefully if not in a git repo.
+    """
+    def _run(args: list[str]) -> str:
+        r = subprocess.run(args, capture_output=True, text=True, timeout=10)
+        return r.stdout.strip() if r.returncode == 0 else ""
+
+    try:
+        sha = _run(["git", "rev-parse", "HEAD"])
+        if not sha:
+            return {"git_error": "not a git repository"}
+        branch = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+        dirty_files = _run(["git", "status", "--short"])
+        diff = _run(["git", "diff"])
+        max_diff = 50_000
+        return {
+            "git_sha": sha,
+            "git_branch": branch,
+            "git_dirty": len(dirty_files) > 0,
+            "git_dirty_files": dirty_files,
+            "git_diff": diff[:max_diff] + ("\n... (truncated)" if len(diff) > max_diff else ""),
+        }
+    except Exception as e:
+        return {"git_error": str(e)}
+
+
+def warn_if_dirty(git_state: dict) -> None:
+    """Print a prominent warning if the git working tree is dirty."""
+    if git_state.get("git_dirty"):
+        files = git_state.get("git_dirty_files", "")
+        n_files = len([l for l in files.splitlines() if l.strip()])
+        print(
+            f"\n{'='*60}\n"
+            f"WARNING: Git working tree is DIRTY ({n_files} file(s) changed)\n"
+            f"Commit: {git_state.get('git_sha', 'unknown')}\n"
+            f"Branch: {git_state.get('git_branch', 'unknown')}\n"
+            f"Changed files:\n{files}\n"
+            f"The diff is logged to WandB for reproducibility.\n"
+            f"{'='*60}\n"
+        )
 
 
 def get_recommended_lr(model: str, is_lora: bool = True, fallback: float = 1e-4) -> float:

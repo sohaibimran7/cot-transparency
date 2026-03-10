@@ -665,11 +665,14 @@ class RLTrainer:
         training_idx = self.config.training.get_indices(n_perts)
         ref_idx = self.config.reference_rate.get_indices(n_perts)
 
-        # Lazy initial reference rates: computed on first encounter of each
-        # situation by sampling from the base model concurrently with policy
-        # sampling, instead of blocking upfront on all situations.
+        # Compute initial reference rates upfront from the base model.
+        # This ensures every situation has a correct p_ref_init before
+        # training begins, avoiding the 0.5 fallback that distorts the
+        # anchor reward signal in early steps.
         if initial_reference_rates is None:
-            initial_reference_rates = {}
+            initial_reference_rates = await self.estimate_initial_reference_rates(
+                situations, perturbation_fns, trait_classifier, answer_parser
+            )
         ref_cfg = self.config.reference_rate
 
         sit_per_group = self.config.loop.situations_per_group
@@ -856,7 +859,7 @@ class RLTrainer:
                         if sit_idx in pending_base_tasks:
                             base_samples = await pending_base_tasks.pop(sit_idx)
                             _resolve_base_rate(sit_idx, base_samples)
-                        p_ref_init = initial_reference_rates.get(sit_idx, 0.5)
+                        p_ref_init = initial_reference_rates[sit_idx]
                     resolved_group_data.append((sit_idx, situation, grad_samples, p_hat, p_ref, p_ref_init, n_total, n_parsed, n_ref_total, n_hat_total))
                 group_data = resolved_group_data
 

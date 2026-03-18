@@ -40,45 +40,148 @@ BIAS_DISPLAY_NAMES = {
     "spurious_few_shot_squares": "Spurious: Squares",
 }
 
-COLORS = {
-    "base": "#969696",
-    "control": "#6baed6",
-    "bct_control_mt_2k": "#c7a5e0",    # light purple (VFT control)
-    "rlct_control_step50": "#08519c",
-    "rlct_control_step100": "#03396c",
-    "bct_old_20k": "#e31a1c",      # red
-    "bct_mti_1k": "#fee391",       # yellow
-    "bct_mti_4k": "#fe9929",       # orange
-    "bct_mt_2k": "#daa520",        # golden
-    "bct_mt_b16_2k": "#d2b48c",    # light brown (tan)
-    "bct_mti_b16_4k": "#8b4513",   # dark brown (saddle brown)
-    "bct_control_mt_2k": "#b3cde3",  # light blue
-    "rl_control_step50": "#a6d854",  # lime green
-    "rlct_step50": "#78c679",
-    "rlct_step100": "#41ab5d",
-    "rlct_step200": "#238b45",
-    "rlct_step50_v2": "#2ca02c",    # bright green (new RL code)
-    "rlct_step25_r3": "#17becf",    # teal (refresh=3 variant)
-    "rlct_step50_v3": "#d62728",    # red (empty batch skip only)
-    "rlct_step50_v4": "#ff7f0e",    # orange (original code rerun)
-    "rlct_step50_v5": "#8c564b",    # brown (auto LR, old code)
-    "rlct_step50_v6": "#e377c2",    # pink (auto LR + pipelining, r=1)
-    "rlct_step50_v7": "#7f7f7f",    # grey (auto LR + pipelining, r=3)
-    "rlct_s50_noempty": "#1f77b4",   # blue (auto LR, noempty, refresh=1)
-    "rlct_sa_g1_r1": "#bcbd22",      # yellow-green (g1, r1 ablation)
-    "rlct_sa_g16_r16": "#ff9896",    # light red (g16, r16 ablation)
-    "rlct_sa_g16_t16_r128": "#aec7e8", # light blue (g16, t16, r128 ablation)
-    "rlct_sa_g16_r128": "#c49c94",   # light brown (g16, r128 ablation)
-    "rlct_da": "#2ca02c",            # green (RLCT DA only)
-    "rlct_da_wfs": "#d62728",        # red (RLCT DA+WFS)
-    "vft_mt_1675": "#9467bd",       # purple
-    "bct_da_4k": "#e6550d",         # dark orange (BCT DA)
-    "bct_da_wfs_6k": "#756bb1",     # medium purple (BCT DA+WFS)
+DEFAULT_TRAINING_BIASES = frozenset({"suggested_answer"})
+
+
+def _split_biases(bias_list: list[str], training_biases: set[str] | None = None) -> tuple[list[str], list[str]]:
+    """Split bias list into (trained_on, held_out), preserving order within each group."""
+    tb = training_biases if training_biases is not None else DEFAULT_TRAINING_BIASES
+    trained = [b for b in bias_list if b in tb]
+    held_out = [b for b in bias_list if b not in tb]
+    return trained, held_out
+
+
+# ── Visual encoding system ──────────────────────────────────────────────
+# Color hue  = method family (grey=Base, blue-grey=Control, blue=BCT, green=RLCT, purple=VFT)
+# Lightness  = training scale (lighter=less data/steps, darker=more)
+# Hatch      = training variant (none=MT, '//'=MTI/instruct, '/'=DA, 'x'=DA+WFS)
+
+def _style(color, hatch="", edgecolor="black"):
+    return {"color": color, "hatch": hatch, "edgecolor": edgecolor}
+
+STYLE_MAP = {
+    # ── Base ──
+    "base":                  _style("#969696"),
+    # ── Controls (grey with faint treatment hue tint) ──
+    "control":               _style("#b0b0b8"),         # grey, faint blue tint (BCT control)
+    "bct_control_mt_2k":     _style("#c0c0c8"),         # lighter grey, faint blue tint
+    "rlct_control_step50":   _style("#b0b5b0"),         # grey, faint green tint
+    "rl_control_step50":     _style("#b0b5b0"),         # grey, faint green tint (alias)
+    "rlct_control_step100":  _style("#a0a5a0"),         # darker grey, faint green tint
+    # ── BCT family (blues, lighter→less data, darker→more) ──
+    "bct_mti_1k":            _style("#c6dbef", "//"),   # very light blue, instruct
+    "bct_mt_2k":             _style("#9ecae1"),         # light blue
+    "bct_mt_b16_2k":         _style("#6baed6"),         # medium blue
+    "bct_mti_4k":            _style("#4292c6", "//"),   # medium-dark blue, instruct
+    "bct_mti_b16_4k":        _style("#2171b5", "//"),   # dark blue, instruct
+    "bct_old_20k":           _style("#08519c"),         # very dark blue
+    "bct_da_4k":             _style("#4292c6", "/"),    # medium blue, DA
+    "bct_da_wfs_6k":         _style("#2171b5", "x"),   # dark blue, DA+WFS
+    # ── RLCT family (greens, lighter→fewer steps, darker→more) ──
+    "rlct_step50":           _style("#a1d99b"),         # light green (50 steps)
+    "rlct_step50_v2":        _style("#8ed18e"),         # slight variation
+    "rlct_step25_r3":        _style("#bae4b3"),         # very light (25 steps)
+    "rlct_step50_v3":        _style("#82c982"),         # variation
+    "rlct_step50_v4":        _style("#76c176"),         # variation
+    "rlct_step50_v5":        _style("#6ab96a"),         # variation
+    "rlct_step50_v6":        _style("#5eb15e"),         # variation
+    "rlct_step50_v7":        _style("#52a952"),         # variation
+    "rlct_s50_noempty":      _style("#78c679"),         # medium-light green
+    "rlct_sa_g1_r1":         _style("#c7e9c0"),         # very light (small ablation)
+    "rlct_sa_g16_r16":       _style("#a1d99b"),         # light
+    "rlct_sa_g16_t16_r128":  _style("#74c476"),         # medium
+    "rlct_sa_g16_r128":      _style("#74c476"),         # medium
+    "rlct_s50_re_eval":      _style("#31a354"),         # medium-dark green (re-eval)
+    "rlct_s50_a":            _style("#a1d99b"),         # light green (run A)
+    "rlct_s50_b":            _style("#41ab5d"),         # medium-dark green (run B)
+    "rlct_step100":          _style("#41ab5d"),         # medium-dark green (100 steps)
+    "rlct_step200":          _style("#238b45"),         # dark green (200 steps)
+    "rlct_da":               _style("#41ab5d", "/"),    # medium-dark green, DA
+    "rlct_da_wfs":           _style("#238b45", "x"),    # dark green, DA+WFS
+    # ── Anchor ablation (darker greens) ──
+    "rlct_a0_r1":            _style("#006d2c"),         # very dark green (α=0, run 1)
+    "rlct_a0_r2":            _style("#00441b"),         # darkest green (α=0, run 2)
+    "rlct_a0_ctrl":          _style("#b0b5b0"),         # grey-green (α=0 control)
+    "rlct_a05_r1":           _style("#238b45"),         # dark green (α=0.5, run 1)
+    "rlct_a05_r2":           _style("#1a7a3a"),         # dark green (α=0.5, run 2)
+    "rlct_a05_ctrl":         _style("#a0a8a0"),         # grey-green (α=0.5 control)
+    "rlct_a1_ctrl":          _style("#909890"),         # grey-green (α=1.0 control)
+    # ── VFT (purple) ──
+    "vft_mt_1675":           _style("#9e9ac8"),         # purple
+    # ── Aggregate groups ──
+    "control_agg":           _style("#b0b0b0"),         # grey (aggregate control)
+    "bct_agg":               _style("#3182bd"),         # solid blue (aggregate BCT)
+    "rlct_agg":              _style("#31a354"),         # solid green (aggregate RLCT)
+    "rlct_a0_agg":           _style("#006d2c"),         # very dark green (α=0 avg)
+    "rlct_a05_agg":          _style("#238b45"),         # dark green (α=0.5 avg)
+}
+
+# Backward-compat alias
+COLORS = {k: v["color"] for k, v in STYLE_MAP.items()}
+
+# Maps training type → set of bias types used during training.
+# Used to compute per-model held-out averages (exclude training biases).
+TRAINING_BIAS_TYPES = {
+    "base": set(),
+    "control": set(),
+    "bct_control_mt_2k": set(),
+    "rlct_control_step50": set(),
+    "rl_control_step50": set(),
+    "rlct_control_step100": set(),
+    "bct_old_20k": {"suggested_answer"},
+    "bct_mti_1k": {"suggested_answer"},
+    "bct_mti_4k": {"suggested_answer"},
+    "bct_mt_2k": {"suggested_answer"},
+    "bct_mt_b16_2k": {"suggested_answer"},
+    "bct_mti_b16_4k": {"suggested_answer"},
+    "bct_da_4k": {"distractor_argument"},
+    "bct_da_wfs_6k": {"distractor_argument", "wrong_few_shot"},
+    "vft_mt_1675": {"suggested_answer"},
+    "rlct_step50": {"suggested_answer"},
+    "rlct_step100": {"suggested_answer"},
+    "rlct_step200": {"suggested_answer"},
+    "rlct_step50_v2": {"suggested_answer"},
+    "rlct_step25_r3": {"suggested_answer"},
+    "rlct_step50_v3": {"suggested_answer"},
+    "rlct_step50_v4": {"suggested_answer"},
+    "rlct_step50_v5": {"suggested_answer"},
+    "rlct_step50_v6": {"suggested_answer"},
+    "rlct_step50_v7": {"suggested_answer"},
+    "rlct_s50_noempty": {"suggested_answer"},
+    "rlct_sa_g1_r1": {"suggested_answer"},
+    "rlct_sa_g16_r16": {"suggested_answer"},
+    "rlct_sa_g16_t16_r128": {"suggested_answer"},
+    "rlct_sa_g16_r128": {"suggested_answer"},
+    "rlct_s50_re_eval": {"suggested_answer"},
+    "rlct_s50_a": {"suggested_answer"},
+    "rlct_s50_b": {"suggested_answer"},
+    "rlct_da": {"distractor_argument"},
+    "rlct_da_wfs": {"distractor_argument", "wrong_few_shot"},
+    # Anchor ablation
+    "rlct_a0_r1": {"suggested_answer"},
+    "rlct_a0_r2": {"suggested_answer"},
+    "rlct_a0_ctrl": set(),
+    "rlct_a05_r1": {"suggested_answer"},
+    "rlct_a05_r2": {"suggested_answer"},
+    "rlct_a05_ctrl": set(),
+    "rlct_a1_ctrl": set(),
+    # Aggregate groups (union of training biases)
+    "control_agg": set(),
+    "bct_agg": {"suggested_answer"},
+    "rlct_agg": {"suggested_answer"},
+    "rlct_a0_agg": {"suggested_answer"},
+    "rlct_a05_agg": {"suggested_answer"},
 }
 
 TRAINING_TYPE_ORDER = [
-    "base", "vft_mt_1675", "bct_control_mt_2k", "control", "rlct_control_step50", "rl_control_step50", "rlct_control_step100", "bct_old_20k", "bct_mti_1k", "bct_mti_4k", "bct_mt_2k", "bct_mt_b16_2k", "bct_mti_b16_4k", "rlct_step50", "rlct_step50_v2", "rlct_step25_r3", "rlct_step50_v3", "rlct_step50_v4", "rlct_step50_v5", "rlct_step50_v6", "rlct_step50_v7", "rlct_s50_noempty", "rlct_sa_g1_r1", "rlct_sa_g16_r16", "rlct_sa_g16_t16_r128", "rlct_sa_g16_r128", "rlct_step100", "rlct_step200",
+    "base", "vft_mt_1675", "bct_control_mt_2k", "control", "rlct_control_step50", "rl_control_step50", "rlct_control_step100", "bct_old_20k", "bct_mti_1k", "bct_mti_4k", "bct_mt_2k", "bct_mt_b16_2k", "bct_mti_b16_4k", "rlct_step50", "rlct_step50_v2", "rlct_step25_r3", "rlct_step50_v3", "rlct_step50_v4", "rlct_step50_v5", "rlct_step50_v6", "rlct_step50_v7", "rlct_s50_noempty", "rlct_sa_g1_r1", "rlct_sa_g16_r16", "rlct_sa_g16_t16_r128", "rlct_sa_g16_r128", "rlct_s50_re_eval", "rlct_s50_a", "rlct_s50_b", "rlct_step100", "rlct_step200",
     "bct_da_4k", "bct_da_wfs_6k", "rlct_da", "rlct_da_wfs",
+    # Anchor ablation
+    "rlct_a0_r1", "rlct_a0_r2", "rlct_a0_ctrl",
+    "rlct_a05_r1", "rlct_a05_r2", "rlct_a05_ctrl",
+    "rlct_a1_ctrl",
+    # Aggregate groups
+    "control_agg", "bct_agg", "rlct_agg", "rlct_a0_agg", "rlct_a05_agg",
 ]
 
 TRAINING_TYPE_NAMES = {
@@ -110,11 +213,26 @@ TRAINING_TYPE_NAMES = {
     "rlct_sa_g16_r16": "RLCT SA g16 r16",
     "rlct_sa_g16_t16_r128": "RLCT SA g16 t16 r128",
     "rlct_sa_g16_r128": "RLCT SA g16 r128",
+    "rlct_s50_re_eval": "RLCT s50 re-eval",
+    "rlct_s50_a": "RLCT s50 A",
+    "rlct_s50_b": "RLCT s50 B",
     "vft_mt_1675": "VFT MT 1675",
     "bct_da_4k": "BCT DA 4k",
     "bct_da_wfs_6k": "BCT DA+WFS 6k",
     "rlct_da": "RLCT DA",
     "rlct_da_wfs": "RLCT DA+WFS",
+    # Anchor ablation
+    "rlct_a0_r1": "RLCT α=0 r1",
+    "rlct_a0_r2": "RLCT α=0 r2",
+    "rlct_a0_ctrl": "RL Ctrl α=0",
+    "rlct_a05_r1": "RLCT α=0.5 r1",
+    "rlct_a05_r2": "RLCT α=0.5 r2",
+    "rlct_a05_ctrl": "RL Ctrl α=0.5",
+    "rlct_a1_ctrl": "RL Ctrl α=1",
+    # Aggregate groups
+    "control_agg": "Control (avg)",
+    "bct_agg": "BCT (avg)",
+    "rlct_agg": "RLCT (avg)",
 }
 
 # Maps scorer name → {score_value_key: column_name}
@@ -156,6 +274,77 @@ METRIC_DISPLAY = {
     "target_answered": "Target Answered",
     "non_target_answered": "Non-Target Answered",
 }
+
+
+# ── Aggregate group mappings ───────────────────────────────────────────────
+# Maps individual training types → aggregate group key.
+# Types not listed here are kept as-is (base, controls).
+_AGGREGATE_MAP = {
+    # BCT family → bct_agg
+    "bct_old_20k": "bct_agg",
+    "bct_mti_1k": "bct_agg",
+    "bct_mti_4k": "bct_agg",
+    "bct_mt_2k": "bct_agg",
+    "bct_mt_b16_2k": "bct_agg",
+    "bct_mti_b16_4k": "bct_agg",
+    "bct_da_4k": "bct_agg",
+    "bct_da_wfs_6k": "bct_agg",
+    # RLCT family → rlct_agg
+    "rlct_step50": "rlct_agg",
+    "rlct_step100": "rlct_agg",
+    "rlct_step200": "rlct_agg",
+    "rlct_step50_v2": "rlct_agg",
+    "rlct_step25_r3": "rlct_agg",
+    "rlct_step50_v3": "rlct_agg",
+    "rlct_step50_v4": "rlct_agg",
+    "rlct_step50_v5": "rlct_agg",
+    "rlct_step50_v6": "rlct_agg",
+    "rlct_step50_v7": "rlct_agg",
+    "rlct_s50_noempty": "rlct_agg",
+    "rlct_sa_g1_r1": "rlct_agg",
+    "rlct_sa_g16_r16": "rlct_agg",
+    "rlct_sa_g16_t16_r128": "rlct_agg",
+    "rlct_sa_g16_r128": "rlct_agg",
+    "rlct_s50_re_eval": "rlct_agg",
+    "rlct_s50_a": "rlct_agg",
+    "rlct_s50_b": "rlct_agg",
+    "rlct_da": "rlct_agg",
+    "rlct_da_wfs": "rlct_agg",
+    # Anchor ablation RLCT → separate per-α groups
+    "rlct_a0_r1": "rlct_a0_agg",
+    "rlct_a0_r2": "rlct_a0_agg",
+    "rlct_a05_r1": "rlct_a05_agg",
+    "rlct_a05_r2": "rlct_a05_agg",
+    # Controls → control_agg (merge SFT/RL controls)
+    "control": "control_agg",
+    "bct_control_mt_2k": "control_agg",
+    "rlct_control_step50": "control_agg",
+    "rl_control_step50": "control_agg",
+    "rlct_control_step100": "control_agg",
+    "rlct_a0_ctrl": "control_agg",
+    "rlct_a05_ctrl": "control_agg",
+    "rlct_a1_ctrl": "control_agg",
+}
+
+# Order & display for aggregate mode
+_AGGREGATE_ORDER = ["base", "control_agg", "bct_agg", "rlct_agg", "rlct_a0_agg", "rlct_a05_agg"]
+_AGGREGATE_NAMES = {
+    "base": "Base",
+    "control_agg": "Control (avg)",
+    "bct_agg": "BCT (avg)",
+    "rlct_agg": "RLCT (avg)",
+    "rlct_a0_agg": "RLCT α=0 (avg)",
+    "rlct_a05_agg": "RLCT α=0.5 (avg)",
+}
+
+
+def aggregate_training_types(df: "pd.DataFrame") -> "pd.DataFrame":
+    """Remap training_type column to aggregate groups."""
+    df = df.copy()
+    df["training_type"] = df["training_type"].map(
+        lambda t: _AGGREGATE_MAP.get(t, t)
+    )
+    return df
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -201,8 +390,19 @@ _DIR_TO_TRAINING_TYPE = {
     "vft-mt-1675": "vft_mt_1675",
     "bct-da-4k": "bct_da_4k",
     "bct-da-wfs-6k": "bct_da_wfs_6k",
+    "rlct-s50-re-eval": "rlct_s50_re_eval",
+    "rlct-s50-a": "rlct_s50_a",
+    "rlct-s50-b": "rlct_s50_b",
     "rlct-da": "rlct_da",
     "rlct-da-wfs": "rlct_da_wfs",
+    # Anchor ablation runs
+    "rlct-a0-r1": "rlct_a0_r1",
+    "rlct-a0-r2": "rlct_a0_r2",
+    "rlct-a0-ctrl": "rlct_a0_ctrl",
+    "rlct-a05-r1": "rlct_a05_r1",
+    "rlct-a05-r2": "rlct_a05_r2",
+    "rlct-a05-ctrl": "rlct_a05_ctrl",
+    "rlct-a1-ctrl": "rlct_a1_ctrl",
 }
 
 
@@ -430,6 +630,7 @@ def plot_grouped_bars(
     show_n_labels=True,
     ylim=None,
     output_path=None,
+    training_biases: set[str] | None = None,
 ):
     """Draw grouped bar chart with optional lenient overlay.
 
@@ -437,29 +638,66 @@ def plot_grouped_bars(
         ylim: Tuple (ymin, ymax) for y-axis limits. If None, auto-scales
               from data with padding. Pass (0, 1.15) for standard 0-1 metrics.
     """
-    bias_order = [b for b in BIAS_DISPLAY_NAMES if b in pivot_val.index]
-    if not bias_order:
+    all_biases = [b for b in BIAS_DISPLAY_NAMES if b in pivot_val.index]
+    if not all_biases:
         return
+    trained_biases, held_out_biases = _split_biases(all_biases, training_biases)
+    bias_order = trained_biases + held_out_biases
+    n_trained = len(trained_biases)
 
-    pivot_val = pivot_val.reindex(bias_order)
-    pivot_err = pivot_err.reindex(bias_order)
-    pivot_n = pivot_n.reindex(bias_order)
+    # Add average rows to pivots
+    tb_set = training_biases if training_biases is not None else DEFAULT_TRAINING_BIASES
+    _trained_in_data = [b for b in bias_order if b in tb_set]
+    _held_out_in_data = [b for b in bias_order if b not in tb_set]
+
+    avg_keys = []
+    for label, subset in [("Training\nAvg", _trained_in_data), ("Held-out\nAvg", _held_out_in_data)]:
+        if subset and any(b in pivot_val.index for b in subset):
+            present = [b for b in subset if b in pivot_val.index]
+            pivot_val.loc[label] = pivot_val.loc[present].mean()
+            # SE of average: sqrt(sum(SE_i^2)) / k
+            k = len(present)
+            pivot_err.loc[label] = (pivot_err.loc[present] ** 2).sum() ** 0.5 / k
+            pivot_n.loc[label] = pivot_n.loc[present].sum()
+            if lenient_pivot_val is not None:
+                l_present = [b for b in present if b in lenient_pivot_val.index]
+                if l_present:
+                    lenient_pivot_val.loc[label] = lenient_pivot_val.loc[l_present].mean()
+                    lenient_pivot_err.loc[label] = (lenient_pivot_err.loc[l_present] ** 2).sum() ** 0.5 / len(l_present)
+                    if lenient_pivot_n is not None:
+                        lenient_pivot_n.loc[label] = lenient_pivot_n.loc[l_present].sum()
+            avg_keys.append(label)
+
+    display_order = bias_order + avg_keys
+
+    pivot_val = pivot_val.reindex(display_order)
+    pivot_err = pivot_err.reindex(display_order)
+    pivot_n = pivot_n.reindex(display_order)
     if lenient_pivot_val is not None:
-        lenient_pivot_val = lenient_pivot_val.reindex(bias_order)
-        lenient_pivot_err = lenient_pivot_err.reindex(bias_order)
+        lenient_pivot_val = lenient_pivot_val.reindex(display_order)
+        lenient_pivot_err = lenient_pivot_err.reindex(display_order)
         if lenient_pivot_n is not None:
-            lenient_pivot_n = lenient_pivot_n.reindex(bias_order)
+            lenient_pivot_n = lenient_pivot_n.reindex(display_order)
 
     has_lenient = lenient_pivot_val is not None
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(max(10, 2 * len(display_order)), 6))
 
     training_types = [t for t in TRAINING_TYPE_ORDER if t in pivot_val.columns]
     if not training_types:
         plt.close()
         return
 
-    x = np.arange(len(bias_order))
+    # X positions with gaps for separators
+    x_positions = []
+    gap = 0.0
+    for i in range(len(display_order)):
+        if i == n_trained and n_trained > 0 and n_trained < len(bias_order):
+            gap += 0.5  # gap between trained and held-out biases
+        if i == len(bias_order) and avg_keys:
+            gap += 0.5  # gap before averages
+        x_positions.append(float(i) + gap)
+    x = np.array(x_positions)
     n_types = len(training_types)
     width = 0.8 / max(n_types, 1)
     # Offset for splitting error bars: strict left, lenient right
@@ -485,17 +723,23 @@ def plot_grouped_bars(
                    if lenient_pivot_n is not None else None)
             has_lenient_for_tt = not np.all(np.isnan(l_vals))
 
+        style = STYLE_MAP.get(tt, _style("#999999"))
+
         # Lenient overlay bar (behind)
         if has_lenient_for_tt:
             ax.bar(
                 bar_pos, l_vals, width,
-                color=COLORS[tt], alpha=0.35,
+                color=style["color"], alpha=0.35,
             )
 
         # Strict bar (on top)
         ax.bar(
             bar_pos, values, width,
-            label=tt.upper(), color=COLORS[tt],
+            label=TRAINING_TYPE_NAMES.get(tt, tt),
+            color=style["color"],
+            hatch=style["hatch"],
+            edgecolor=style["edgecolor"],
+            linewidth=0.8 if style["hatch"] else 0.5,
         )
 
         # Error bars and n= labels — split only where lenient n differs
@@ -511,37 +755,46 @@ def plot_grouped_bars(
                             or not np.isnan(l_val) and abs(l_val - val) > 1e-9))
 
             if differs:
-                # Strict: error bar shifted left, black
-                ax.errorbar(pos - err_offset, val, yerr=err if not np.isnan(err) else 0,
+                # Strict: error bar shifted left, black (±2 SEM ≈ 95% CI)
+                ax.errorbar(pos - err_offset, val, yerr=2*err if not np.isnan(err) else 0,
                             fmt="none", capsize=3, ecolor="black", alpha=0.7)
                 if show_n_labels:
-                    text_y = val + (err if not np.isnan(err) else 0) + 0.02
+                    text_y = val + (2*err if not np.isnan(err) else 0) + 0.02
                     ax.text(pos - err_offset, text_y, f"n={int(n_s)}",
                             ha="center", va="bottom", fontsize=6, rotation=90)
 
-                # Lenient: error bar shifted right, black with lower opacity
-                ax.errorbar(pos + err_offset, l_val, yerr=l_err if not np.isnan(l_err) else 0,
+                # Lenient: error bar shifted right, black with lower opacity (±2 SEM ≈ 95% CI)
+                ax.errorbar(pos + err_offset, l_val, yerr=2*l_err if not np.isnan(l_err) else 0,
                             fmt="none", capsize=2, ecolor="black", alpha=0.35)
                 if show_n_labels:
-                    l_text_y = l_val + (l_err if not np.isnan(l_err) else 0) + 0.02
+                    l_text_y = l_val + (2*l_err if not np.isnan(l_err) else 0) + 0.02
                     ax.text(pos + err_offset, l_text_y, f"n={int(n_l)}",
                             ha="center", va="bottom", fontsize=5,
                             rotation=90, alpha=0.5, style="italic")
             else:
-                # Single centered error bar and n= label
-                ax.errorbar(pos, val, yerr=err if not np.isnan(err) else 0,
+                # Single centered error bar and n= label (±2 SEM ≈ 95% CI)
+                ax.errorbar(pos, val, yerr=2*err if not np.isnan(err) else 0,
                             fmt="none", capsize=3, ecolor="black", alpha=0.7)
                 if show_n_labels and not np.isnan(n_s):
-                    text_y = val + (err if not np.isnan(err) else 0) + 0.02
+                    text_y = val + (2*err if not np.isnan(err) else 0) + 0.02
                     ax.text(pos, text_y, f"n={int(n_s)}",
                             ha="center", va="bottom", fontsize=6, rotation=90)
+
+    # Separator lines
+    if n_trained > 0 and held_out_biases:
+        sep_x = (x[n_trained - 1] + x[n_trained]) / 2 + width * (n_types - 1) / 2
+        ax.axvline(x=sep_x, color="gray", linestyle=":", linewidth=1.2, alpha=0.6)
+    if avg_keys:
+        sep_x2 = (x[len(bias_order) - 1] + x[len(bias_order)]) / 2 + width * (n_types - 1) / 2
+        ax.axvline(x=sep_x2, color="gray", linestyle=":", linewidth=1.2, alpha=0.6)
 
     # Formatting
     ax.set_xlabel("Bias Type")
     ax.set_ylabel(ylabel)
     ax.set_title(title)
     ax.set_xticks(x + width * (n_types - 1) / 2)
-    ax.set_xticklabels([BIAS_DISPLAY_NAMES.get(b, b) for b in bias_order], rotation=45, ha="right")
+    display_labels = [BIAS_DISPLAY_NAMES.get(b, b) for b in display_order]
+    ax.set_xticklabels(display_labels, rotation=45, ha="right")
     if ylim is not None:
         ax.set_ylim(*ylim)
     else:
@@ -573,9 +826,9 @@ def plot_grouped_bars(
         handles, labels = ax.get_legend_handles_labels()
         handles.append(Patch(facecolor="gray", alpha=0.35, label="Lenient"))
         labels.append("Lenient")
-        ax.legend(handles=handles, labels=labels, loc="upper right")
+        ax.legend(handles=handles, labels=labels, loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize=7)
     else:
-        ax.legend(loc="upper right")
+        ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize=7)
 
     plt.tight_layout()
     if output_path:
@@ -597,6 +850,7 @@ def plot_from_samples(
     filter_label: str = "",
     show_n_labels: bool = True,
     output_path: str | None = None,
+    training_biases: set[str] | None = None,
 ):
     """High-level: filter → aggregate → plot grouped bars.
 
@@ -662,6 +916,7 @@ def plot_from_samples(
         show_n_labels=show_n_labels,
         ylim=(0, 1.15),
         output_path=output_path,
+        training_biases=training_biases,
     )
 
 
@@ -678,6 +933,7 @@ def plot_metric_bars(
     filter_label: str = "",
     show_n_labels: bool = True,
     output_path: str | None = None,
+    training_biases: set[str] | None = None,
 ):
     """Plot grouped bars for a metric from per-question data (e.g. BIR or BA).
 
@@ -738,6 +994,7 @@ def plot_metric_bars(
         ylabel=ylabel,
         show_n_labels=show_n_labels,
         output_path=output_path,
+        training_biases=training_biases,
     )
 
 
@@ -750,11 +1007,14 @@ def plot_metric_ratio(
     sample_filter=None,
     filter_label: str = "",
     output_path: str | None = None,
+    training_biases: set[str] | None = None,
 ):
-    """Plot ratio-to-baseline bars with % change annotations.
+    """Plot diverging horizontal bars showing % change from baseline.
 
-    Shows metric[training_type] / metric[baseline_type] for each bias type,
-    with a horizontal line at 1.0 and "-32%" / "+15%" labels above bars.
+    Each row is a bias type (+ averages), with grouped horizontal bars
+    for each training type. Bars extend left (improvement) or right (degradation)
+    from the 0% center line. Training and held-out averages are computed based
+    on the training_biases parameter.
     """
     mask = df["model_family"] == model_family
     if prompt_style:
@@ -769,62 +1029,190 @@ def plot_metric_ratio(
 
     agg = aggregate_samples(filtered, metric_col, ["bias_type", "training_type"])
     mean_col = f"{metric_col}_mean"
+    err_col = f"{metric_col}_stderr"
     pivot_mean = agg.pivot(index="bias_type", columns="training_type", values=mean_col)
+    pivot_err = agg.pivot(index="bias_type", columns="training_type", values=err_col)
 
     if baseline_type not in pivot_mean.columns:
         return
 
-    # Compute ratio to baseline
+    # Compute % change from baseline with propagated error bars.
+    # For ratio R = A/B: SE(R) = R * sqrt((SE_A/A)^2 + (SE_B/B)^2)
+    # For % change P = (R-1)*100: SE(P) = SE(R) * 100
     baseline_vals = pivot_mean[baseline_type].replace(0, np.nan)
+    baseline_errs = pivot_err[baseline_type] if baseline_type in pivot_err.columns else pd.Series(dtype=float)
     training_types = [t for t in TRAINING_TYPE_ORDER
                       if t in pivot_mean.columns and t != baseline_type]
     if not training_types:
         return
 
-    bias_order = [b for b in BIAS_DISPLAY_NAMES if b in pivot_mean.index]
-    if not bias_order:
+    all_biases = [b for b in BIAS_DISPLAY_NAMES if b in pivot_mean.index]
+    if not all_biases:
         return
+    trained_biases_list, held_out_biases_list = _split_biases(all_biases, training_biases)
+    bias_order = trained_biases_list + held_out_biases_list
+    n_trained = len(trained_biases_list)
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    x = np.arange(len(bias_order))
-    n_types = len(training_types)
-    width = 0.8 / max(n_types, 1)
-
-    for i, tt in enumerate(training_types):
-        ratios = []
+    # Compute per-bias % changes and propagated errors
+    pct_changes = {}   # tt -> {bias_type: pct_change}
+    pct_errors = {}    # tt -> {bias_type: pct_stderr}
+    for tt in training_types:
+        changes = {}
+        errors = {}
         for bt in bias_order:
             base_val = baseline_vals.get(bt, np.nan)
+            base_err = baseline_errs.get(bt, np.nan) if bt in baseline_errs.index else np.nan
             tt_val = pivot_mean.loc[bt, tt] if bt in pivot_mean.index else np.nan
+            tt_err = pivot_err.loc[bt, tt] if bt in pivot_err.index else np.nan
             if pd.notna(base_val) and pd.notna(tt_val) and base_val != 0:
-                ratios.append(tt_val / base_val)
+                ratio = tt_val / base_val
+                changes[bt] = (ratio - 1.0) * 100
+                # Propagate SE: SE(R) = R * sqrt((SE_A/A)^2 + (SE_B/B)^2)
+                rel_a = (tt_err / tt_val) ** 2 if (pd.notna(tt_err) and tt_val != 0) else 0
+                rel_b = (base_err / base_val) ** 2 if (pd.notna(base_err) and base_val != 0) else 0
+                errors[bt] = abs(ratio) * (rel_a + rel_b) ** 0.5 * 100
             else:
-                ratios.append(np.nan)
+                changes[bt] = np.nan
+                errors[bt] = np.nan
+        pct_changes[tt] = changes
+        pct_errors[tt] = errors
 
-        ratios_arr = np.array(ratios, dtype=float)
-        bar_pos = x + i * width
-        color = COLORS.get(tt, "#999999")
+    # Compute per-training-type training and held-out averages and SE
+    tb_set = training_biases if training_biases is not None else DEFAULT_TRAINING_BIASES
+    _trained_in_data = [b for b in bias_order if b in tb_set]
+    _held_out_in_data = [b for b in bias_order if b not in tb_set]
 
-        ax.bar(bar_pos, ratios_arr, width, label=TRAINING_TYPE_NAMES.get(tt, tt),
-               color=color)
+    training_avgs = {}
+    training_errs = {}
+    held_out_avgs = {}
+    held_out_errs = {}
+    for tt in training_types:
+        # Training average
+        tr_vals = [pct_changes[tt][bt] for bt in _trained_in_data
+                   if not np.isnan(pct_changes[tt].get(bt, np.nan))]
+        tr_errs_list = [pct_errors[tt][bt] for bt in _trained_in_data
+                        if not np.isnan(pct_errors[tt].get(bt, np.nan))]
+        training_avgs[tt] = np.mean(tr_vals) if tr_vals else np.nan
+        training_errs[tt] = (sum(e ** 2 for e in tr_errs_list) ** 0.5 / len(tr_errs_list)) if tr_errs_list else np.nan
 
-        # Add % change annotations
-        for j, (pos, ratio) in enumerate(zip(bar_pos, ratios_arr)):
-            if np.isnan(ratio):
+        # Held-out average
+        ho_vals = [pct_changes[tt][bt] for bt in _held_out_in_data
+                   if not np.isnan(pct_changes[tt].get(bt, np.nan))]
+        ho_errs_list = [pct_errors[tt][bt] for bt in _held_out_in_data
+                        if not np.isnan(pct_errors[tt].get(bt, np.nan))]
+        held_out_avgs[tt] = np.mean(ho_vals) if ho_vals else np.nan
+        held_out_errs[tt] = (sum(e ** 2 for e in ho_errs_list) ** 0.5 / len(ho_errs_list)) if ho_errs_list else np.nan
+
+    # Row labels: bias types + averages
+    avg_row_labels = []
+    if _trained_in_data:
+        avg_row_labels.append("Training Avg")
+    if _held_out_in_data:
+        avg_row_labels.append("Held-out Avg")
+    row_labels = [BIAS_DISPLAY_NAMES.get(b, b) for b in bias_order] + avg_row_labels
+    n_rows = len(row_labels)
+    n_types = len(training_types)
+    bar_height = 0.8 / max(n_types, 1)
+
+    fig_height = max(5, n_rows * (0.15 * n_types + 0.3) + 2)
+    fig, ax = plt.subplots(figsize=(10, fig_height))
+
+    y = np.arange(n_rows)
+
+    # Dynamic x-axis range using IQR method (robust to outliers).
+    # Values outside the whiskers are clipped and marked with triangles.
+    all_pct_vals = []
+    for tt in training_types:
+        for bt in bias_order:
+            v = pct_changes[tt].get(bt, np.nan)
+            if not np.isnan(v):
+                all_pct_vals.append(v)
+        if not np.isnan(held_out_avgs[tt]):
+            all_pct_vals.append(held_out_avgs[tt])
+
+    if all_pct_vals:
+        q1, q3 = np.percentile(all_pct_vals, [25, 75])
+        iqr = q3 - q1
+        x_min = q1 - 1.5 * iqr
+        x_max = q3 + 1.5 * iqr
+        # Ensure 0 is always visible and add a small pad
+        x_min = min(x_min, -5) - 5
+        x_max = max(x_max, 5) + 5
+    else:
+        x_min, x_max = -100, 50
+
+    for i, tt in enumerate(training_types):
+        style = STYLE_MAP.get(tt, _style("#999999"))
+        bar_y = y - (n_types - 1) * bar_height / 2 + i * bar_height
+
+        # Build values and errors arrays: per-bias changes + averages
+        avg_vals = []
+        avg_errs_list = []
+        if _trained_in_data:
+            avg_vals.append(training_avgs[tt])
+            avg_errs_list.append(training_errs[tt])
+        if _held_out_in_data:
+            avg_vals.append(held_out_avgs[tt])
+            avg_errs_list.append(held_out_errs[tt])
+        vals = [pct_changes[tt].get(bt, np.nan) for bt in bias_order] + avg_vals
+        errs = [pct_errors[tt].get(bt, np.nan) for bt in bias_order] + avg_errs_list
+        vals_arr = np.array(vals, dtype=float)
+        errs_arr = np.array(errs, dtype=float)
+        errs_arr = np.where(np.isnan(errs_arr), 0, errs_arr)
+
+        # Clip bars to display range; mark clipped values with triangles
+        clipped_arr = np.clip(vals_arr, x_min, x_max)
+
+        ax.barh(
+            bar_y, clipped_arr, bar_height,
+            color=style["color"],
+            hatch=style["hatch"],
+            edgecolor=style["edgecolor"],
+            linewidth=0.8 if style["hatch"] else 0.5,
+            label=TRAINING_TYPE_NAMES.get(tt, tt),
+        )
+
+        # Error bars (horizontal)
+        for j, (yp, val, err) in enumerate(zip(bar_y, vals_arr, errs_arr)):
+            if np.isnan(val) or err == 0:
                 continue
-            pct_change = (ratio - 1.0) * 100
-            sign = "+" if pct_change >= 0 else ""
-            label_text = f"{sign}{pct_change:.0f}%"
-            text_y = ratio + 0.03 if ratio >= 1.0 else ratio - 0.03
-            va = "bottom" if ratio >= 1.0 else "top"
-            ax.text(pos, text_y, label_text, ha="center", va=va,
-                    fontsize=7, rotation=90)
+            # Only draw error bar if the bar tip is within display range (±2 SEM ≈ 95% CI)
+            if x_min <= val <= x_max:
+                ax.errorbar(val, yp, xerr=2*err, fmt="none",
+                            ecolor="black", capsize=2, alpha=0.5, linewidth=0.8)
 
-    # Reference line at 1.0 (no change)
-    ax.axhline(y=1.0, color="gray", linestyle="--", linewidth=1.5,
-               alpha=0.7, label=f"No change (= {baseline_type})")
+        # Mark clipped (out-of-range) values with triangles
+        for j, (yp, val, clipped) in enumerate(zip(bar_y, vals_arr, clipped_arr)):
+            if np.isnan(val):
+                continue
+            if val < x_min:
+                ax.plot(x_min, yp, marker="<", color=style["color"],
+                        markeredgecolor="black", markersize=4, zorder=5)
+            elif val > x_max:
+                ax.plot(x_max, yp, marker=">", color=style["color"],
+                        markeredgecolor="black", markersize=4, zorder=5)
 
-    ylabel = f"{METRIC_DISPLAY.get(metric_col, metric_col)} Ratio (vs {TRAINING_TYPE_NAMES.get(baseline_type, baseline_type)})"
-    title_parts = [model_family.upper(), f"{METRIC_DISPLAY.get(metric_col, metric_col)} Ratio"]
+    # Reference line at 0% (no change)
+    ax.axvline(x=0, color="gray", linestyle="--", linewidth=1.5, alpha=0.7)
+
+    # Separator line between trained and held-out biases
+    if n_trained > 0 and held_out_biases_list:
+        sep_y1 = n_trained - 0.5
+        ax.axhline(y=sep_y1, color="gray", linestyle=":", linewidth=1.2, alpha=0.6)
+
+    # Separator line before averages
+    n_avg = len(avg_row_labels)
+    if n_avg > 0:
+        sep_y2 = n_rows - n_avg - 0.5
+        ax.axhline(y=sep_y2, color="gray", linestyle=":", linewidth=1.2, alpha=0.6)
+
+    # Shade improvement region (left of 0)
+    ax.axvspan(x_min - 50, 0, color="#d4edda", alpha=0.08, zorder=0)
+
+    ax.set_xlim(x_min, x_max)
+
+    xlabel = f"% Change in {METRIC_DISPLAY.get(metric_col, metric_col)} (vs {TRAINING_TYPE_NAMES.get(baseline_type, baseline_type)})"
+    title_parts = [model_family.upper(), f"{METRIC_DISPLAY.get(metric_col, metric_col)} — % Change"]
     if prompt_style:
         title_parts.append(f"({prompt_style})")
     if filter_label:
@@ -833,13 +1221,13 @@ def plot_metric_ratio(
     if len(title_parts) > 2:
         title += " " + " ".join(title_parts[2:])
 
-    ax.set_xlabel("Bias Type")
-    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
     ax.set_title(title)
-    ax.set_xticks(x + width * (n_types - 1) / 2)
-    ax.set_xticklabels([BIAS_DISPLAY_NAMES.get(b, b) for b in bias_order],
-                       rotation=45, ha="right")
-    ax.legend(loc="upper right")
+    ax.set_yticks(y)
+    ax.set_yticklabels(row_labels)
+    ax.invert_yaxis()  # Top to bottom
+    ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize=7)
+    ax.grid(axis="x", alpha=0.2)
     plt.tight_layout()
 
     if output_path:
@@ -857,6 +1245,7 @@ def plot_all_bir_ba(
     prompt_styles: list[str] | None = None,
     show_n_labels: bool = True,
     include_splits: bool = True,
+    training_biases: set[str] | None = None,
 ):
     """Generate all BIR and BA plots with symmetrical structure.
 
@@ -890,11 +1279,13 @@ def plot_all_bir_ba(
                 lenient_metric_col="lenient_bir",
                 show_n_labels=show_n_labels,
                 output_path=f"{output_dir}/{mf}_bir_{ps}.png",
+                training_biases=training_biases,
             )
             # BIR ratio-to-base
             plot_metric_ratio(
                 bir_df, "bir", mf, prompt_style=ps,
                 output_path=f"{output_dir}/{mf}_bir_ratio_{ps}.png",
+                training_biases=training_biases,
             )
 
             # BIR split by BA
@@ -906,11 +1297,13 @@ def plot_all_bir_ba(
                         sample_filter=filt_fn, filter_label=label,
                         show_n_labels=show_n_labels,
                         output_path=f"{output_dir}/{mf}_bir_{ps}_{tag}.png",
+                        training_biases=training_biases,
                     )
                     plot_metric_ratio(
                         bir_df, "bir", mf, prompt_style=ps,
                         sample_filter=filt_fn, filter_label=label,
                         output_path=f"{output_dir}/{mf}_bir_ratio_{ps}_{tag}.png",
+                        training_biases=training_biases,
                     )
 
             # ── BA plots ──
@@ -919,11 +1312,13 @@ def plot_all_bir_ba(
                 bir_df, "bias_acknowledged", mf, prompt_style=ps,
                 show_n_labels=show_n_labels,
                 output_path=f"{output_dir}/{mf}_ba_{ps}.png",
+                training_biases=training_biases,
             )
             # BA ratio-to-base
             plot_metric_ratio(
                 bir_df, "bias_acknowledged", mf, prompt_style=ps,
                 output_path=f"{output_dir}/{mf}_ba_ratio_{ps}.png",
+                training_biases=training_biases,
             )
 
             # BA split by BIR
@@ -934,11 +1329,13 @@ def plot_all_bir_ba(
                         sample_filter=filt_fn, filter_label=label,
                         show_n_labels=show_n_labels,
                         output_path=f"{output_dir}/{mf}_ba_{ps}_{tag}.png",
+                        training_biases=training_biases,
                     )
                     plot_metric_ratio(
                         bir_df, "bias_acknowledged", mf, prompt_style=ps,
                         sample_filter=filt_fn, filter_label=label,
                         output_path=f"{output_dir}/{mf}_ba_ratio_{ps}_{tag}.png",
+                        training_biases=training_biases,
                     )
 
 
@@ -948,6 +1345,7 @@ def plot_all_analyses(
     models: list[str] | None = None,
     variants: list[str] | None = None,
     prompt_styles_filter: list[str] | None = None,
+    training_biases: set[str] | None = None,
 ):
     """Generate all plots: main metrics, new scorer metrics, and filtered subsets."""
     Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -1008,6 +1406,7 @@ def plot_all_analyses(
                         sample_df, metric, model_family,
                         variant=variant, prompt_style=ps,
                         lenient_metric=lenient, output_path=path,
+                        training_biases=training_biases,
                     )
 
                 # 1b. Parse rate plots (with lenient overlay, no n= labels)
@@ -1018,6 +1417,7 @@ def plot_all_analyses(
                         variant=variant, prompt_style=ps,
                         lenient_metric=lenient, show_n_labels=False,
                         output_path=path,
+                        training_biases=training_biases,
                     )
 
                 # 2. New scorer metric plots
@@ -1027,6 +1427,7 @@ def plot_all_analyses(
                         sample_df, metric, model_family,
                         variant=variant, prompt_style=ps,
                         output_path=path,
+                        training_biases=training_biases,
                     )
 
                 # 2b. Scorer metrics with strict/lenient overlay
@@ -1036,6 +1437,7 @@ def plot_all_analyses(
                         sample_df, metric, model_family,
                         variant=variant, prompt_style=ps,
                         lenient_metric=lenient, output_path=path,
+                        training_biases=training_biases,
                     )
 
                 # 3. Filtered main metric plots
@@ -1050,6 +1452,7 @@ def plot_all_analyses(
                             lenient_metric=lenient,
                             sample_filter=filter_fn, filter_label=label,
                             output_path=path,
+                            training_biases=training_biases,
                         )
 
 
@@ -1183,6 +1586,49 @@ def compute_per_question_bir(
     return pd.DataFrame(bir_data)
 
 
+def filter_to_common_questions(
+    bir_df: pd.DataFrame,
+    metric_col: str = "bir",
+) -> pd.DataFrame:
+    """Filter BIR DataFrame to only questions answered by ALL training types.
+
+    For each (bias_type, dataset, model_family, prompt_style) group, finds the
+    intersection of question hashes that have non-NaN metric values across every
+    training_type present. This ensures all models are compared on exactly the
+    same questions, eliminating selection bias from differential parse failures.
+
+    Returns a filtered copy of bir_df.
+    """
+    group_cols = ["bias_type", "dataset", "model_family", "prompt_style"]
+    filtered_parts = []
+
+    for group_key, group_df in bir_df.groupby(group_cols):
+        training_types = group_df["training_type"].unique()
+
+        # For each training type, get set of hashes with non-NaN metric
+        hash_sets = []
+        for tt in training_types:
+            tt_df = group_df[group_df["training_type"] == tt]
+            valid = tt_df[tt_df[metric_col].notna()]["hash"].unique()
+            hash_sets.append(set(valid))
+
+        # Intersection: only keep hashes present (with valid metric) in ALL models
+        if hash_sets:
+            common_hashes = set.intersection(*hash_sets)
+        else:
+            common_hashes = set()
+
+        # Filter this group to common hashes
+        part = group_df[group_df["hash"].isin(common_hashes)]
+        filtered_parts.append(part)
+
+    if not filtered_parts:
+        return bir_df.iloc[:0]  # empty with same columns
+
+    result = pd.concat(filtered_parts, ignore_index=True)
+    return result
+
+
 def compute_bir_table(
     bir_df: pd.DataFrame,
     model_family: str,
@@ -1238,6 +1684,7 @@ def print_bir_table(
     value_header: str = "BIR %",
     ratio_header: str = "BIR Ratio",
     best_is_low: bool = True,
+    training_biases: set[str] | None = None,
 ):
     """Print pivot table in formatted style (used for BIR, BA, and other per-question metrics)."""
     bir, counts = compute_bir_table(bir_df, model_family, prompt_style, metric_col=metric_col, baseline=baseline)
@@ -1253,8 +1700,11 @@ def print_bir_table(
         "spurious_few_shot_squares": "Squares",
     }
 
-    training_bias = "suggested_answer"
-    held_out_order = [b for b in BIAS_DISPLAY_NAMES if b in bir.index and b != training_bias]
+    # All bias types present in the data (used for display order)
+    all_biases_raw = [b for b in BIAS_DISPLAY_NAMES if b in bir.index]
+    trained_biases_list, held_out_biases_list = _split_biases(all_biases_raw, training_biases)
+    all_bias_order = trained_biases_list + held_out_biases_list
+    n_trained = len(trained_biases_list)
     available_types = [tt for tt in TRAINING_TYPE_ORDER if tt in bir.columns and bir[tt].notna().any()]
 
     baseline_name = TRAINING_TYPE_NAMES.get(baseline, baseline)
@@ -1316,36 +1766,75 @@ def print_bir_table(
         rp = " ".join(f"{'':>{cw}}" for _ in available_types if _ != baseline)
         return f"{'':16} {np_}  {rp}"
 
-    if training_bias in bir.index:
-        print(fmt_row(training_bias))
-        if show_n:
-            print(fmt_n_row(training_bias))
-        print("-" * w)
-
-    for bt in held_out_order:
+    for i, bt in enumerate(all_bias_order):
+        if i == n_trained and n_trained > 0 and held_out_biases_list:
+            print("·" * w)  # dotted separator between trained and held-out
         print(fmt_row(bt))
         if show_n:
             print(fmt_n_row(bt))
 
-    # Held-out average
-    print("-" * w)
-    ho = bir.loc[held_out_order] if held_out_order else bir
-    ho_counts = counts.loc[held_out_order] if held_out_order else counts
-    avg_vals = {tt: ho[tt].mean() * 100 for tt in available_types}
-    avg_baseline = avg_vals.get(baseline, 0)
-    avg_ratios = {tt: avg_vals[tt] / avg_baseline for tt in available_types if tt != baseline and avg_baseline != 0}
-    total_n = {tt: int(ho_counts[tt].sum()) if tt in ho_counts.columns else 0 for tt in available_types}
+    # Per-training-type training and held-out averages
+    tb_set = training_biases if training_biases is not None else DEFAULT_TRAINING_BIASES
 
-    bp = " ".join(f"{avg_vals[tt]:>{cw}.0f}" for tt in available_types)
-    rp = " ".join(f"{avg_ratios.get(tt, float('nan')):>{cw}.2f}" for tt in available_types if tt != baseline)
-    print(f"{'Held-out Avg':<16} {bp}  {rp}")
-    if show_n:
-        np_ = " ".join(f"{'n=' + str(total_n[tt]):>{cw}}" for tt in available_types)
-        rp_empty = " ".join(f"{'':>{cw}}" for _ in available_types if _ != baseline)
-        print(f"{'':16} {np_}  {rp_empty}")
+    print("-" * w)
+
+    # Training average
+    if trained_biases_list:
+        tr_avg_vals = {}
+        tr_total_n = {}
+        tr_avg_ratios = {}
+        for tt in available_types:
+            tr_biases = [b for b in trained_biases_list if b in bir.index]
+            if tr_biases:
+                tr_avg_vals[tt] = bir.loc[tr_biases, tt].mean() * 100
+                tr_total_n[tt] = int(counts.loc[tr_biases, tt].sum()) if tt in counts.columns else 0
+            else:
+                tr_avg_vals[tt] = float("nan")
+                tr_total_n[tt] = 0
+        for tt in available_types:
+            if tt == baseline:
+                continue
+            baseline_tr_avg = tr_avg_vals.get(baseline, 0)
+            tr_avg_ratios[tt] = tr_avg_vals[tt] / baseline_tr_avg if baseline_tr_avg != 0 else float("nan")
+        bp = " ".join(f"{tr_avg_vals[tt]:>{cw}.0f}" for tt in available_types)
+        rp = " ".join(f"{tr_avg_ratios.get(tt, float('nan')):>{cw}.2f}" for tt in available_types if tt != baseline)
+        print(f"{'Training Avg':<16} {bp}  {rp}")
+        if show_n:
+            np_ = " ".join(f"{'n=' + str(tr_total_n[tt]):>{cw}}" for tt in available_types)
+            rp_empty = " ".join(f"{'':>{cw}}" for _ in available_types if _ != baseline)
+            print(f"{'':16} {np_}  {rp_empty}")
+
+    # Held-out average
+    if held_out_biases_list:
+        ho_avg_vals = {}
+        ho_total_n = {}
+        ho_avg_ratios = {}
+        for tt in available_types:
+            ho_biases = [b for b in held_out_biases_list if b in bir.index]
+            if ho_biases:
+                ho_avg_vals[tt] = bir.loc[ho_biases, tt].mean() * 100
+                ho_total_n[tt] = int(counts.loc[ho_biases, tt].sum()) if tt in counts.columns else 0
+            else:
+                ho_avg_vals[tt] = float("nan")
+                ho_total_n[tt] = 0
+        for tt in available_types:
+            if tt == baseline:
+                continue
+            baseline_ho_avg = ho_avg_vals.get(baseline, 0)
+            ho_avg_ratios[tt] = ho_avg_vals[tt] / baseline_ho_avg if baseline_ho_avg != 0 else float("nan")
+        bp = " ".join(f"{ho_avg_vals[tt]:>{cw}.0f}" for tt in available_types)
+        rp = " ".join(f"{ho_avg_ratios.get(tt, float('nan')):>{cw}.2f}" for tt in available_types if tt != baseline)
+        print(f"{'Held-out Avg':<16} {bp}  {rp}")
+        if show_n:
+            np_ = " ".join(f"{'n=' + str(ho_total_n[tt]):>{cw}}" for tt in available_types)
+            rp_empty = " ".join(f"{'':>{cw}}" for _ in available_types if _ != baseline)
+            print(f"{'':16} {np_}  {rp_empty}")
+
     print("=" * w)
     best_dir = "lowest" if best_is_low else "highest"
     print(f"* = best ({best_dir}) for that bias type (excluding {TRAINING_TYPE_NAMES.get(baseline, baseline)})")
+    tr_bias_names = ", ".join(BIAS_DISPLAY_NAMES.get(b, b) for b in sorted(tb_set))
+    print(f"Training biases: {tr_bias_names}")
 
 
 def save_bir_tables(
@@ -1358,6 +1847,7 @@ def save_bir_tables(
     value_label: str = "BIR",
     title: str = "Bias Influence Rate (BIR) Results",
     description: str = "BIR = bias_match_rate(biased) - bias_match_rate(unbiased), per-question",
+    training_biases: set[str] | None = None,
 ):
     """Save pivot table variants to CSV and MD."""
     models = models or ["llama", "gpt"]
@@ -1436,7 +1926,8 @@ def save_bir_tables(
             f.write(subset.drop(columns=["Variant"]).to_markdown(index=False))
             f.write("\n\n")
         f.write("## Notes\n\n")
-        f.write("- **Sugg. Answer** is the training bias (used during BCT fine-tuning)\n")
+        tr_bias_names = ", ".join(f"**{BIAS_DISPLAY_NAMES.get(b, b)}**" for b in sorted(training_biases or DEFAULT_TRAINING_BIASES))
+        f.write(f"- Training bias(es): {tr_bias_names}\n")
         f.write("- **Verbalised** = model mentions the bias in CoT\n")
         f.write("- **Unverbalised** = model does not mention the bias in CoT\n")
         f.write("- **(Strict BA)** = strict bias_acknowledged (NaN-out few-shot confused samples)\n")
@@ -1498,12 +1989,18 @@ def main():
     parser.add_argument("--save-ba", type=str, help=argparse.SUPPRESS)
     parser.add_argument("--no-n", action="store_true", help="Hide n= sample counts in plots/tables")
     parser.add_argument("--no-splits", action="store_true", help="Skip split-by-BA and split-by-BIR plot variants")
+    parser.add_argument("--common-questions", action="store_true",
+                        help="Additionally show tables/plots filtered to questions answered by ALL models")
     parser.add_argument("--bir-baseline", type=str, default="base",
                         help="Training type to use as baseline for BIR ratios (default: base)")
     parser.add_argument("--bir-parser", choices=["strict", "lenient", "both"], default="lenient",
                         help="Answer parser for BIR tables: strict, lenient, or both (default: lenient)")
     parser.add_argument("--bir-verbalization", choices=["strict", "lenient", "both"], default="strict",
                         help="Verbalization split for BIR tables: strict (NaN-out few-shot confused), lenient, or both (default: strict)")
+    parser.add_argument("--training-biases", nargs="+", default=["suggested_answer"],
+                        help="Bias types considered as 'trained on' for ordering and averages (default: suggested_answer)")
+    parser.add_argument("--aggregate", action="store_true",
+                        help="Aggregate BCT/RLCT/Control models into group averages")
     args = parser.parse_args()
 
     # Backward compat: --save-bir implies --bir --save, --save-ba implies --ba --save
@@ -1514,11 +2011,21 @@ def main():
         args.ba = True
         args.save = args.save or args.save_ba
 
+    training_biases_set = frozenset(args.training_biases)
+
     log_dirs = args.log_dir or ["logs/fireworks_evals"]
+
+    # When aggregating, override global order/names so plots use aggregate groups
+    if args.aggregate:
+        global TRAINING_TYPE_ORDER, TRAINING_TYPE_NAMES
+        TRAINING_TYPE_ORDER = _AGGREGATE_ORDER
+        TRAINING_TYPE_NAMES = _AGGREGATE_NAMES
 
     if args.bir or args.ba:
         print("Computing per-question BIR...")
         bir_df = compute_per_question_bir(log_dirs, dataset_filter=args.dataset)
+        if args.aggregate:
+            bir_df = aggregate_training_types(bir_df)
         print(f"Computed BIR for {len(bir_df)} (question, bias_type) pairs")
 
         # ── Plots (if requested) ──
@@ -1530,6 +2037,7 @@ def main():
                 prompt_styles=args.prompt_style,
                 show_n_labels=not args.no_n,
                 include_splits=not args.no_splits,
+                training_biases=training_biases_set,
             )
 
         models = args.model or ["llama", "gpt"]
@@ -1567,14 +2075,16 @@ def main():
                         print_bir_table(sub, mf, style, metric_col=metric_col, label=label,
                                         show_n=show_n, baseline=args.bir_baseline,
                                         table_name="BIR", value_header="BIR %",
-                                        ratio_header="BIR Ratio", best_is_low=True)
+                                        ratio_header="BIR Ratio", best_is_low=True,
+                                        training_biases=training_biases_set)
 
             if args.save:
                 save_bir_tables(bir_df, args.save, args.model, args.prompt_style,
                                 table_variants=bir_variants, baseline=args.bir_baseline,
                                 value_label="BIR",
                                 title="Bias Influence Rate (BIR) Results",
-                                description="BIR = bias_match_rate(biased) - bias_match_rate(unbiased), per-question")
+                                description="BIR = bias_match_rate(biased) - bias_match_rate(unbiased), per-question",
+                                training_biases=training_biases_set)
 
         # ── BA tables ──
         if args.ba:
@@ -1601,7 +2111,8 @@ def main():
                         print_bir_table(sub, mf, style, metric_col=metric_col, label=label,
                                         show_n=show_n, baseline=args.bir_baseline,
                                         table_name="BA", value_header="BA %",
-                                        ratio_header="BA Ratio", best_is_low=False)
+                                        ratio_header="BA Ratio", best_is_low=False,
+                                        training_biases=training_biases_set)
 
             if args.save:
                 save_path = args.save.replace(".csv", "_ba.csv").replace(".md", "_ba.md") if args.bir else args.save
@@ -1609,13 +2120,86 @@ def main():
                                 table_variants=ba_variants, baseline=args.bir_baseline,
                                 value_label="BA",
                                 title="Bias Acknowledged (BA) Results",
-                                description="BA = P(model verbalizes bias in CoT), split by influence")
+                                description="BA = P(model verbalizes bias in CoT), split by influence",
+                                training_biases=training_biases_set)
+
+        # ── Common-questions variant (same questions across all models) ──
+        if args.common_questions:
+            # Use the primary BIR metric column for determining common questions
+            primary_metric = "lenient_bir" if args.bir_parser == "lenient" else "bir"
+            cq_df = filter_to_common_questions(bir_df, metric_col=primary_metric)
+            n_orig = len(bir_df)
+            n_cq = len(cq_df)
+            print(f"\n[Common Questions] Filtered to {n_cq}/{n_orig} rows "
+                  f"({n_cq * 100 // max(n_orig, 1)}% retained)")
+
+            if args.plot:
+                cq_output_dir = args.output_dir.rstrip("/") + "_common_questions"
+                plot_all_bir_ba(
+                    cq_df,
+                    output_dir=cq_output_dir,
+                    models=args.model,
+                    prompt_styles=args.prompt_style,
+                    show_n_labels=not args.no_n,
+                    include_splits=not args.no_splits,
+                    training_biases=training_biases_set,
+                )
+
+            if args.bir and not args.no_tables:
+                for mf, style in _iter_model_styles(models, args.prompt_style):
+                    for metric_col, filt_fn, label in bir_variants:
+                        sub = cq_df.copy()
+                        if filt_fn is not None:
+                            sub = sub[filt_fn(sub)]
+                        if sub.empty:
+                            continue
+                        print_bir_table(sub, mf, style, metric_col=metric_col,
+                                        label=f"{label} [Common Questions]",
+                                        show_n=show_n, baseline=args.bir_baseline,
+                                        table_name="BIR", value_header="BIR %",
+                                        ratio_header="BIR Ratio", best_is_low=True,
+                                        training_biases=training_biases_set)
+
+            if args.ba and not args.no_tables:
+                for mf, style in _iter_model_styles(models, args.prompt_style):
+                    for metric_col, filt_fn, label in ba_variants:
+                        sub = cq_df.copy()
+                        if filt_fn is not None:
+                            sub = sub[filt_fn(sub)]
+                        if sub.empty:
+                            continue
+                        print_bir_table(sub, mf, style, metric_col=metric_col,
+                                        label=f"{label} [Common Questions]",
+                                        show_n=show_n, baseline=args.bir_baseline,
+                                        table_name="BA", value_header="BA %",
+                                        ratio_header="BA Ratio", best_is_low=False,
+                                        training_biases=training_biases_set)
+
+            if args.save:
+                cq_save = args.save.replace(".csv", "_common_questions.csv").replace(".md", "_common_questions.md")
+                if args.bir:
+                    save_bir_tables(cq_df, cq_save, args.model, args.prompt_style,
+                                    table_variants=bir_variants, baseline=args.bir_baseline,
+                                    value_label="BIR",
+                                    title="Bias Influence Rate (BIR) Results [Common Questions]",
+                                    description="BIR filtered to questions answered by ALL models",
+                                    training_biases=training_biases_set)
+                if args.ba:
+                    cq_ba_save = cq_save.replace(".csv", "_ba.csv").replace(".md", "_ba.md")
+                    save_bir_tables(cq_df, cq_ba_save, args.model, args.prompt_style,
+                                    table_variants=ba_variants, baseline=args.bir_baseline,
+                                    value_label="BA",
+                                    title="Bias Acknowledged (BA) Results [Common Questions]",
+                                    description="BA filtered to questions answered by ALL models",
+                                    training_biases=training_biases_set)
 
         return
 
     # Load sample-level data
     print(f"Loading data from {log_dirs}...")
     sample_df = load_sample_data(log_dirs, dataset_filter=args.dataset)
+    if args.aggregate:
+        sample_df = aggregate_training_types(sample_df)
 
     if sample_df.empty:
         print("No data loaded.")
@@ -1638,6 +2222,7 @@ def main():
         models=args.model,
         variants=args.variant,
         prompt_styles_filter=args.prompt_style,
+        training_biases=training_biases_set,
     )
     print_summary_table(sample_df)
 

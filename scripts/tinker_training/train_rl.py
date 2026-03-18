@@ -51,6 +51,7 @@ from cot_transparency.apis.tinker.rl_training import (
     TrainingSamplingConfig,
     TrainingLoopConfig,
     GenerationConfig,
+    ConsistencyReward,
 )
 from cot_transparency.apis.tinker.common import CheckpointConfig, AdamConfig, LoRAConfig
 from sycophancy_eval_inspect.mcq.answer_parser import cot_answer_parser
@@ -127,6 +128,7 @@ def main():
     parser.add_argument("--lr-schedule", default="constant", choices=["constant", "linear", "cosine"])
     parser.add_argument("--lora-rank", type=int, default=8)
     parser.add_argument("--kl-coef", type=float, default=0.05)
+    parser.add_argument("--anchor-weight", type=float, default=0.5, help="Anchor weight (alpha): 0=pure consistency, 1=pure anchor, 0.5=equal")
     parser.add_argument("--loss-fn", default="ppo", choices=["ppo", "reinforce"])
 
     # === Sampling ===
@@ -245,6 +247,7 @@ def main():
     print(f"  n_train_samples:    {args.n_train_samples}")
     print(f"  n_grad_samples:     {n_grad}")
     print(f"  KL coef:            {args.kl_coef}")
+    print(f"  Anchor weight:      {args.anchor_weight}")
     print(f"  Loss fn:            {args.loss_fn}")
     if args.resume_from:
         print(f"  Resume from:        {args.resume_from}")
@@ -271,7 +274,8 @@ def main():
     else:
         perturbation_fns = [unbiased_perturbation, biased_perturbation]
 
-    trainer = RLTrainer(config=config, resume_from=args.resume_from)
+    reward_fn = ConsistencyReward(anchor_weight=args.anchor_weight)
+    trainer = RLTrainer(config=config, reward_function=reward_fn, resume_from=args.resume_from)
     trainer.setup()
 
     final_checkpoint = asyncio.run(

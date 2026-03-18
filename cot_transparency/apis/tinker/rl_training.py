@@ -26,6 +26,7 @@ Usage:
 """
 
 import asyncio
+from collections import defaultdict
 import hashlib
 import json
 import logging
@@ -209,8 +210,9 @@ class SampleResult:
     """Pre-computed result from _collect_samples.
     Rates are computed inside _collect_samples so the full sample data
     can be freed early. Only gradient samples retain tokens/logprobs."""
-    grad_samples: list["Sample"]          # Gradient samples (with tokens/logprobs)
-    rates: dict[int, float]               # Trait rate per perturbation index
+    grad_samples: list["Sample"]          # Training perturbation gradient samples
+    ref_grad_samples: list["Sample"]      # Reference perturbation gradient samples (for anchor)
+    rates: dict[int, float | None]         # Trait rate per perturbation index (None if 0 parsed)
     rate_counts: dict[int, int]           # Number of parsed samples per perturbation
     n_total: int                          # Total raw samples (all perturbations)
     n_parsed: int                         # Parsed samples (all perturbations)
@@ -285,18 +287,35 @@ class RewardFunction(ABC):
 
 
 class ConsistencyReward(RewardFunction):
-    """Consistency reward: r = (1-a)*r_consistency + a*r_anchor"""
+    """Consistency reward for training perturbation samples.
+
+    Pushes p_hat toward p_ref (privileged) using variance-optimal baseline p_hat.
+    r = -(p_hat - p_ref) * (trait - p_hat)
+
+    Anchor reward is computed separately on reference perturbation samples.
+    """
 
     def __init__(self, anchor_weight: float = 0.5):
         self.anchor_weight = anchor_weight
 
     def compute_rewards(self, samples: list[Sample], p_hat: dict[int, float], p_ref: float, p_ref_initial: float) -> list[float]:
-        a = self.anchor_weight
+        """Consistency-only rewards for training perturbation samples."""
         rewards = []
         for s in samples:
-            r_consistency = -(p_hat[s.perturbation_idx] - p_ref) * (s.trait_value - p_ref)
-            r_anchor = -(p_ref - p_ref_initial) * (s.trait_value - p_ref_initial)
-            rewards.append((1 - a) * r_consistency + a * r_anchor)
+            r = -(p_hat[s.perturbation_idx] - p_ref) * (s.trait_value - p_hat[s.perturbation_idx])
+            rewards.append(r)
+        return rewards
+
+    def compute_anchor_rewards(self, ref_samples: list[Sample], p_ref: float, p_ref_initial: float) -> list[float]:
+        """Anchor rewards for reference perturbation samples.
+
+        Pushes p_ref back toward p_ref_initial using variance-optimal baseline p_ref.
+        r = -(p_ref - p_ref_initial) * (trait - p_ref)
+        """
+        rewards = []
+        for s in ref_samples:
+            r = -(p_ref - p_ref_initial) * (s.trait_value - p_ref)
+            rewards.append(r)
         return rewards
 
 
@@ -457,32 +476,36 @@ class RLTrainer:
         # Select gradient samples (only these keep tokens/logprobs)
         if rates_only:
             grad_samples = []
+            ref_grad_samples = []
         else:
             grad_samples = self._select_gradient_samples(all_samples, list(training_idx))
+            # Reference perturbation samples for anchor gradient — use all parsed samples
+            ref_grad_samples = self._select_gradient_samples(all_samples, list(ref_idx))
 
         # all_samples (with full token/logprob data for all 64×n_perts samples)
         # goes out of scope here and can be GC'd immediately.
         return SampleResult(
             grad_samples=grad_samples,
+            ref_grad_samples=ref_grad_samples,
             rates=rates,
             rate_counts=rate_counts,
             n_total=n_total,
             n_parsed=n_parsed,
         )
 
-    def _compute_rates(self, samples: dict[int, list[Sample]], indices: list[int]) -> tuple[dict[int, float], dict[int, int]]:
+    def _compute_rates(self, samples: dict[int, list[Sample]], indices: list[int]) -> tuple[dict[int, float | None], dict[int, int]]:
         """Compute trait rates, only using successfully parsed samples.
 
         Returns:
-            rates: dict mapping perturbation index to trait rate
+            rates: dict mapping perturbation index to trait rate (None if no parsed samples)
             counts: dict mapping perturbation index to number of parsed samples used
         """
-        rates = {}
+        rates: dict[int, float | None] = {}
         counts = {}
         for idx in indices:
             parsed = [s for s in samples.get(idx, []) if s.parsed_successfully]
             counts[idx] = len(parsed)
-            rates[idx] = sum(s.trait_value for s in parsed) / len(parsed) if parsed else 0.5
+            rates[idx] = sum(s.trait_value for s in parsed) / len(parsed) if parsed else None
         return rates, counts
 
     def _select_gradient_samples(self, samples: dict[int, list[Sample]], training_indices: list[int]) -> list[Sample]:
@@ -560,13 +583,16 @@ class RLTrainer:
         total_samples = 0
         parsed_samples = 0
 
-        async def estimate_for_situation(sit_idx: int, situation: dict, parser: Optional[Callable[[str], Optional[str]]] = None) -> tuple[int, float, int, int]:
+        async def estimate_for_situation(sit_idx: int, situation: dict, parser: Optional[Callable[[str], Optional[str]]] = None) -> tuple[int, float | None, int, int]:
             result = await self._collect_samples(situation, perturbation_fns, trait_classifier,
                                                  use_base_model=True, answer_parser=parser,
                                                  rates_only=True)
-            rate_values = [result.rates[idx] for idx in ref_indices if idx in result.rates]
-            rate = ref_cfg.aggregate_rates(rate_values) if ref_cfg.aggregation and rate_values else (
-                sum(rate_values) / len(rate_values) if rate_values else 0.5
+            rate_values = [result.rates[idx] for idx in ref_indices
+                           if idx in result.rates and result.rates[idx] is not None]
+            if not rate_values:
+                return sit_idx, None, result.n_total, result.n_parsed
+            rate = ref_cfg.aggregate_rates(rate_values) if ref_cfg.aggregation else (
+                sum(rate_values) / len(rate_values)
             )
             return sit_idx, rate, result.n_total, result.n_parsed
 
@@ -576,12 +602,19 @@ class RLTrainer:
             for sit_idx in range(len(situations))
         ])
 
-        # Aggregate parse stats and report
+        # Aggregate parse stats and report (skip situations with no parsed samples)
         rate_dict = {}
+        n_failed = 0
         for sit_idx, rate, n_total, n_parsed in results:
-            rate_dict[sit_idx] = rate
+            if rate is not None:
+                rate_dict[sit_idx] = rate
+            else:
+                n_failed += 1
             total_samples += n_total
             parsed_samples += n_parsed
+
+        if n_failed > 0:
+            print(f"  ⚠️  {n_failed}/{len(situations)} situations had 0 parsed samples in base rate estimation")
 
         if total_samples > 0 and answer_parser is not None:
             parse_rate = parsed_samples / total_samples
@@ -679,6 +712,7 @@ class RLTrainer:
         if initial_reference_rates is None:
             initial_reference_rates = {}
         ref_cfg = self.config.reference_rate
+        need_p_ref_init = self.reward_function.anchor_weight > 0
 
         sit_per_group = self.config.loop.situations_per_group
         n_groups = (n_situations + sit_per_group - 1) // sit_per_group
@@ -721,15 +755,20 @@ class RLTrainer:
             # with fwd_bwd) and resolved lazily when their result is needed.
             pending_base_tasks: dict[int, asyncio.Task] = {}
 
-            def _resolve_base_rate(sit_idx: int, base_result: SampleResult):
+            def _resolve_base_rate(sit_idx: int, base_result: SampleResult) -> bool:
                 """Extract and cache p_ref_init from base model sample result.
                 Rates are already computed inside _collect_samples, so this just
-                aggregates the reference perturbation rates into a single float."""
-                base_rate_vals = [base_result.rates[i] for i in ref_idx if i in base_result.rates]
+                aggregates the reference perturbation rates into a single float.
+                Returns True if a valid rate was obtained, False otherwise."""
+                base_rate_vals = [base_result.rates[i] for i in ref_idx
+                                  if i in base_result.rates and base_result.rates[i] is not None]
+                if not base_rate_vals:
+                    return False
                 initial_reference_rates[sit_idx] = (
-                    ref_cfg.aggregate_rates(base_rate_vals) if ref_cfg.aggregation and base_rate_vals
-                    else (sum(base_rate_vals) / len(base_rate_vals) if base_rate_vals else 0.5)
+                    ref_cfg.aggregate_rates(base_rate_vals) if ref_cfg.aggregation
+                    else sum(base_rate_vals) / len(base_rate_vals)
                 )
+                return True
 
             # Target situation list for base watcher — updated as training progresses
             base_target_sits: list[int] = []
@@ -738,12 +777,19 @@ class RLTrainer:
                 """Prune completed base tasks and resolve their rates."""
                 done_keys = [k for k, t in pending_base_tasks.items() if t.done()]
                 for k in done_keys:
-                    _resolve_base_rate(k, pending_base_tasks.pop(k).result())
+                    task = pending_base_tasks.pop(k)
+                    try:
+                        _resolve_base_rate(k, task.result())
+                    except Exception as e:
+                        # Task failed (e.g. API error). Leave sit out of
+                        # initial_reference_rates — the on-demand path in
+                        # the resolution block will retry.
+                        _log.warning("Base sampling task for sit %d failed: %s", k, e)
 
             def _fill_base_slots():
                 """Launch base tasks up to the concurrency limit.
                 Iterates base_target_sits and fills any free slots."""
-                if global_step == 0:
+                if global_step == 0 or not need_p_ref_init:
                     return
                 max_concurrent = self.config.loop.max_concurrent_base_samples
                 for idx in base_target_sits:
@@ -773,14 +819,11 @@ class RLTrainer:
 
                 # Step 0: policy == base model, so policy samples give the
                 # exact base rate. No extra API call needed.
-                need_base = sit_idx not in initial_reference_rates
+                need_base = need_p_ref_init and sit_idx not in initial_reference_rates
                 if need_base and global_step == 0:
                     result = await self._collect_samples(situation, perturbation_fns, trait_classifier, answer_parser=answer_parser)
-                    init_rate_vals = [result.rates[i] for i in ref_idx if i in result.rates]
-                    initial_reference_rates[sit_idx] = (
-                        ref_cfg.aggregate_rates(init_rate_vals) if ref_cfg.aggregation and init_rate_vals
-                        else (sum(init_rate_vals) / len(init_rate_vals) if init_rate_vals else 0.5)
-                    )
+                    # At step 0, policy == base model, so these rates ARE the base rates
+                    _resolve_base_rate(sit_idx, result)
                 else:
                     # Policy-only sampling. Base sampling (if needed) runs
                     # separately during training waits — see _launch_base_tasks.
@@ -798,15 +841,22 @@ class RLTrainer:
                 # p_ref_init may not be available yet (base task still running).
                 # Return None as placeholder; resolved before reward computation.
                 p_ref_init = initial_reference_rates.get(sit_idx, None)
-                p_hat = {i: result.rates[i] for i in training_idx if i in result.rates}
+                p_hat = {i: result.rates[i] for i in training_idx
+                         if i in result.rates and result.rates[i] is not None}
                 n_hat = {i: result.rate_counts[i] for i in training_idx if i in result.rate_counts}
-                ref_rate_vals = [result.rates[i] for i in ref_idx if i in result.rates]
-                p_ref = ref_cfg.aggregate_rates(ref_rate_vals) if ref_cfg.aggregation and ref_rate_vals else (
-                    sum(ref_rate_vals) / len(ref_rate_vals) if ref_rate_vals else (p_ref_init if p_ref_init is not None else 0.5)
-                )
+                ref_rate_vals = [result.rates[i] for i in ref_idx
+                                 if i in result.rates and result.rates[i] is not None]
+                if ref_rate_vals:
+                    p_ref = ref_cfg.aggregate_rates(ref_rate_vals) if ref_cfg.aggregation else (
+                        sum(ref_rate_vals) / len(ref_rate_vals)
+                    )
+                else:
+                    # No parsed ref samples from policy — fall back to p_ref_init (may be None)
+                    p_ref = p_ref_init
                 n_ref_total = sum(result.rate_counts[i] for i in ref_idx if i in result.rate_counts)
                 n_hat_total = sum(n_hat.values())
-                return (sit_idx, situation, result.grad_samples, p_hat, p_ref, p_ref_init,
+                return (sit_idx, situation, result.grad_samples, result.ref_grad_samples,
+                        p_hat, p_ref, p_ref_init,
                         result.n_total, result.n_parsed, n_ref_total, n_hat_total)
 
             async def sample_group(group_idx):
@@ -841,7 +891,7 @@ class RLTrainer:
                 parsed_samples = 0
                 total_n_ref = 0
                 total_n_hat = 0
-                for _, _, _, _, _, _, n_total, n_parsed, n_ref, n_hat in group_data:
+                for _, _, _, _, _, _, _, n_total, n_parsed, n_ref, n_hat in group_data:
                     total_samples += n_total
                     parsed_samples += n_parsed
                     total_n_ref += n_ref
@@ -856,29 +906,89 @@ class RLTrainer:
 
                 # Resolve any pending base tasks for situations in this group.
                 # Base tasks run during training waits; if one hasn't finished,
-                # await it now (rare — training is typically 10x slower).
+                # await it now. If no task exists at all, launch one on the spot
+                # rather than falling back to an arbitrary 0.5.
                 resolved_group_data = []
                 for row in group_data:
-                    sit_idx, situation, grad_samples, p_hat, p_ref, p_ref_init, n_total, n_parsed, n_ref_total, n_hat_total = row
-                    if p_ref_init is None:
+                    sit_idx, situation, grad_samples, ref_grad_samples, p_hat, p_ref, p_ref_init, n_total, n_parsed, n_ref_total, n_hat_total = row
+                    if p_ref_init is None and need_p_ref_init:
+                        # 1. Await any pending base task
                         if sit_idx in pending_base_tasks:
-                            base_samples = await pending_base_tasks.pop(sit_idx)
-                            _resolve_base_rate(sit_idx, base_samples)
-                        p_ref_init = initial_reference_rates.get(sit_idx, 0.5)
-                    resolved_group_data.append((sit_idx, situation, grad_samples, p_hat, p_ref, p_ref_init, n_total, n_parsed, n_ref_total, n_hat_total))
+                            try:
+                                base_samples = await pending_base_tasks.pop(sit_idx)
+                                _resolve_base_rate(sit_idx, base_samples)
+                            except Exception as e:
+                                _log.warning("Pending base task for sit %d failed: %s. Will retry on-demand.", sit_idx, e)
+
+                        # 2. If still missing (no task existed), launch one now.
+                        # Register as a pending_base_task so the watcher won't
+                        # duplicate it during our await.
+                        if sit_idx not in initial_reference_rates:
+                            print(f"  ⏳ Base rate missing for sit {sit_idx}, sampling now...")
+                            on_demand_task = asyncio.create_task(
+                                self._collect_samples(
+                                    situations[sit_idx], perturbation_fns, trait_classifier,
+                                    use_base_model=True, answer_parser=answer_parser,
+                                    rates_only=True,
+                                )
+                            )
+                            pending_base_tasks[sit_idx] = on_demand_task  # guard against watcher
+                            base_result = await on_demand_task
+                            pending_base_tasks.pop(sit_idx, None)
+                            if not _resolve_base_rate(sit_idx, base_result):
+                                # All samples failed to parse — skip this situation
+                                print(f"  ⚠️  Could not compute base rate for sit {sit_idx} (0 parsed samples), skipping")
+                                continue
+
+                        p_ref_init = initial_reference_rates[sit_idx]
+
+                    # Also fix p_ref if it was None (no parsed ref samples from policy)
+                    if p_ref is None:
+                        if p_ref_init is not None:
+                            p_ref = p_ref_init
+                        else:
+                            # All ref samples failed to parse and no base rate — skip
+                            print(f"  ⚠️  No parsed ref samples for sit {sit_idx}, skipping")
+                            continue
+
+                    resolved_group_data.append((sit_idx, situation, grad_samples, ref_grad_samples, p_hat, p_ref, p_ref_init, n_total, n_parsed, n_ref_total, n_hat_total))
                 group_data = resolved_group_data
 
-                # Compute rewards and advantages
-                all_rewards, all_grad_data = [], []
-                for sit_idx, situation, grad_samples, p_hat, p_ref, p_ref_init, _, _, _, _ in group_data:
+                # Compute rewards and advantages — separate populations for
+                # consistency (training perturbation) and anchor (reference perturbation)
+                anchor_weight = self.reward_function.anchor_weight
+
+                # Consistency: training perturbation samples
+                consistency_rewards, consistency_grad_data = [], []
+                for sit_idx, situation, grad_samples, ref_grad_samples, p_hat, p_ref, p_ref_init, _, _, _, _ in group_data:
                     rewards = self.reward_function.compute_rewards(grad_samples, p_hat, p_ref, p_ref_init)
-                    all_rewards.extend(rewards)
+                    consistency_rewards.extend(rewards)
                     for sample in grad_samples:
                         pert_result = perturbation_fns[sample.perturbation_idx](situation)
                         prompt = self._format_prompt(pert_result["messages"])
-                        all_grad_data.append((prompt, sample))  # Keep as ModelInput, not tokens
+                        consistency_grad_data.append((prompt, sample))
 
-                advantages = self._normalize_advantages(all_rewards)
+                # Anchor: reference perturbation samples (skip when anchor_weight=0)
+                anchor_rewards, anchor_grad_data = [], []
+                if anchor_weight > 0:
+                    for sit_idx, situation, grad_samples, ref_grad_samples, p_hat, p_ref, p_ref_init, _, _, _, _ in group_data:
+                        rewards = self.reward_function.compute_anchor_rewards(ref_grad_samples, p_ref, p_ref_init)
+                        anchor_rewards.extend(rewards)
+                        for sample in ref_grad_samples:
+                            pert_result = perturbation_fns[sample.perturbation_idx](situation)
+                            prompt = self._format_prompt(pert_result["messages"])
+                            anchor_grad_data.append((prompt, sample))
+
+                # Normalize each population separately, then scale by weight
+                consistency_adv = self._normalize_advantages(consistency_rewards)
+                anchor_adv = self._normalize_advantages(anchor_rewards)
+                consistency_adv = [a * (1 - anchor_weight) for a in consistency_adv]
+                anchor_adv = [a * anchor_weight for a in anchor_adv]
+
+                # Merge into combined lists for batch creation
+                all_rewards = consistency_rewards + anchor_rewards
+                all_grad_data = consistency_grad_data + anchor_grad_data
+                advantages = consistency_adv + anchor_adv
 
                 # Skip empty batches: if all advantages are zero (constant rewards),
                 # forward_backward produces zero gradients — waste of compute.
@@ -905,8 +1015,10 @@ class RLTrainer:
                     # No training happened so no policy change. Refill queue
                     # since skipped steps don't consume staleness budget.
                     next_to_prefetch = _fill_prefetch_queue(next_to_prefetch)
-                    # Update base watcher target — it will auto-fill slots
+                    # Update base watcher target and ensure it's running
                     base_target_sits = [s for g in groups[i_group + 1:] for s in g]
+                    if base_watcher_task is None or base_watcher_task.done():
+                        base_watcher_task = asyncio.create_task(_base_watcher())
                     continue
 
                 # Create training batch using cookbook's trajectory_to_data
@@ -969,7 +1081,7 @@ class RLTrainer:
                 # Rate variance metric - across ALL perturbations (reference + training)
                 # This measures consistency: how different are rates between biased and unbiased
                 all_rates = []
-                for _, _, _, p_hat, p_ref, _, _, _, _, _ in group_data:
+                for _, _, _, _, p_hat, p_ref, _, _, _, _, _ in group_data:
                     all_rates.extend(p_hat.values())  # Training perturbation rates
                     all_rates.append(p_ref)  # Reference rate
                 if all_rates:
@@ -979,36 +1091,74 @@ class RLTrainer:
                     rate_var = 0.0
 
                 # Compute average rates across the group
-                avg_p_ref = sum(p_ref for _, _, _, _, p_ref, _, _, _, _, _ in group_data) / len(group_data)
-                avg_p_ref_init = sum(p_ref_init for _, _, _, _, _, p_ref_init, _, _, _, _ in group_data) / len(group_data)
+                avg_p_ref = sum(p_ref for _, _, _, _, _, p_ref, _, _, _, _, _ in group_data) / len(group_data)
+                avg_p_ref_init = (
+                    sum(p_ref_init for _, _, _, _, _, _, p_ref_init, _, _, _, _ in group_data) / len(group_data)
+                    if need_p_ref_init else None
+                )
                 avg_p_hat = {}
-                for _, _, _, p_hat, _, _, _, _, _, _ in group_data:
+                for _, _, _, _, p_hat, _, _, _, _, _, _ in group_data:
                     for pert_idx, rate in p_hat.items():
                         avg_p_hat[pert_idx] = avg_p_hat.get(pert_idx, 0.0) + rate / len(group_data)
 
-                # Compute reward stats
-                reward_mean = sum(all_rewards) / len(all_rewards) if all_rewards else 0.0
-                reward_std = (sum((r - reward_mean)**2 for r in all_rewards) / len(all_rewards)) ** 0.5 if all_rewards else 0.0
+                # Reward stats — separate for consistency and anchor
+                cons_reward_mean = sum(consistency_rewards) / len(consistency_rewards) if consistency_rewards else 0.0
+                anchor_reward_mean = sum(anchor_rewards) / len(anchor_rewards) if anchor_rewards else 0.0
+
+                # Reward decomposition by (perturbation_idx, trait_value)
+                # For discrete traits (0/1), this shows exactly what incentive each outcome gets
+                reward_by_pert_trait = defaultdict(list)
+                for (prompt, sample), reward in zip(all_grad_data, all_rewards):
+                    reward_by_pert_trait[(sample.perturbation_idx, sample.trait_value)].append(reward)
+
+                # Advantage stats (after weighting)
+                adv_abs_mean = sum(abs(a) for a in advantages) / len(advantages) if advantages else 0.0
+
+                # Average response length (tokens) across gradient samples
+                avg_response_len = sum(len(s.tokens) for _, s in all_grad_data) / len(all_grad_data) if all_grad_data else 0.0
 
                 # KL metrics
                 kl_v1 = kl_sample_train_metrics.get("optim/kl_sample_train_v1", 0.0)
 
                 # CONSOLIDATED LOGGING - one call with all metrics
                 step_metrics = {
+                    "train/epoch": epoch,
                     "train/parse_rate": parse_rate,
+                    "train/n_gradient_samples": len(batch_data),
+                    "train/n_consistency_samples": len(consistency_grad_data),
+                    "train/n_anchor_samples": len(anchor_grad_data),
+                    "train/avg_response_length": avg_response_len,
+                    # Rates
                     "train/p_ref": avg_p_ref,
-                    "train/p_ref_init": avg_p_ref_init,
+                    **({"train/p_ref_init": avg_p_ref_init,
+                       "train/p_ref_drift": avg_p_ref - avg_p_ref_init} if avg_p_ref_init is not None else {}),
                     "train/n_ref": total_n_ref,
                     "train/n_hat": total_n_hat,
                     "train/rate_var": rate_var,
-                    "train/reward_mean": reward_mean,
-                    "train/reward_std": reward_std,
-                    "train/reward_min": min(all_rewards) if all_rewards else 0.0,
-                    "train/reward_max": max(all_rewards) if all_rewards else 0.0,
+                    # Consistency rewards (training perturbation)
+                    "train/consistency_reward_mean": cons_reward_mean,
+                    "train/consistency_reward_std": (sum((r - cons_reward_mean)**2 for r in consistency_rewards) / len(consistency_rewards)) ** 0.5 if consistency_rewards else 0.0,
+                    # Anchor rewards (reference perturbation)
+                    "train/anchor_reward_mean": anchor_reward_mean,
+                    "train/anchor_reward_std": (sum((r - anchor_reward_mean)**2 for r in anchor_rewards) / len(anchor_rewards)) ** 0.5 if anchor_rewards else 0.0,
+                    # Combined advantage stats
+                    "train/advantage_abs_mean": adv_abs_mean,
                 }
-                # Add p_hat for each training perturbation
+                # Per-perturbation rates and consistency gap
                 for pert_idx, rate in avg_p_hat.items():
                     step_metrics[f"train/p_hat_{pert_idx}"] = rate
+                    step_metrics[f"train/consistency_gap_{pert_idx}"] = rate - avg_p_ref
+
+                # Reward decomposition: mean reward per (perturbation, trait_value)
+                for (pert_idx, trait_val), rewards in reward_by_pert_trait.items():
+                    trait_key = f"{trait_val:.0f}" if trait_val == int(trait_val) else f"{trait_val:.2f}"
+                    step_metrics[f"train/reward_pert{pert_idx}_trait{trait_key}_mean"] = sum(rewards) / len(rewards)
+                    step_metrics[f"train/reward_pert{pert_idx}_trait{trait_key}_count"] = len(rewards)
+
+                # Forward-backward metrics from Tinker (loss, grad norms, etc.)
+                if hasattr(fwd_bwd_result, 'metrics') and fwd_bwd_result.metrics:
+                    for k, v in fwd_bwd_result.metrics.items():
+                        step_metrics[f"train/{k}"] = v
 
                 # Add KL metrics from cookbook and penalty
                 step_metrics.update(kl_sample_train_metrics)
@@ -1020,7 +1170,8 @@ class RLTrainer:
 
                 # Update progress bar
                 p_hat_display = list(avg_p_hat.values())[0] if avg_p_hat else 0.0
-                pbar.set_postfix({"kl": f"{kl_v1:.4f}", "rate_var": f"{rate_var:.4f}", "p_hat": f"{p_hat_display:.2f}"})
+                gap_display = list(avg_p_hat.values())[0] - avg_p_ref if avg_p_hat else 0.0
+                pbar.set_postfix({"kl": f"{kl_v1:.4f}", "gap": f"{gap_display:.3f}", "p_hat": f"{p_hat_display:.2f}", "adv": f"{adv_abs_mean:.3f}"})
 
                 # Refresh policy (update sampling client with current weights)
                 if self.config.loop.refresh_policy_every_n_steps and global_step % self.config.loop.refresh_policy_every_n_steps == 0:

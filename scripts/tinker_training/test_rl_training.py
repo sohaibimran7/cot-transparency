@@ -5,7 +5,7 @@ Uses suggested_answer prompts from MMLU and TruthfulQA test sets.
 
 Usage:
     python scripts/tinker_training/test_rl_training.py
-    python scripts/tinker_training/test_rl_training.py --n_samples 10 --dry_run
+    python scripts/tinker_training/test_rl_training.py --n_datapoints 10 --dry_run
 """
 
 import asyncio
@@ -34,15 +34,15 @@ from cot_transparency.apis.tinker.common import CheckpointConfig, AdamConfig, Lo
 from sycophancy_eval_inspect.mcq.answer_parser import cot_answer_parser
 
 
-def load_samples(file_path: Path, n_samples: int) -> list[dict]:
-    """Load samples from JSONL file."""
-    samples = []
+def load_datapoints(file_path: Path, n_datapoints: int) -> list[dict]:
+    """Load datapoints from JSONL file."""
+    datapoints = []
     with open(file_path) as f:
         for line in f:
-            samples.append(json.loads(line))
-            if len(samples) >= n_samples:
+            datapoints.append(json.loads(line))
+            if len(datapoints) >= n_datapoints:
                 break
-    return samples
+    return datapoints
 
 
 def unbiased_perturbation(datapoint: dict) -> dict:
@@ -69,7 +69,7 @@ def trait_classifier(response: str, datapoint: dict) -> float:
 
 def main():
     parser = argparse.ArgumentParser(description="Test RL consistency training")
-    parser.add_argument("--n_samples", type=int, default=50, help="Samples per dataset")
+    parser.add_argument("--n_datapoints", type=int, default=50, help="Datapoints per dataset")
     parser.add_argument("--model", type=str, default="meta-llama/Llama-3.1-8B-Instruct")
     parser.add_argument("--dry_run", action="store_true", help="Just load data, don't train")
     parser.add_argument("--experiment_name", type=str, default="rl_test")
@@ -87,15 +87,15 @@ def main():
 
     datapoints = []
     if mmlu_path.exists():
-        datapoints.extend(load_samples(mmlu_path, args.n_samples))
-        print(f"Loaded {min(args.n_samples, len(datapoints))} MMLU samples")
+        datapoints.extend(load_datapoints(mmlu_path, args.n_datapoints))
+        print(f"Loaded {min(args.n_datapoints, len(datapoints))} MMLU datapoints")
     else:
         print(f"Warning: {mmlu_path} not found")
 
     if tqa_path.exists():
-        tqa_samples = load_samples(tqa_path, args.n_samples)
-        datapoints.extend(tqa_samples)
-        print(f"Loaded {len(tqa_samples)} TruthfulQA samples")
+        tqa_datapoints = load_datapoints(tqa_path, args.n_datapoints)
+        datapoints.extend(tqa_datapoints)
+        print(f"Loaded {len(tqa_datapoints)} TruthfulQA datapoints")
     else:
         print(f"Warning: {tqa_path} not found")
 

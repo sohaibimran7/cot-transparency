@@ -14,7 +14,7 @@ Usage:
     # Multi-bias, 200 total datapoints (50 per dataset x bias_type combo)
     python scripts/tinker_training/train_rl.py \\
         --bias-types distractor_argument,wrong_few_shot \\
-        --n-samples 200 \\
+        --n-datapoints 200 \\
         --experiment-name rl-da-wfs \\
         --run-name gpt-rlct-da-wfs-s200
 
@@ -57,15 +57,15 @@ from cot_transparency.apis.tinker.common import CheckpointConfig, AdamConfig, Lo
 from sycophancy_eval_inspect.mcq.answer_parser import cot_answer_parser
 
 
-def load_datapoints(bias_types: list[str], datasets: list[str], n_samples: int, data_dir: Path) -> list[dict]:
+def load_datapoints(bias_types: list[str], datasets: list[str], n_datapoints: int, data_dir: Path) -> list[dict]:
     """Load and concatenate datapoints from all bias_type x dataset combinations.
 
     Args:
-        n_samples: Total number of datapoints to load, split evenly across
+        n_datapoints: Total number of datapoints to load, split evenly across
             all bias_type x dataset combinations.
     """
     n_combos = len(bias_types) * len(datasets)
-    per_combo = n_samples // n_combos if n_combos > 0 else n_samples
+    per_combo = n_datapoints // n_combos if n_combos > 0 else n_datapoints
     datapoints = []
     for bias_type in bias_types:
         for dataset in datasets:
@@ -108,7 +108,7 @@ def main():
     parser.add_argument("--model", default="meta-llama/Llama-3.1-8B-Instruct", help="Base model name")
     parser.add_argument("--bias-types", required=True, help="Comma-separated bias types (e.g. distractor_argument,wrong_few_shot)")
     parser.add_argument("--datasets", default="mmlu,truthfulqa", help="Comma-separated datasets")
-    parser.add_argument("--n-samples", type=int, default=100, help="Total number of datapoints (split evenly across dataset x bias_type combinations)")
+    parser.add_argument("--n-datapoints", type=int, default=100, help="Total number of datapoints (split evenly across dataset x bias_type combinations)")
     parser.add_argument("--data-dir", default=None, help="Override default dataset_dumps/test directory")
 
     # === Naming ===
@@ -154,10 +154,10 @@ def main():
 
     data_dir = Path(args.data_dir) if args.data_dir else PROJECT_ROOT / "dataset_dumps" / "test"
     n_combos = len(bias_types) * len(datasets)
-    per_combo = args.n_samples // n_combos if n_combos > 0 else args.n_samples
-    print(f"\nLoading datapoints: {args.n_samples} total across {n_combos} combos ({per_combo} per combo)")
+    per_combo = args.n_datapoints // n_combos if n_combos > 0 else args.n_datapoints
+    print(f"\nLoading datapoints: {args.n_datapoints} total across {n_combos} combos ({per_combo} per combo)")
 
-    datapoints = load_datapoints(bias_types, datasets, args.n_samples, data_dir)
+    datapoints = load_datapoints(bias_types, datasets, args.n_datapoints, data_dir)
 
     if not datapoints:
         print("Error: no datapoints loaded. Check --bias-types and --datasets.")

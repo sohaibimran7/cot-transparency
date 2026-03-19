@@ -45,17 +45,17 @@ def load_samples(file_path: Path, n_samples: int) -> list[dict]:
     return samples
 
 
-def unbiased_perturbation(situation: dict) -> dict:
+def unbiased_perturbation(datapoint: dict) -> dict:
     """Neutral prompt without suggested answer."""
-    return {"messages": situation["unbiased_question"]}
+    return {"messages": datapoint["unbiased_question"]}
 
 
-def biased_perturbation(situation: dict) -> dict:
+def biased_perturbation(datapoint: dict) -> dict:
     """Biased prompt with suggested answer."""
-    return {"messages": situation["biased_question"]}
+    return {"messages": datapoint["biased_question"]}
 
 
-def trait_classifier(response: str, situation: dict) -> float:
+def trait_classifier(response: str, datapoint: dict) -> float:
     """
     Returns 1.0 if model follows the biased suggestion, 0.0 otherwise.
 
@@ -63,7 +63,7 @@ def trait_classifier(response: str, situation: dict) -> float:
     to match the unbiased baseline.
     """
     answer = cot_answer_parser(response)
-    biased_option = situation.get("biased_option", "")
+    biased_option = datapoint.get("biased_option", "")
     return 1.0 if answer == biased_option else 0.0
 
 
@@ -85,25 +85,25 @@ def main():
     mmlu_path = Path("dataset_dumps/test/suggested_answer/mmlu_suggested_answer.jsonl")
     tqa_path = Path("dataset_dumps/test/suggested_answer/truthfulqa_suggested_answer.jsonl")
 
-    situations = []
+    datapoints = []
     if mmlu_path.exists():
-        situations.extend(load_samples(mmlu_path, args.n_samples))
-        print(f"Loaded {min(args.n_samples, len(situations))} MMLU samples")
+        datapoints.extend(load_samples(mmlu_path, args.n_samples))
+        print(f"Loaded {min(args.n_samples, len(datapoints))} MMLU samples")
     else:
         print(f"Warning: {mmlu_path} not found")
 
     if tqa_path.exists():
         tqa_samples = load_samples(tqa_path, args.n_samples)
-        situations.extend(tqa_samples)
+        datapoints.extend(tqa_samples)
         print(f"Loaded {len(tqa_samples)} TruthfulQA samples")
     else:
         print(f"Warning: {tqa_path} not found")
 
-    print(f"Total situations: {len(situations)}")
+    print(f"Total datapoints: {len(datapoints)}")
 
     if args.dry_run:
         print("\n=== Dry run: checking data format ===")
-        sample = situations[0]
+        sample = datapoints[0]
         print(f"Keys: {sample.keys()}")
         print(f"Unbiased prompt: {sample['unbiased_question'][0]['content'][:200]}...")
         print(f"Biased prompt: {sample['biased_question'][0]['content'][:200]}...")
@@ -142,15 +142,15 @@ def main():
         ),
         reference_rate=RateEstimationConfig(
             perturbation_indices=args.ref_perturbations,
-            n_samples=128,
+            n_rollouts=128,
         ),
         training=TrainingSamplingConfig(
             perturbation_indices=args.train_perturbations,
-            n_samples_for_rate=128,
-            n_samples_for_gradient=128,
+            n_rollouts_for_rate=128,
+            n_rollouts_for_gradient=128,
         ),
         loop=TrainingLoopConfig(
-            situations_per_group=1,
+            batch_size=1,
             gradient_accumulation_steps=1,
             refresh_policy_every_n_steps=args.refresh_policy_every_n_steps,
             n_epochs=1,
@@ -180,7 +180,7 @@ def main():
     print(f"\n=== Starting RL Training ===")
     print(f"Model: {config.model}")
     print(f"Experiment: {config.experiment_name}/{config.run_name}")
-    print(f"Situations: {len(situations)}")
+    print(f"Datapoints: {len(datapoints)}")
     print(f"Perturbations: {pert_desc}")
 
     trainer = RLTrainer(config=config, resume_from=args.resume_from)
@@ -188,7 +188,7 @@ def main():
 
     final_checkpoint = asyncio.run(
         trainer.train(
-            situations=situations,
+            datapoints=datapoints,
             perturbation_fns=perturbation_fns,
             trait_classifier=trait_classifier,
             answer_parser=cot_answer_parser,  # Track parse rate

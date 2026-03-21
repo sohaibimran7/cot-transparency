@@ -4,6 +4,7 @@ Common utilities for Tinker API training modules.
 Shared code between SFT and RL training.
 """
 
+import re
 import subprocess
 from typing import Optional
 
@@ -132,6 +133,79 @@ def warn_if_dirty(git_state: dict) -> None:
             f"The diff is logged to WandB for reproducibility.\n"
             f"{'='*60}\n"
         )
+
+
+_GPT_OSS_ANALYSIS_RE = re.compile(
+    r'<\|channel\|>analysis<\|message\|>(.*?)<\|end\|>', re.DOTALL,
+)
+_GPT_OSS_FINAL_RE = re.compile(
+    r'<\|channel\|>final<\|message\|>(.*?)(?:<\|end\|>|<\|return\|>)?$', re.DOTALL,
+)
+
+
+def split_gpt_oss_channels(content: str) -> tuple[str, str | None]:
+    """Split gpt-oss channel-tagged content into (final_content, thinking).
+
+    If the content contains ``<|channel|>`` tags, extracts the analysis
+    (thinking) and final channels separately.  Returns the original
+    content unchanged when no channel tags are present.
+    """
+    if "<|channel|>" not in content:
+        return content, None
+
+    analysis_match = _GPT_OSS_ANALYSIS_RE.search(content)
+    final_match = _GPT_OSS_FINAL_RE.search(content)
+
+    final_content = final_match.group(1).strip() if final_match else content.strip()
+    thinking = None
+    if analysis_match:
+        t = analysis_match.group(1).strip()
+        if t:
+            thinking = t
+
+    return final_content, thinking
+
+
+def strip_thinking_from_previous_turns(messages: list[dict]) -> list[dict]:
+    """Strip thinking/reasoning tokens from all assistant turns except the last.
+
+    For multi-turn conversations with reasoning models, previous turns' chains
+    of thought should be hidden from future turns' context. This matches the
+    industry convention where providers hide previous turns' thinking at
+    inference time.
+
+    Works on message dicts with the optional 'thinking' field from
+    tinker_cookbook.renderers.Message. Messages without a 'thinking' field
+    are returned unchanged.
+
+    Args:
+        messages: List of message dicts with 'role', 'content', and
+            optionally 'thinking' keys.
+
+    Returns:
+        New list of message dicts with 'thinking' removed from all
+        assistant turns except the last one.
+    """
+    # Find the index of the last assistant turn
+    last_assistant_idx = None
+    for i in range(len(messages) - 1, -1, -1):
+        if messages[i].get("role") == "assistant":
+            last_assistant_idx = i
+            break
+
+    result = []
+    for i, msg in enumerate(messages):
+        if (
+            msg.get("role") == "assistant"
+            and i != last_assistant_idx
+            and "thinking" in msg
+        ):
+            new_msg = {k: v for k, v in msg.items() if k != "thinking"}
+            result.append(new_msg)
+        else:
+            result.append(msg)
+
+    return result
 
 
 def get_recommended_lr(model: str, is_lora: bool = True, fallback: float = 1e-4) -> float:

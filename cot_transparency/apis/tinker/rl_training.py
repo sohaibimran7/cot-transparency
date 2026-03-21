@@ -62,6 +62,8 @@ from cot_transparency.apis.tinker.common import (
     get_recommended_lr,
     get_git_state,
     warn_if_dirty,
+    split_gpt_oss_channels,
+    strip_thinking_from_previous_turns,
 )
 from cot_transparency.apis.tinker.pricing import (
     get_pricing,
@@ -202,6 +204,7 @@ class Sample:
     trait_value: float
     perturbation_idx: int
     parsed_successfully: bool = True  # Track if answer was parsed
+    prompt_messages: Optional[list[dict]] = None  # Actual prompt used to generate this sample
 
 
 @dataclass
@@ -352,8 +355,136 @@ class RLTrainer:
             )
 
     def _format_prompt(self, messages: list[dict]) -> types.ModelInput:
-        """Convert messages to a generation prompt for sampling."""
-        return self.renderer.build_generation_prompt(messages)
+        """Convert messages to a generation prompt for sampling.
+
+        Strips thinking tokens from previous assistant turns to match
+        the industry convention for reasoning models.
+        """
+        return self.renderer.build_generation_prompt(
+            strip_thinking_from_previous_turns(messages)
+        )
+
+    def _is_on_policy_are_you_sure(self, situation: dict, messages: list[dict]) -> bool:
+        if situation.get("bias_name") != "are_you_sure":
+            return False
+        if len(messages) != 5:
+            return False
+        roles = [m.get("role") for m in messages]
+        if roles != ["user", "assistant", "user", "assistant", "user"]:
+            return False
+        return "are you sure" in messages[2].get("content", "").lower()
+
+    def _extract_short_answer_for_history(
+        self,
+        text: str,
+        answer_parser: Optional[Callable[[str], Optional[str]]] = None,
+    ) -> str:
+        """Best-effort extraction of a short answer token for insertion into chat history."""
+        if answer_parser is not None:
+            try:
+                parsed = answer_parser(text)
+                if parsed:
+                    return str(parsed).strip()
+            except Exception:
+                pass
+
+        cleaned = text.strip()
+        if not cleaned:
+            return ""
+
+        cleaned = cleaned.splitlines()[0].strip()
+        if cleaned.startswith("("):
+            cleaned = cleaned[1:]
+        cleaned = cleaned.rstrip(").: \n\t")
+        return cleaned or text.strip()
+
+    async def _sample_are_you_sure_on_policy_once(
+        self,
+        client: tinker.SamplingClient,
+        situation: dict,
+        messages: list[dict],
+        trait_classifier: Callable[[str, dict], float],
+        answer_parser: Optional[Callable[[str], Optional[str]]],
+        perturbation_idx: int,
+    ) -> Sample:
+        """Sample one on-policy are_you_sure trajectory.
+
+        Expected static dataset format:
+            0: user      initial question ending with 'The best answer is: ('
+            1: assistant static answer (ignored, replaced with forced ground truth)
+            2: user      'I don't think that's right. Are you sure?'
+            3: assistant static intermediate response (ignored, replaced on-policy)
+            4: user      final ask for answer in target format
+
+        The first assistant turn is teacher-forced with the correct ground truth
+        letter (no CoT) — confirmed by checking the dataset that all first answers
+        are single letters. This avoids anchoring the model to its own first-turn
+        reasoning and sidesteps the on-policy resampling loop.
+        """
+        # Step 1: teacher-force the correct answer (single letter, no CoT).
+        # The dataset already has the correct answer as a single letter in messages[1],
+        # and situation["ground_truth"] is the canonical source.
+        first_answer_text = situation["ground_truth"]
+
+        # Step 2: sample the model's intermediate response on-policy
+        second_prompt_messages = [
+            messages[0],
+            {"role": "assistant", "content": first_answer_text},
+            messages[2],
+        ]
+        second_prompt = self._format_prompt(second_prompt_messages)
+        second_cached = await self._sample_from_client(client, second_prompt, 1)
+        second_sample = second_cached[0]
+
+        # Step 3: sample the final answer conditioned on the model-generated history
+        final_prompt_messages = [
+            messages[0],
+            {"role": "assistant", "content": first_answer_text},
+            messages[2],
+            {"role": "assistant", "content": second_sample.text},
+            messages[4],
+        ]
+        final_prompt = self._format_prompt(final_prompt_messages)
+        final_cached = await self._sample_from_client(client, final_prompt, 1)
+        final_sample = final_cached[0]
+
+        parsed_ok = True
+        if answer_parser is not None:
+            parsed_ok = answer_parser(final_sample.text) is not None
+
+        return Sample(
+            tokens=final_sample.tokens,
+            logprobs=final_sample.logprobs,
+            text=final_sample.text,
+            trait_value=float(trait_classifier(final_sample.text, situation)),
+            perturbation_idx=perturbation_idx,
+            parsed_successfully=parsed_ok,
+            prompt_messages=final_prompt_messages,
+        )
+
+    async def _sample_are_you_sure_on_policy(
+        self,
+        client: tinker.SamplingClient,
+        situation: dict,
+        messages: list[dict],
+        n_samples: int,
+        trait_classifier: Callable[[str, dict], float],
+        answer_parser: Optional[Callable[[str], Optional[str]]],
+        perturbation_idx: int,
+    ) -> list[Sample]:
+        """Collect on-policy are_you_sure samples."""
+        samples: list[Sample] = []
+        for _ in range(n_samples):
+            sample = await self._sample_are_you_sure_on_policy_once(
+                client=client,
+                situation=situation,
+                messages=messages,
+                trait_classifier=trait_classifier,
+                answer_parser=answer_parser,
+                perturbation_idx=perturbation_idx,
+            )
+            samples.append(sample)
+        return samples
 
     async def _sample_from_client(self, client: tinker.SamplingClient, prompt: types.ModelInput, n_samples: int) -> list[CachedSample]:
         result = await client.sample_async(
@@ -372,6 +503,12 @@ class RLTrainer:
             logprobs = list(seq.logprobs) if seq.logprobs else [0.0] * len(tokens)
             parsed_msg, _ = self.renderer.parse_response(tokens)
             text = parsed_msg.get("content", "") if parsed_msg else self.tokenizer.decode(tokens)
+            # For gpt-oss: strip channel tags so text contains only the
+            # final content (no analysis/thinking).  This ensures that
+            # when text is reused in multi-turn conversation history
+            # (e.g. are_you_sure intermediate turns), reasoning tokens
+            # don't leak into subsequent prompts.
+            text, _ = split_gpt_oss_channels(text)
             samples.append(CachedSample(tokens=tokens, logprobs=logprobs, text=text))
         return samples
 
@@ -414,6 +551,20 @@ class RLTrainer:
         async def sample_for_perturbation(idx: int) -> tuple[int, list[Sample]]:
             pert_result = perturbation_fns[idx](situation)
             messages = pert_result["messages"]
+
+            # are_you_sure needs on-policy intermediate assistant turns.
+            if self._is_on_policy_are_you_sure(situation, messages):
+                samples = await self._sample_are_you_sure_on_policy(
+                    client=client,
+                    situation=situation,
+                    messages=messages,
+                    n_samples=n_samples_per[idx],
+                    trait_classifier=trait_classifier,
+                    answer_parser=answer_parser,
+                    perturbation_idx=idx,
+                )
+                return idx, samples
+
             prompt = self._format_prompt(messages)
             prompt_content = json.dumps(messages, sort_keys=True)
             pert_id = f"{cache_prefix}f{idx}"
@@ -440,6 +591,7 @@ class RLTrainer:
                     trait_value=float(trait_classifier(s.text, situation)),
                     perturbation_idx=idx,
                     parsed_successfully=parsed_ok,
+                    prompt_messages=messages,
                 ))
             return idx, samples
 
@@ -874,8 +1026,11 @@ class RLTrainer:
                     rewards = self.reward_function.compute_rewards(grad_samples, p_hat, p_ref, p_ref_init)
                     all_rewards.extend(rewards)
                     for sample in grad_samples:
-                        pert_result = perturbation_fns[sample.perturbation_idx](situation)
-                        prompt = self._format_prompt(pert_result["messages"])
+                        prompt_messages = sample.prompt_messages
+                        if prompt_messages is None:
+                            pert_result = perturbation_fns[sample.perturbation_idx](situation)
+                            prompt_messages = pert_result["messages"]
+                        prompt = self._format_prompt(prompt_messages)
                         all_grad_data.append((prompt, sample))  # Keep as ModelInput, not tokens
 
                 advantages = self._normalize_advantages(all_rewards)

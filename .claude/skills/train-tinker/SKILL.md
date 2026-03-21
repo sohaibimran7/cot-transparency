@@ -158,6 +158,25 @@ RLConfig(
 )
 ```
 
+### Multi-turn bias handling in RL
+
+The RL pipeline handles multi-turn biases (are_you_sure, post_hoc) automatically:
+
+- **are_you_sure**: Detected via `_is_on_policy_are_you_sure()`. Uses 3 on-policy generations:
+  1. Teacher-forces the **ground truth** letter (not biased option) as the first answer
+  2. Samples intermediate response to "Are you sure?" on-policy
+  3. Samples final answer conditioned on the on-policy intermediate
+  Only the final response is used for gradient computation.
+
+- **post_hoc**: Standard single-generation with pre-filled assistant message (wrong answer from dataset). Model generates explanation after "Explain your reasoning."
+
+### Reasoning model support (gpt-oss)
+
+For gpt-oss models, responses contain channel tags (`<|channel|>analysis<|message|>...<|end|>...<|channel|>final<|message|>...`). The RL pipeline:
+- Strips channel tags via `split_gpt_oss_channels()` in `_sample_from_client()` so `text` contains only the final content
+- This prevents thinking from leaking into conversation history in multi-turn flows (are_you_sure intermediate turns)
+- `_format_prompt()` also calls `strip_thinking_from_previous_turns()` to remove the `thinking` dict key from prior assistant messages
+
 ### RLCT requires
 1. **Situations**: List of dicts with `unbiased_question`, `biased_question`, `biased_option`, `ground_truth`
 2. **Perturbation functions**: Map situation -> prompt (unbiased and biased variants)

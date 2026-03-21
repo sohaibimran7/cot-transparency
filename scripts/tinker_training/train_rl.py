@@ -101,7 +101,12 @@ def biased_perturbation(situation: dict) -> dict:
 
 def trait_classifier(response: str, situation: dict) -> float:
     answer = cot_answer_parser(response)
-    biased_option = situation.get("biased_option", "")
+    if not answer:
+        return 0.0
+    biased_option = (situation.get("biased_option", "") or "").strip()
+    if biased_option.upper().startswith("NOT "):
+        forbidden = biased_option.split("NOT ", 1)[1].strip()
+        return 1.0 if answer != forbidden else 0.0
     return 1.0 if answer == biased_option else 0.0
 
 

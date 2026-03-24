@@ -44,7 +44,7 @@ For models not in `hyperparam_utils` (e.g., `openai/gpt-oss-120b`), it crashes w
 Follow the pattern from `sycophancy_eval_inspect/logs/cot_100samples/`:
 - `{model}-{method}-{details}` e.g. `gpt-bct-mti-4k`, `llama-rlct-s50`
 - `mti` = mmlu+truthfulqa+instruct, `mt` = mmlu+truthfulqa only
-- `4k` = ~4000 samples, `s50` = 50 total situations
+- `4k` = ~4000 samples, `s50` = 50 total datapoints
 - Control runs: `gpt-control-mti-4k`, `gpt-rl-control-s50`
 
 The `--run-name` should NOT include checkpoint step info (e.g., don't use `-s50`). Steps are appended automatically by `build_checkpoint_name()` → `{experiment_name}_{run_name}_step{N}`.
@@ -121,7 +121,7 @@ python scripts/tinker_training/train_rl.py \
     --model meta-llama/Llama-3.1-8B-Instruct \
     --bias-types suggested_answer \
     --datasets mmlu,truthfulqa \
-    --n-samples 50 \
+    --n-datapoints 50 \
     --experiment-name rl_suggested_answer \
     --run-name llama-rlct-sa \
     --lora-rank 8 --refresh-every 1 --checkpoint-every 50 -y
@@ -136,15 +136,15 @@ RLConfig(
     optimizer=AdamConfig(lr_schedule="constant"),
     reference_rate=RateEstimationConfig(
         perturbation_indices=[0],    # Index 0 = unbiased
-        n_samples=128,
+        n_rollouts=128,
     ),
     training=TrainingSamplingConfig(
         perturbation_indices=[1],    # Index 1 = biased
-        n_samples_for_rate=128,
-        n_samples_for_gradient=128,
+        n_rollouts_for_rate=128,
+        n_rollouts_for_consistency=128,
     ),
     loop=TrainingLoopConfig(
-        situations_per_group=1,
+        batch_size=1,
         gradient_accumulation_steps=1,
         refresh_policy_every_n_steps=1,
     ),
@@ -159,8 +159,8 @@ RLConfig(
 ```
 
 ### RLCT requires
-1. **Situations**: List of dicts with `unbiased_question`, `biased_question`, `biased_option`, `ground_truth`
-2. **Perturbation functions**: Map situation -> prompt (unbiased and biased variants)
+1. **Datapoints**: List of dicts with `unbiased_question`, `biased_question`, `biased_option`, `ground_truth`
+2. **Perturbation functions**: Map datapoint -> prompt (unbiased and biased variants)
 3. **Trait classifier**: Detect whether model follows biased suggestion
 
 ### Key RL flags
@@ -169,7 +169,7 @@ RLConfig(
 | `--model MODEL` | Base model |
 | `--bias-types TYPES` | Comma-separated bias types (e.g. `suggested_answer,wrong_few_shot`) |
 | `--datasets DATASETS` | Comma-separated datasets (default: `mmlu,truthfulqa`) |
-| `--n-samples N` | Total situations (split evenly across dataset × bias_type combos, default: 100) |
+| `--n-datapoints N` | Total datapoints (split evenly across dataset × bias_type combos, default: 100) |
 | `--experiment-name NAME` | Experiment name |
 | `--run-name NAME` | Run name (used in checkpoint path and eval `--name`) |
 | `--lr RATE` | Learning rate (default: auto from Tinker's `get_recommended_lr`; pass explicitly for non-Llama models) |
@@ -177,12 +177,13 @@ RLConfig(
 | `--lora-rank N` | LoRA rank (default: 8) |
 | `--kl-coef FLOAT` | KL penalty coefficient (default: 0.05) |
 | `--loss-fn FN` | `ppo` or `reinforce` |
-| `--n-ref-samples N` | Samples for reference rate estimation (default: 128) |
-| `--n-train-samples N` | Samples for training rate estimation (default: 128) |
-| `--n-grad-samples N` | Samples for gradient (default: same as `--n-train-samples`) |
+| `--n-ref-rollouts N` | Rollouts for reference rate estimation (default: 128) |
+| `--n-train-rollouts N` | Rollouts for training rate estimation (default: 128) |
+| `--n-consistency-rollouts N` | Consistency gradient rollouts (default: same as `--n-train-rollouts`) |
+| `--n-anchor-rollouts N` | Anchor gradient rollouts (default: all parsed ref rollouts) |
 | `--temperature FLOAT` | Sampling temperature (default: 1.0) |
 | `--max-new-tokens N` | Max generation tokens (default: 8192) |
-| `--situations-per-group N` | Situations per gradient step (default: 1) |
+| `--batch-size N` | Datapoints per gradient step (default: 1) |
 | `--gradient-accumulation-steps N` | Gradient accumulation (default: 1) |
 | `--refresh-every N` | Refresh sampling policy every N steps (default: 1). Higher values enable deeper prefetch pipelining but use slightly staler samples. |
 | `--checkpoint-every N` | Save checkpoint every N steps (default: 50) |

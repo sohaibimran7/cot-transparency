@@ -51,7 +51,6 @@ from cot_transparency.apis.tinker.rl_training import (
     TrainingSamplingConfig,
     TrainingLoopConfig,
     GenerationConfig,
-    ConsistencyReward,
 )
 from cot_transparency.apis.tinker.common import CheckpointConfig, AdamConfig, LoRAConfig
 from sycophancy_eval_inspect.mcq.answer_parser import cot_answer_parser
@@ -126,7 +125,8 @@ def main():
     # === Sampling ===
     parser.add_argument("--n-ref-rollouts", type=int, default=128, help="Rollouts for reference rate estimation")
     parser.add_argument("--n-train-rollouts", type=int, default=128, help="Rollouts for training rate estimation")
-    parser.add_argument("--n-grad-rollouts", type=int, default=None, help="Rollouts for gradient (default: same as --n-train-rollouts)")
+    parser.add_argument("--n-consistency-rollouts", type=int, default=None, help="Consistency gradient rollouts (default: same as --n-train-rollouts)")
+    parser.add_argument("--n-anchor-rollouts", type=int, default=None, help="Anchor gradient rollouts (default: all parsed ref rollouts)")
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--max-new-tokens", type=int, default=8192)
 
@@ -143,6 +143,7 @@ def main():
     # === Run modes ===
     parser.add_argument("--control", action="store_true", help="Control: use unbiased perturbation for both ref and train")
     parser.add_argument("--resume-from", default=None, help="Tinker checkpoint path to resume from")
+    parser.add_argument("--resume-with-optimizer", action="store_true", help="Also restore optimizer state when resuming (for exact continuation)")
     parser.add_argument("--dry-run", action="store_true", help="Load data and print config, don't train")
     parser.add_argument("-y", "--yes", action="store_true", help="Skip confirmation prompt")
 
@@ -150,7 +151,7 @@ def main():
 
     bias_types = [b.strip() for b in args.bias_types.split(",")]
     datasets = [d.strip() for d in args.datasets.split(",")]
-    n_grad = args.n_grad_rollouts or args.n_train_rollouts
+    n_consistency = args.n_consistency_rollouts or args.n_train_rollouts
 
     data_dir = Path(args.data_dir) if args.data_dir else PROJECT_ROOT / "dataset_dumps" / "test"
     n_combos = len(bias_types) * len(datasets)
@@ -183,7 +184,8 @@ def main():
         training=TrainingSamplingConfig(
             perturbation_indices=[1],
             n_rollouts_for_rate=args.n_train_rollouts,
-            n_rollouts_for_gradient=n_grad,
+            n_rollouts_for_consistency=n_consistency,
+            n_rollouts_for_anchor=args.n_anchor_rollouts,
         ),
         loop=TrainingLoopConfig(
             batch_size=args.batch_size,
@@ -201,6 +203,7 @@ def main():
         ),
         kl_coef=args.kl_coef,
         loss_fn=args.loss_fn,
+        anchor_weight=args.anchor_weight,
         log_base_dir="logs",
     )
 
@@ -222,12 +225,14 @@ def main():
     print(f"  Checkpoint every:   {args.checkpoint_every} steps")
     print(f"  n_ref_rollouts:     {args.n_ref_rollouts}")
     print(f"  n_train_rollouts:   {args.n_train_rollouts}")
-    print(f"  n_grad_rollouts:    {n_grad}")
+    print(f"  n_consistency_rollouts: {n_consistency}")
+    print(f"  n_anchor_rollouts:  {args.n_anchor_rollouts}")
     print(f"  KL coef:            {args.kl_coef}")
     print(f"  Anchor weight:      {args.anchor_weight}")
     print(f"  Loss fn:            {args.loss_fn}")
     if args.resume_from:
         print(f"  Resume from:        {args.resume_from}")
+        print(f"  With optimizer:     {args.resume_with_optimizer}")
     print(f"{'='*60}")
 
     if args.dry_run:
@@ -251,8 +256,7 @@ def main():
     else:
         perturbation_fns = [unbiased_perturbation, biased_perturbation]
 
-    reward_fn = ConsistencyReward(anchor_weight=args.anchor_weight)
-    trainer = RLTrainer(config=config, reward_function=reward_fn, resume_from=args.resume_from)
+    trainer = RLTrainer(config=config, resume_from=args.resume_from, resume_with_optimizer=args.resume_with_optimizer)
     trainer.setup()
 
     final_checkpoint = asyncio.run(

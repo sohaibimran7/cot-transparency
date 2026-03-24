@@ -79,6 +79,7 @@ def main():
     parser.add_argument("--control", action="store_true", help="Control run: use unbiased perturbation for both ref and train")
     parser.add_argument("--refresh_policy_every_n_steps", type=int, default=1, help="Refresh sampling policy every N steps")
     parser.add_argument("--resume_from", type=str, default=None, help="Tinker checkpoint path to load before training (tinker://...)")
+    parser.add_argument("--resume_with_optimizer", action="store_true", help="Also restore optimizer state when resuming (for exact continuation)")
     args = parser.parse_args()
 
     # Load samples from both datasets
@@ -147,7 +148,7 @@ def main():
         training=TrainingSamplingConfig(
             perturbation_indices=args.train_perturbations,
             n_rollouts_for_rate=128,
-            n_rollouts_for_gradient=128,
+            n_rollouts_for_consistency=128,
         ),
         loop=TrainingLoopConfig(
             batch_size=1,
@@ -183,7 +184,7 @@ def main():
     print(f"Datapoints: {len(datapoints)}")
     print(f"Perturbations: {pert_desc}")
 
-    trainer = RLTrainer(config=config, resume_from=args.resume_from)
+    trainer = RLTrainer(config=config, resume_from=args.resume_from, resume_with_optimizer=args.resume_with_optimizer)
     trainer.setup()
 
     final_checkpoint = asyncio.run(

@@ -62,7 +62,7 @@ from cot_transparency.apis.tinker.common import (
     get_recommended_lr,
     get_git_state,
     warn_if_dirty,
-    split_gpt_oss_channels,
+    extract_thinking_from_content,
     strip_thinking_from_previous_turns,
 )
 from cot_transparency.apis.tinker.pricing import (
@@ -503,12 +503,12 @@ class RLTrainer:
             logprobs = list(seq.logprobs) if seq.logprobs else [0.0] * len(tokens)
             parsed_msg, _ = self.renderer.parse_response(tokens)
             text = parsed_msg.get("content", "") if parsed_msg else self.tokenizer.decode(tokens)
-            # For gpt-oss: strip channel tags so text contains only the
-            # final content (no analysis/thinking).  This ensures that
-            # when text is reused in multi-turn conversation history
-            # (e.g. are_you_sure intermediate turns), reasoning tokens
-            # don't leak into subsequent prompts.
-            text, _ = split_gpt_oss_channels(text)
+            # Strip thinking/reasoning from text so it contains only the
+            # final content.  Handles gpt-oss channel tags and <think>
+            # tags generically.  This ensures that when text is reused
+            # in multi-turn conversation history (e.g. are_you_sure
+            # intermediate turns), reasoning tokens don't leak.
+            text, _ = extract_thinking_from_content(text)
             samples.append(CachedSample(tokens=tokens, logprobs=logprobs, text=text))
         return samples
 

@@ -1,7 +1,6 @@
 """MCQ bias evaluation task."""
 
 import json
-import re
 from pathlib import Path
 from typing import Any
 
@@ -9,7 +8,6 @@ from inspect_ai import Task, task
 from inspect_ai.model import ChatMessageAssistant, ChatMessageUser
 from inspect_ai.solver import Generate, Solver, TaskState, solver
 
-from sycophancy_eval_inspect.mcq.answer_parser import cot_answer_parser, fallback_answer_parser
 from sycophancy_eval_inspect.mcq.dataset import (
     PromptStyle,
     QuestionVariant,
@@ -19,21 +17,8 @@ from sycophancy_eval_inspect.mcq.scorer import (
     bias_acknowledged_scorer,
     few_shot_confusion_scorer,
     mcq_bias_scorer,
-    mcq_bias_scorer_fallback,
     options_considered_scorer,
 )
-
-
-def _strip_reasoning_from_history(state: TaskState) -> None:
-    """Remove reasoning content from all assistant messages in the history.
-
-    Reasoning models (o1, deepseek-r1, etc.) store thinking tokens in a
-    separate ``reasoning`` field on ChatMessageAssistant.  These must not
-    leak into subsequent prompts in a multi-turn conversation.
-    """
-    for i, msg in enumerate(state.messages):
-        if msg.role == "assistant" and getattr(msg, "reasoning", None):
-            state.messages[i] = ChatMessageAssistant(content=msg.content)
 
 
 @solver
@@ -52,32 +37,21 @@ def multi_turn_generate() -> Solver:
             # Single-turn (or post_hoc with pre-filled assistant turn) — one generation.
             return await generate(state)
 
-        # Multi-turn (are_you_sure): generate → extract answer → inject challenge → …
-        # First generation: model answers the question. Extract just the answer
-        # letter so the conversation history matches the dataset structure
-        # (short answer followed by "Are you sure?" challenge).
-        state = await generate(state)
-        first_completion = state.output.completion
-        parsed = (
-            cot_answer_parser(first_completion)
-            or fallback_answer_parser(first_completion)
-        )
-        # Fallback: extract any (X) pattern from the response
-        if not parsed:
-            m = re.search(r"\(([A-J])\)", first_completion)
-            if m:
-                parsed = m.group(1)
-        if parsed:
-            # Replace the full CoT assistant message with just the letter
-            state.messages[-1] = ChatMessageAssistant(content=parsed)
+        # Multi-turn (are_you_sure): force correct answer → inject challenge → generate.
+        # The first assistant turn is teacher-forced with the correct ground truth
+        # letter (no CoT).  The dataset confirms all first answers are single
+        # letters.  Generating on-policy and filtering to a correct single letter
+        # is equivalent but wastes compute.
+        first_answer = state.target
+        state.messages.append(ChatMessageAssistant(content=first_answer))
 
-        # Inject remaining challenge messages and generate responses
+        # Inject challenge messages and generate responses.
+        # reasoning_history=False tells Inspect to strip reasoning content
+        # from prior assistant messages before sending to the API, so
+        # thinking tokens don't leak into subsequent prompts.
         for followup in followups:
-            # Strip reasoning from all prior assistant messages so reasoning
-            # model thinking tokens don't leak into subsequent prompts.
-            _strip_reasoning_from_history(state)
             state.messages.append(ChatMessageUser(content=followup))
-            state = await generate(state)
+            state = await generate(state, reasoning_history=False)
 
         return state
 
@@ -174,7 +148,6 @@ def mcq_bias_eval(
         solver=[multi_turn_generate()],
         scorer=[
             mcq_bias_scorer(),
-            mcq_bias_scorer_fallback(),
             options_considered_scorer(),
             bias_acknowledged_scorer(),
             few_shot_confusion_scorer(),

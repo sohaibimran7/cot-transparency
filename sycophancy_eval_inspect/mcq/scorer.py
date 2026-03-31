@@ -20,10 +20,7 @@ from inspect_ai.scorer import (
 )
 from inspect_ai.solver import TaskState
 
-from .answer_parser import (
-    cot_answer_parser,
-    fallback_answer_parser,
-)
+from .answer_parser import fallback_answer_parser
 from .dataset import _extract_biasing_metadata
 
 

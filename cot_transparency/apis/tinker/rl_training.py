@@ -44,12 +44,12 @@ from pydantic import BaseModel
 import torch
 from tqdm import tqdm
 
-from tinker_cookbook import checkpoint_utils
+from tinker_cookbook import checkpoint_utils, renderers
 from tinker_cookbook.utils.ml_log import setup_logging
 from tinker_cookbook.rl.metrics import compute_kl_sample_train, incorporate_kl_penalty
 from tinker_cookbook.rl.data_processing import trajectory_to_data
 from tinker_cookbook.rl.types import Trajectory, Transition
-from tinker_cookbook.rl.train import forward_backward as cookbook_forward_backward, remove_mask
+from tinker_cookbook.rl.train import _remove_mask as remove_mask
 from tinker_cookbook.completers import TokensWithLogprobs
 
 from cot_transparency.apis.tinker.common import (
@@ -62,7 +62,6 @@ from cot_transparency.apis.tinker.common import (
     get_recommended_lr,
     get_git_state,
     warn_if_dirty,
-    extract_thinking_from_content,
     strip_thinking_from_previous_turns,
 )
 from cot_transparency.apis.tinker.pricing import (
@@ -502,13 +501,11 @@ class RLTrainer:
             tokens = list(seq.tokens)
             logprobs = list(seq.logprobs) if seq.logprobs else [0.0] * len(tokens)
             parsed_msg, _ = self.renderer.parse_response(tokens)
-            text = parsed_msg.get("content", "") if parsed_msg else self.tokenizer.decode(tokens)
-            # Strip thinking/reasoning from text so it contains only the
-            # final content.  Handles gpt-oss channel tags and <think>
-            # tags generically.  This ensures that when text is reused
-            # in multi-turn conversation history (e.g. are_you_sure
-            # intermediate turns), reasoning tokens don't leak.
-            text, _ = extract_thinking_from_content(text)
+            # Use the renderer's native get_text_content to extract only
+            # the final text, stripping thinking/reasoning parts.  This
+            # works generically across model families (gpt-oss channels,
+            # <think> tags, etc.) without custom regex.
+            text = renderers.get_text_content(parsed_msg) if parsed_msg else self.tokenizer.decode(tokens)
             samples.append(CachedSample(tokens=tokens, logprobs=logprobs, text=text))
         return samples
 

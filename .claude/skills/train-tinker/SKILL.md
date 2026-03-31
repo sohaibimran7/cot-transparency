@@ -170,10 +170,10 @@ The RL pipeline handles multi-turn biases (are_you_sure, post_hoc) automatically
 
 - **post_hoc**: Standard single-generation with pre-filled assistant message (wrong answer from dataset). Model generates explanation after "Explain your reasoning."
 
-### Reasoning model support (gpt-oss)
+### Reasoning model support (gpt-oss, Qwen3, DeepSeek-R1, etc.)
 
-For gpt-oss models, responses contain channel tags (`<|channel|>analysis<|message|>...<|end|>...<|channel|>final<|message|>...`). The RL pipeline:
-- Strips channel tags via `split_gpt_oss_channels()` in `_sample_from_client()` so `text` contains only the final content
+For reasoning models, the RL pipeline uses tinker-cookbook 0.2.1's native renderer to extract clean text:
+- `renderers.get_text_content(parsed_msg)` in `_sample_from_client()` extracts only the final text, stripping thinking/reasoning parts generically across all model families
 - This prevents thinking from leaking into conversation history in multi-turn flows (are_you_sure intermediate turns)
 - `_format_prompt()` also calls `strip_thinking_from_previous_turns()` to remove the `thinking` dict key from prior assistant messages
 

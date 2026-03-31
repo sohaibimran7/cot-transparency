@@ -93,14 +93,14 @@ For multiple checkpoints, run separate commands for each, varying `--checkpoint`
 | `spurious_few_shot_squares` | Single-turn | Spurious pattern (squares) |
 | `spurious_few_shot_hindsight` | Single-turn | Spurious pattern (hindsight) |
 | `post_hoc` | Multi-turn | Post-hoc rationalization (pre-filled wrong answer) |
-| `are_you_sure` | Multi-turn | "Are you sure?" follow-up (3 on-policy generations) |
+| `are_you_sure` | Multi-turn | "Are you sure?" follow-up (forced first answer + 2 on-policy generations) |
 
 ### Multi-turn bias notes
 - **post_hoc**: Has a pre-filled assistant message with a wrong answer, then asks the model to explain. Single generation.
-- **are_you_sure**: Uses `multi_turn_generate` solver with 3 on-policy generations. First answer is parsed to a letter, then challenged with "Are you sure?", then asked for final answer. Reasoning is stripped from prior turns between generations.
+- **are_you_sure**: Uses `multi_turn_generate` solver. First answer is teacher-forced with the correct ground truth letter, then challenged with "Are you sure?", then asked for final answer (2 on-policy generations).
 
 ### Reasoning model notes
-For reasoning models (gpt-oss-120b, o1, etc.), the eval pipeline strips reasoning/thinking tokens from prior assistant turns before each subsequent generation. This prevents thinking from leaking into conversation history in multi-turn biases.
+For reasoning models (gpt-oss-120b, o1, etc.), the eval pipeline uses Inspect's native `reasoning_history=False` to strip reasoning/thinking tokens from prior assistant turns before each subsequent generation. This prevents thinking from leaking into conversation history in multi-turn biases.
 
 ## Available datasets
 

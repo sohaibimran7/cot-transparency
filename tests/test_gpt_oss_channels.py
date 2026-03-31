@@ -1,8 +1,9 @@
 """
-Tests for extract_thinking_from_content and its integration with the RL pipeline.
+Tests for thinking/reasoning extraction and stripping in the RL pipeline.
 
-Covers gpt-oss channel tags, <think> tags, and the strip_thinking_from_previous_turns
-helper used in multi-turn prompt construction.
+Covers:
+- tinker_cookbook.renderers.get_text_content (native renderer-based extraction)
+- strip_thinking_from_previous_turns (dict-level thinking field stripping)
 
 Run with:
     python -m pytest tests/test_gpt_oss_channels.py -v
@@ -10,149 +11,62 @@ Run with:
 
 import pytest
 
-from cot_transparency.apis.tinker.common import (
-    extract_thinking_from_content,
-    split_gpt_oss_channels,  # backward-compatible alias
-    strip_thinking_from_previous_turns,
-)
+from tinker_cookbook.renderers import get_text_content
+
+from cot_transparency.apis.tinker.common import strip_thinking_from_previous_turns
 
 
 # =============================================================================
-# gpt-oss channel tag extraction
+# get_text_content: renderer-native thinking extraction
 # =============================================================================
 
-class TestGptOssChannels:
-    def test_no_channel_tags_returns_unchanged(self):
-        """Non-gpt-oss content (e.g. Llama) passes through unchanged."""
-        content = "Therefore, the best answer is: (A)."
-        final, thinking = extract_thinking_from_content(content)
-        assert final == content
-        assert thinking is None
+class TestGetTextContent:
+    """Tests for tinker_cookbook.renderers.get_text_content.
 
-    def test_empty_string(self):
-        final, thinking = extract_thinking_from_content("")
-        assert final == ""
-        assert thinking is None
+    This is the function used by _sample_from_client to extract clean text
+    from parsed model responses, stripping thinking/reasoning parts.
+    """
 
-    def test_analysis_and_final_channels(self):
-        """Standard gpt-oss response with analysis + final channels."""
-        content = (
-            "<|channel|>analysis<|message|>Let me think about this carefully. "
-            "The question asks about X.<|end|>"
-            "<|start|>assistant"
-            "<|channel|>final<|message|>Therefore, the best answer is: (B)."
-        )
-        final, thinking = extract_thinking_from_content(content)
-        assert final == "Therefore, the best answer is: (B)."
-        assert thinking == "Let me think about this carefully. The question asks about X."
+    def test_gpt_oss_structured_content(self):
+        """gpt-oss parse_response returns list with ThinkingPart + TextPart."""
+        msg = {"role": "assistant", "content": [
+            {"type": "thinking", "thinking": "Let me think about this."},
+            {"type": "text", "text": "Therefore, the best answer is: (B)."},
+        ]}
+        assert get_text_content(msg) == "Therefore, the best answer is: (B)."
 
-    def test_final_channel_only(self):
-        """Response with only final channel (no analysis)."""
-        content = "<|channel|>final<|message|>The answer is (C)."
-        final, thinking = extract_thinking_from_content(content)
-        assert final == "The answer is (C)."
-        assert thinking is None
+    def test_gpt_oss_thinking_only(self):
+        """Response with only thinking, no text part."""
+        msg = {"role": "assistant", "content": [
+            {"type": "thinking", "thinking": "Still thinking..."},
+        ]}
+        assert get_text_content(msg) == ""
 
-    def test_analysis_and_final_with_return_tag(self):
-        """Response ending with <|return|> tag."""
-        content = (
-            "<|channel|>analysis<|message|>Thinking...<|end|>"
-            "<|start|>assistant"
-            "<|channel|>final<|message|>Answer is (A).<|return|>"
-        )
-        final, thinking = extract_thinking_from_content(content)
-        assert final == "Answer is (A)."
-        assert thinking == "Thinking..."
+    def test_gpt_oss_text_only(self):
+        """Response with no thinking part."""
+        msg = {"role": "assistant", "content": [
+            {"type": "text", "text": "The answer is (A)."},
+        ]}
+        assert get_text_content(msg) == "The answer is (A)."
 
-    def test_multiline_thinking(self):
-        """Analysis channel with newlines."""
-        content = (
-            "<|channel|>analysis<|message|>Step 1: Read the question.\n"
-            "Step 2: Consider each option.\n"
-            "Step 3: Choose the best one.<|end|>"
-            "<|start|>assistant"
-            "<|channel|>final<|message|>Therefore, the best answer is: (D)."
-        )
-        final, thinking = extract_thinking_from_content(content)
-        assert "Step 1" not in final
-        assert "Step 1" in thinking
-        assert final == "Therefore, the best answer is: (D)."
+    def test_plain_string_content(self):
+        """Non-reasoning model (e.g. Llama3) returns plain string content."""
+        msg = {"role": "assistant", "content": "The answer is (A)."}
+        assert get_text_content(msg) == "The answer is (A)."
 
-    def test_empty_analysis(self):
-        """Analysis channel that's empty."""
-        content = (
-            "<|channel|>analysis<|message|><|end|>"
-            "<|start|>assistant"
-            "<|channel|>final<|message|>The answer is (B)."
-        )
-        final, thinking = extract_thinking_from_content(content)
-        assert final == "The answer is (B)."
-        assert thinking is None  # empty thinking should be None
+    def test_empty_string_content(self):
+        msg = {"role": "assistant", "content": ""}
+        assert get_text_content(msg) == ""
 
-
-# =============================================================================
-# <think> tag extraction (Qwen3, DeepSeek-R1, etc.)
-# =============================================================================
-
-class TestThinkTags:
-    def test_standard_think_tags(self):
-        content = "<think>Let me reason about this.</think>The answer is (A)."
-        final, thinking = extract_thinking_from_content(content)
-        assert final == "The answer is (A)."
-        assert thinking == "Let me reason about this."
-
-    def test_think_tags_with_newlines(self):
-        content = (
-            "<think>\nStep 1: Read the question.\n"
-            "Step 2: Consider options.\n</think>\n\n"
-            "Therefore, the best answer is: (B)."
-        )
-        final, thinking = extract_thinking_from_content(content)
-        assert final == "Therefore, the best answer is: (B)."
-        assert "Step 1" in thinking
-        assert "Step 2" in thinking
-
-    def test_no_closing_think_tag_returns_unchanged(self):
-        """Truncated output with <think> but no </think> returns content unchanged."""
-        content = "<think>I'm still thinking about this and ran out of tokens"
-        final, thinking = extract_thinking_from_content(content)
-        assert final == content
-        assert thinking is None
-
-    def test_empty_think_tags(self):
-        content = "<think></think>The answer is (C)."
-        final, thinking = extract_thinking_from_content(content)
-        assert final == "The answer is (C)."
-        assert thinking is None  # empty thinking should be None
-
-    def test_think_tags_no_response(self):
-        """Think tags with empty response after."""
-        content = "<think>All reasoning, no answer.</think>"
-        final, thinking = extract_thinking_from_content(content)
-        assert final == ""
-        assert thinking == "All reasoning, no answer."
-
-
-# =============================================================================
-# Backward compatibility: split_gpt_oss_channels alias
-# =============================================================================
-
-class TestBackwardCompatAlias:
-    def test_alias_works_for_gpt_oss(self):
-        content = (
-            "<|channel|>analysis<|message|>Thinking<|end|>"
-            "<|start|>assistant"
-            "<|channel|>final<|message|>Answer."
-        )
-        final, thinking = split_gpt_oss_channels(content)
-        assert final == "Answer."
-        assert thinking == "Thinking"
-
-    def test_alias_works_for_think_tags(self):
-        content = "<think>Reasoning</think>Answer."
-        final, thinking = split_gpt_oss_channels(content)
-        assert final == "Answer."
-        assert thinking == "Reasoning"
+    def test_multiline_thinking_extracted(self):
+        """Only text part extracted, multiline thinking discarded."""
+        msg = {"role": "assistant", "content": [
+            {"type": "thinking", "thinking": "Step 1: Read.\nStep 2: Think.\nStep 3: Answer."},
+            {"type": "text", "text": "Therefore, the best answer is: (D)."},
+        ]}
+        result = get_text_content(msg)
+        assert result == "Therefore, the best answer is: (D)."
+        assert "Step 1" not in result
 
 
 # =============================================================================
@@ -192,7 +106,7 @@ class TestStripThinkingFromPreviousTurns:
 
 
 # =============================================================================
-# Integration: extract_thinking + strip_thinking for are_you_sure flow
+# Integration: get_text_content + strip_thinking for are_you_sure flow
 # =============================================================================
 
 class TestAreYouSureMultiTurnFlow:
@@ -200,62 +114,34 @@ class TestAreYouSureMultiTurnFlow:
 
     The flow:
       1. Teacher-force ground truth letter as msg[1]
-      2. Sample intermediate response (may contain channel/think tags)
+      2. Sample intermediate response → get_text_content extracts clean text
       3. Build final prompt with intermediate in history
-      4. Verify thinking doesn't leak into final prompt
+      4. strip_thinking_from_previous_turns removes thinking dict key
+      5. Verify thinking doesn't leak into final prompt
     """
 
-    def test_gpt_oss_channel_tags_stripped_from_intermediate(self):
-        """After extraction, intermediate response has no channel tags."""
-        raw_intermediate = (
-            "<|channel|>analysis<|message|>I need to reconsider. "
-            "The user says I'm wrong.<|end|>"
-            "<|start|>assistant"
-            "<|channel|>final<|message|>Actually, I think option (A) is correct "
-            "because of X and Y."
-        )
-        clean_text, _ = extract_thinking_from_content(raw_intermediate)
+    def test_gpt_oss_intermediate_is_clean(self):
+        """get_text_content strips thinking from gpt-oss structured response."""
+        parsed_msg = {"role": "assistant", "content": [
+            {"type": "thinking", "thinking": "I need to reconsider."},
+            {"type": "text", "text": "Actually, option (A) is correct."},
+        ]}
+        clean_text = get_text_content(parsed_msg)
 
         final_prompt_messages = [
             {"role": "user", "content": "What is the answer?\n\nThe best answer is: ("},
-            {"role": "assistant", "content": "D"},  # teacher-forced
-            {"role": "user", "content": "I don't think that's right. Are you sure?"},
-            {"role": "assistant", "content": clean_text},  # on-policy intermediate
-            {"role": "user", "content": "So what is the answer?\n\nPlease think step by step..."},
-        ]
-
-        for msg in final_prompt_messages:
-            assert "<|channel|>" not in msg["content"], (
-                f"Channel tags leaked into {msg['role']} message"
-            )
-            assert "<|message|>" not in msg["content"]
-
-    def test_think_tags_stripped_from_intermediate(self):
-        """For <think>-tag models, thinking is stripped from intermediate."""
-        raw_intermediate = (
-            "<think>The user is challenging me. Let me reconsider.</think>"
-            "Actually, I think option (A) is correct because of X and Y."
-        )
-        clean_text, _ = extract_thinking_from_content(raw_intermediate)
-
-        final_prompt_messages = [
-            {"role": "user", "content": "What is the answer?"},
             {"role": "assistant", "content": "D"},
-            {"role": "user", "content": "Are you sure?"},
+            {"role": "user", "content": "I don't think that's right. Are you sure?"},
             {"role": "assistant", "content": clean_text},
-            {"role": "user", "content": "Please give your final answer."},
+            {"role": "user", "content": "So what is the answer?"},
         ]
 
         for msg in final_prompt_messages:
-            assert "<think>" not in msg["content"], (
-                f"Think tags leaked into {msg['role']} message"
-            )
+            assert "<|channel|>" not in msg["content"]
+            assert "I need to reconsider" not in msg["content"]
 
     def test_llama_intermediate_unchanged(self):
-        """For Llama (no channel or think tags), the flow works the same."""
-        raw_intermediate = (
-            "I apologize, but I believe option (A) is correct because..."
-        )
-        clean_text, thinking = extract_thinking_from_content(raw_intermediate)
-        assert clean_text == raw_intermediate
-        assert thinking is None
+        """For Llama (plain string content), get_text_content passes through."""
+        parsed_msg = {"role": "assistant", "content": "I believe option (A) is correct."}
+        clean_text = get_text_content(parsed_msg)
+        assert clean_text == "I believe option (A) is correct."

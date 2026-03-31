@@ -4,7 +4,6 @@ Common utilities for Tinker API training modules.
 Shared code between SFT and RL training.
 """
 
-import re
 import subprocess
 from typing import Optional
 
@@ -133,64 +132,6 @@ def warn_if_dirty(git_state: dict) -> None:
             f"The diff is logged to WandB for reproducibility.\n"
             f"{'='*60}\n"
         )
-
-
-_GPT_OSS_ANALYSIS_RE = re.compile(
-    r'<\|channel\|>analysis<\|message\|>(.*?)<\|end\|>', re.DOTALL,
-)
-_GPT_OSS_FINAL_RE = re.compile(
-    r'<\|channel\|>final<\|message\|>(.*?)(?:<\|end\|>|<\|return\|>)?$', re.DOTALL,
-)
-
-
-def _split_gpt_oss_channels(content: str) -> tuple[str, str | None]:
-    """Split gpt-oss ``<|channel|>`` tagged content into (final, thinking)."""
-    analysis_match = _GPT_OSS_ANALYSIS_RE.search(content)
-    final_match = _GPT_OSS_FINAL_RE.search(content)
-
-    final_content = final_match.group(1).strip() if final_match else content.strip()
-    thinking = None
-    if analysis_match:
-        t = analysis_match.group(1).strip()
-        if t:
-            thinking = t
-
-    return final_content, thinking
-
-
-def _split_think_tags(content: str) -> tuple[str, str | None]:
-    """Split ``<think>...</think>`` tagged content into (response, thinking).
-
-    Handles models like Qwen3, DeepSeek-R1 that wrap reasoning in
-    ``<think>`` tags within the content string.
-    """
-    if "</think>" not in content:
-        return content, None
-    parts = content.split("</think>", 1)
-    thinking_raw = parts[0].removeprefix("<think>").strip()
-    final = parts[1].strip()
-    return final, thinking_raw or None
-
-
-def extract_thinking_from_content(content: str) -> tuple[str, str | None]:
-    """Extract thinking/reasoning from model response content.
-
-    Handles multiple model families generically:
-    - gpt-oss: ``<|channel|>analysis`` / ``<|channel|>final`` tags
-    - Qwen3, DeepSeek-R1, etc.: ``<think>...</think>`` tags
-
-    Returns ``(final_content, thinking)`` where *thinking* is ``None``
-    when the content contains no recognisable reasoning markers.
-    """
-    if "<|channel|>" in content:
-        return _split_gpt_oss_channels(content)
-    if "<think>" in content:
-        return _split_think_tags(content)
-    return content, None
-
-
-# Backward-compatible alias
-split_gpt_oss_channels = extract_thinking_from_content
 
 
 def strip_thinking_from_previous_turns(messages: list[dict]) -> list[dict]:

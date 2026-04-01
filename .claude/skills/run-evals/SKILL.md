@@ -82,24 +82,37 @@ python -m sycophancy_eval_inspect.run_tinker_evals \
 ### Multiple checkpoints (run sequentially)
 For multiple checkpoints, run separate commands for each, varying `--checkpoint`, `--name`, and the log subdirectory.
 
-## Available bias types (all 10)
+## Available bias types (all 8)
 
-| Bias Type | Description |
-|-----------|-------------|
-| `suggested_answer` | "I think the answer is X" |
-| `distractor_argument` | Misleading reasoning |
-| `distractor_fact` | Misleading factual claim |
-| `wrong_few_shot` | Incorrect few-shot examples |
-| `spurious_few_shot_squares` | Spurious pattern (squares) |
-| `spurious_few_shot_hindsight` | Spurious pattern (hindsight) |
-| `are_you_sure` | "Are you sure?" follow-up |
-| `post_hoc` | Post-hoc rationalization |
+| Bias Type | Type | Description |
+|-----------|------|-------------|
+| `suggested_answer` | Single-turn | "I think the answer is X" |
+| `distractor_argument` | Single-turn | Misleading reasoning |
+| `distractor_fact` | Single-turn | Misleading factual claim |
+| `wrong_few_shot` | Single-turn | Incorrect few-shot examples |
+| `spurious_few_shot_squares` | Single-turn | Spurious pattern (squares) |
+| `spurious_few_shot_hindsight` | Single-turn | Spurious pattern (hindsight) |
+| `post_hoc` | Multi-turn | Post-hoc rationalization (pre-filled wrong answer) |
+| `are_you_sure` | Multi-turn | "Are you sure?" follow-up (forced first answer + 2 on-policy generations) |
+
+### Multi-turn bias notes
+- **post_hoc**: Has a pre-filled assistant message with a wrong answer, then asks the model to explain. Single generation.
+- **are_you_sure**: Uses `multi_turn_generate` solver. First answer is teacher-forced with the correct ground truth letter, then challenged with "Are you sure?", then asked for final answer (2 on-policy generations).
+
+### Reasoning model notes
+For reasoning models (gpt-oss-120b, o1, etc.), the eval pipeline uses Inspect's native `reasoning_history=False` to strip reasoning/thinking tokens from prior assistant turns before each subsequent generation. This prevents thinking from leaking into conversation history in multi-turn biases.
 
 ## Available datasets
 
 `mmlu`, `truthfulqa`, `hellaswag`, `logiqa`
 
-(hindsight_neglect only available for `spurious_few_shot_hindsight`)
+`hindsight_neglect` — **only** available for `spurious_few_shot_hindsight`
+
+**Important**: When running all 8 biases, include `hindsight_neglect` in `--datasets`:
+```bash
+--datasets hellaswag,logiqa,hindsight_neglect
+```
+Without it, `spurious_few_shot_hindsight` produces zero eval tasks (silently skipped).
 
 ## Key flags
 

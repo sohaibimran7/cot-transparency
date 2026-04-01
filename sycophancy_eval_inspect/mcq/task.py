@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Any
 
 from inspect_ai import Task, task
-from inspect_ai.solver import generate
+from inspect_ai.model import ChatMessageAssistant, ChatMessageUser
+from inspect_ai.solver import Generate, Solver, TaskState, solver
 
 from sycophancy_eval_inspect.mcq.dataset import (
     PromptStyle,
@@ -16,9 +17,45 @@ from sycophancy_eval_inspect.mcq.scorer import (
     bias_acknowledged_scorer,
     few_shot_confusion_scorer,
     mcq_bias_scorer,
-    mcq_bias_scorer_fallback,
     options_considered_scorer,
 )
+
+
+@solver
+def multi_turn_generate() -> Solver:
+    """Solver that handles multi-turn biases with on-policy generation.
+
+    For samples with ``followup_user_messages`` in metadata (e.g. are_you_sure),
+    generates the model's response at each assistant turn rather than using
+    pre-filled canned responses.  For single-turn samples, behaves identically
+    to ``generate()``.
+    """
+
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        followups = state.metadata.get("followup_user_messages")
+        if not followups:
+            # Single-turn (or post_hoc with pre-filled assistant turn) — one generation.
+            return await generate(state)
+
+        # Multi-turn (are_you_sure): force correct answer → inject challenge → generate.
+        # The first assistant turn is teacher-forced with the correct ground truth
+        # letter (no CoT).  The dataset confirms all first answers are single
+        # letters.  Generating on-policy and filtering to a correct single letter
+        # is equivalent but wastes compute.
+        first_answer = state.target.text
+        state.messages.append(ChatMessageAssistant(content=first_answer))
+
+        # Inject challenge messages and generate responses.
+        # reasoning_history="last" tells Inspect to include reasoning only
+        # for the last assistant message, stripping it from earlier turns
+        # so thinking tokens don't leak into subsequent prompts.
+        for followup in followups:
+            state.messages.append(ChatMessageUser(content=followup))
+            state = await generate(state, reasoning_history="last")
+
+        return state
+
+    return solve
 
 
 def load_hashes_from_file(path: str | Path) -> set[str]:
@@ -108,10 +145,9 @@ def mcq_bias_eval(
 
     return Task(
         dataset=dataset,
-        solver=[generate()],
+        solver=[multi_turn_generate()],
         scorer=[
             mcq_bias_scorer(),
-            mcq_bias_scorer_fallback(),
             options_considered_scorer(),
             bias_acknowledged_scorer(),
             few_shot_confusion_scorer(),

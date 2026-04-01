@@ -46,12 +46,11 @@ def multi_turn_generate() -> Solver:
         state.messages.append(ChatMessageAssistant(content=first_answer))
 
         # Inject challenge messages and generate responses.
-        # reasoning_history="last" tells Inspect to include reasoning only
-        # for the last assistant message, stripping it from earlier turns
-        # so thinking tokens don't leak into subsequent prompts.
+        # reasoning_history="none" strips all reasoning from prior assistant
+        # turns so thinking tokens don't leak into subsequent prompts.
         for followup in followups:
             state.messages.append(ChatMessageUser(content=followup))
-            state = await generate(state, reasoning_history="last")
+            state = await generate(state, reasoning_history="none")
 
         return state
 

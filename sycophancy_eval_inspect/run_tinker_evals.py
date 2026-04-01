@@ -87,6 +87,7 @@ def create_tinker_model(
         model_name=config.base_model,
         sampling_client=sampling_client,
         verbose=False,
+        include_reasoning=True,
     )
 
     return Model(

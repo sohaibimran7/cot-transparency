@@ -26,6 +26,7 @@ statsmodels
 streamlit
 datasets
 wandb
+tinker-cookbook>=0.2.1
 fuzzywuzzy
 python-Levenshtein
 anyio>=3.0.0

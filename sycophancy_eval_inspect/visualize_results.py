@@ -10,6 +10,7 @@ few_shot_confusion), and BIR tables with verbalised/unverbalised variants.
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -406,14 +407,60 @@ _DIR_TO_TRAINING_TYPE = {
 }
 
 
+# ── Model registry (extends hardcoded dicts with external entries) ─────────
+_REGISTRY_PATH = Path(__file__).parent / "model_registry.json"
+_MODEL_PREFIXES = ["llama-", "gpt-oss-120b-", "gpt-oss-20b-", "gpt-"]
+
+
+def _load_model_registry() -> None:
+    """Load model_registry.json and merge entries into module-level dicts."""
+    global _MODEL_PREFIXES
+    if not _REGISTRY_PATH.exists():
+        return
+    with open(_REGISTRY_PATH) as f:
+        registry = json.load(f)
+
+    # Extend model prefixes (deduplicated, order preserved)
+    for p in registry.get("model_prefixes", []):
+        if p not in _MODEL_PREFIXES:
+            _MODEL_PREFIXES.append(p)
+
+    for suffix, entry in registry.get("models", {}).items():
+        tt = entry.get("training_type", suffix.replace("-", "_"))
+        # _DIR_TO_TRAINING_TYPE
+        if suffix not in _DIR_TO_TRAINING_TYPE:
+            _DIR_TO_TRAINING_TYPE[suffix] = tt
+        # STYLE_MAP
+        if tt not in STYLE_MAP:
+            STYLE_MAP[tt] = _style(
+                entry.get("color", "#888888"),
+                entry.get("hatch", ""),
+                entry.get("edgecolor", "black"),
+            )
+            COLORS[tt] = STYLE_MAP[tt]["color"]
+        # TRAINING_TYPE_NAMES
+        if tt not in TRAINING_TYPE_NAMES:
+            TRAINING_TYPE_NAMES[tt] = entry.get("display_name", tt)
+        # TRAINING_BIAS_TYPES
+        if tt not in TRAINING_BIAS_TYPES:
+            TRAINING_BIAS_TYPES[tt] = set(entry.get("training_biases", []))
+        # TRAINING_TYPE_ORDER — append if missing
+        if tt not in TRAINING_TYPE_ORDER:
+            TRAINING_TYPE_ORDER.append(tt)
+
+
+_load_model_registry()
+
+
 def _get_training_type_from_dir(dir_name: str) -> str | None:
     """Extract training type from directory name.
 
     Expected naming: {model}-{suffix} where suffix is a key in _DIR_TO_TRAINING_TYPE.
+    Prefixes are loaded from model_registry.json so new models work automatically.
     """
-    # Strip model prefix (e.g. "llama-", "gpt-", "gpt-oss-120b-", "gpt-oss-20b-")
     n = dir_name.lower()
-    for prefix in ("llama-", "gpt-oss-120b-", "gpt-oss-20b-", "gpt-"):
+    # Sort prefixes longest-first to match "gpt-oss-120b-" before "gpt-"
+    for prefix in sorted(_MODEL_PREFIXES, key=len, reverse=True):
         if n.startswith(prefix):
             n = n[len(prefix):]
             break
@@ -421,11 +468,14 @@ def _get_training_type_from_dir(dir_name: str) -> str | None:
 
 
 def _get_model_family_from_dir(dir_name: str) -> str | None:
-    """Extract model family from directory name (expects {model}-... prefix)."""
+    """Extract model family from directory name.
+
+    Derives family from registered prefixes (e.g. 'llama-' -> 'llama').
+    """
     lower = dir_name.lower()
-    for prefix in ("llama", "gpt"):
+    for prefix in sorted(_MODEL_PREFIXES, key=len, reverse=True):
         if lower.startswith(prefix):
-            return prefix
+            return prefix.rstrip("-")
     return None
 
 

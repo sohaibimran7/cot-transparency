@@ -34,7 +34,7 @@ from tinker import types
 from pydantic import BaseModel
 from tqdm import tqdm
 
-from tinker_cookbook.supervised.common import datum_from_tokens_weights, compute_mean_nll
+from tinker_cookbook.supervised.common import datum_from_model_input_weights, compute_mean_nll
 from tinker_cookbook.utils.lr_scheduling import compute_schedule_lr_multiplier
 from tinker_cookbook import checkpoint_utils
 from tinker_cookbook.utils.ml_log import setup_logging
@@ -175,7 +175,7 @@ async def train_sft(
             batch_data = []
             for sample in batch_samples:
                 tokens, weights = renderer.build_supervised_example(sample["messages"])
-                batch_data.append(datum_from_tokens_weights(tokens, weights))
+                batch_data.append(datum_from_model_input_weights(tokens, weights))
 
             # Compute LR with schedule
             lr_mult = compute_schedule_lr_multiplier(

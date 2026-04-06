@@ -38,7 +38,7 @@ from tinker_cookbook.utils.ml_log import setup_logging
 from tinker_cookbook.rl.metrics import compute_kl_sample_train, incorporate_kl_penalty
 from tinker_cookbook.rl.data_processing import trajectory_to_data
 from tinker_cookbook.rl.types import Trajectory, Transition
-from tinker_cookbook.rl.train import remove_mask
+from tinker_cookbook.rl.train import _remove_mask as remove_mask
 from tinker_cookbook.completers import TokensWithLogprobs
 
 from cot_transparency.apis.tinker.common import (

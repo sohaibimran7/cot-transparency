@@ -29,6 +29,7 @@ wandb
 tinker-cookbook>=0.2.1
 fuzzywuzzy
 python-Levenshtein
+pyyaml>=6.0
 anyio>=3.0.0
 grugstream
 together==1.2.0

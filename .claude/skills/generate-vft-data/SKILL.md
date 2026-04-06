@@ -20,7 +20,7 @@ Generate VFT (Verbalization Fine-Tuning) training data by:
 ## Before running
 
 **Confirm with the user:**
-1. Which model to sample from (show available models if unsure: `python scripts/tinker_training/generate_vft_data.py --list-models` via the generate_bct_data script)
+1. Which model to sample from (show available models if unsure: `python scripts/tinker_training/generate_vft_data.py --list-models`)
 2. Which datasets (e.g., `truthfulqa mmlu`) and their limits
 3. Bias type (default: `suggested_answer`)
 4. Output name for the directory

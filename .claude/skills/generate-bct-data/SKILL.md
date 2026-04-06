@@ -100,30 +100,21 @@ Key differences from `generate_bct_data.py`:
 - `--output-dir` puts both control and bct files in the same flat directory
 - `--limits` controls how many samples per dataset (in same order as `--datasets`)
 
-### Channel tag cleaning (gpt-oss-120b)
+### Data format
 
-gpt-oss-120b output includes channel tags (`<|channel|>analysis<|message|>...`). After generation, clean with:
-
-```bash
-python scripts/prepare_datasets.py \
-    --input .../bct_cot.jsonl \
-    --output .../bct_cot_cleaned.jsonl \
-    --clean
-```
+Generated data is stored in tinker's native Message format. For models with internal reasoning (e.g. gpt-oss-120b), the assistant content is a structured list of `ThinkingPart`/`TextPart` dicts. `build_supervised_example` in finetune.py handles this natively — no cleaning needed.
 
 To combine BCT + instruct samples:
 ```bash
 python scripts/prepare_datasets.py \
-    --input .../bct_cot_cleaned.jsonl \
+    --input .../bct_cot.jsonl \
     --input dataset_dumps/train_seed_42/gpt-oss-120b/instruct_samples.jsonl:2000 \
     --output .../bct_cot_instruct.jsonl \
-    --clean --shuffle
+    --shuffle
 ```
-
-~2-5% of samples may be removed due to unparseable channel tags.
 
 ## Script locations
 
 - `scripts/tinker_training/generate_bct_data.py` — Generate from training prompts (control_seed_42/train_seed_42)
 - `scripts/tinker_training/generate_bct_from_test.py` — Generate from test data (biased/unbiased pairs)
-- `scripts/prepare_datasets.py` — Clean channel tags, combine, shuffle
+- `scripts/prepare_datasets.py` — Combine, shuffle, limit datasets

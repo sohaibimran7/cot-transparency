@@ -273,6 +273,100 @@ Add `--save-brr path/to/output` to save BRR tables as CSV and Markdown files.
 
 **Limitations:** Plots are not saved automatically unless `--output-dir` is provided (otherwise they display interactively). The BRR table is printed to stdout; use `--save-brr` to persist it. The training type detection relies on directory naming conventions (e.g. directory names containing "base", "bct", "rlct_step50", etc.) defined in `_get_training_type_from_dir()` — rename your log directories to match, or update the function. The `MODEL_NAME_MAP` dict maps Fireworks model IDs to friendly names and would need updating for new deployments.
 
+## End-to-end experiment runner
+
+`run_experiment.py` orchestrates the full pipeline (data gen → training → eval → analysis) from a YAML config. It supports running multiple experiments in parallel with combined visualization.
+
+### Quick start
+
+```bash
+# Full BCT pipeline with control and base eval
+python scripts/tinker_training/run_experiment.py \
+    scripts/tinker_training/experiment_configs/example_bct_sft.yaml
+
+# Run BCT + RLCT in parallel, combined analysis
+python scripts/tinker_training/run_experiment.py \
+    scripts/tinker_training/experiment_configs/example_bct_sft.yaml \
+    scripts/tinker_training/experiment_configs/example_rlct.yaml
+
+# Preview all commands without executing
+python scripts/tinker_training/run_experiment.py config.yaml --dry-run
+
+# Resume from evaluation (skip data gen + training)
+python scripts/tinker_training/run_experiment.py config.yaml --start-from eval
+```
+
+### Config format
+
+```yaml
+name: bct-sa-llama-4k
+model: meta-llama/Llama-3.1-8B-Instruct
+
+data_generation:                        # single step or list of steps
+  script: generate_bct_from_test        # any script in scripts/tinker_training/
+  args:                                 # passed through as CLI flags generically
+    bias: suggested_answer
+    datasets: [mmlu, truthfulqa]
+    limits: [1183, 817]
+    batch_size: 64
+
+training:
+  method: sft                           # or rl
+  include_control: true                 # train control variant in parallel
+  data_mode: interleave                 # interleave | sequential | concat
+  args:
+    experiment_name: bct_suggested_answer
+    run_name: llama-bct-mti-4k
+    data: auto
+    lr: 1.0e-4
+    batch_size: 128
+
+evaluation:
+  include_base: true                    # eval base model in parallel with checkpoints
+  args:
+    bias_types: "suggested_answer,distractor_argument"
+    prompt_styles: "cot,no_cot"
+    limit: 100
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+
+viz_registration:                       # auto-register for visualization
+  dir_suffix: bct-mti-4k
+  display_name: "BCT MTI 4k"
+  color: "#4292c6"
+  training_biases: [suggested_answer]
+```
+
+### Key features
+
+- **Control training** (`include_control: true`): Runs main + control in parallel. SFT uses control data, RL adds `--control` flag. Control variant auto-suffixed with `-ctrl`.
+- **Base model eval** (`include_base: true`): Evaluates base model alongside finetuned checkpoints.
+- **Multi-config**: Multiple YAML files run their pipelines in parallel threads with labeled output. Analysis runs once at the end comparing all models.
+- **Data mode**: `interleave` mixes data from multiple gen steps round-robin; `sequential` chains checkpoints (e.g. VFT then BCT).
+- **Generic data gen**: Args passed through as CLI flags — any new script works without runner changes.
+- **Stage control**: `--start-from`, `--stages`, `--force`, `--dry-run`. Completed stages auto-skip on re-run.
+- **Model registry**: `viz_registration` auto-registers model types (including control variants) so `visualize_results.py` can plot them.
+
+### Combining methods
+
+```yaml
+# VFT + BCT interleaved in one training run
+data_generation:
+  - script: generate_vft_data
+    args: {datasets: [truthfulqa, mmlu], bias: suggested_answer, ...}
+  - script: generate_bct_from_test
+    args: {datasets: [mmlu, truthfulqa], bias: suggested_answer, ...}
+
+training:
+  method: sft
+  data_mode: interleave     # round-robin mix VFT + BCT data
+  # data_mode: sequential   # or train VFT first, then BCT resuming from VFT checkpoint
+```
+
 ## Project structure
 
 ```
@@ -286,14 +380,18 @@ scripts/
     generate_base_prompts.py      # Create biased/unbiased prompt pairs
     prepare_datasets.py           # Clean, combine, shuffle JSONL datasets
     tinker_training/
-        test_rl_training.py       # Run RLCT training
-        generate_bct_data.py      # Generate SFT training data via sampling
+        run_experiment.py         # End-to-end experiment runner
+        train_sft.py              # SFT training
+        train_rl.py               # RL consistency training
+        generate_bct_data.py      # Generate BCT data from training prompts
+        generate_bct_from_test.py # Generate BCT data from test bias files
+        generate_vft_data.py      # Generate VFT data (verbalization fine-tuning)
+        experiment_configs/       # Example YAML configs
 
 sycophancy_eval_inspect/          # Evaluation suite (Inspect AI)
     mcq/                          #   MCQ bias evaluation (dataset, scorer, task)
     run_tinker_evals.py           #   Run evals on Tinker checkpoints
     run_fireworks_evals.py        #   Run evals on Fireworks deployments
     visualize_results.py          #   Generate comparison plots and BRR tables
-    logs/cot_100samples/          #   Eval logs
-    plots/cot_100samples/         #   Result plots
+    model_registry.json           #   Dynamic model type registry for visualization
 ```

@@ -1,0 +1,47 @@
+{
+  "model_prefixes": [
+    "llama-",
+    "gpt-oss-120b-",
+    "gpt-oss-20b-",
+    "gpt-",
+    "qwen3-"
+  ],
+  "models": {
+    "bct-sa": {
+      "training_type": "bct_sa",
+      "display_name": "BCT SA",
+      "color": "#4292c6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct-sa-ctrl": {
+      "training_type": "bct_sa_ctrl",
+      "display_name": "BCT SA Control",
+      "color": "#9ecae1",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-sa": {
+      "training_type": "rlct_sa",
+      "display_name": "RLCT SA",
+      "color": "#41ab5d",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-sa-ctrl": {
+      "training_type": "rlct_sa_ctrl",
+      "display_name": "RLCT SA Control",
+      "color": "#a1d99b",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    }
+  }
+}

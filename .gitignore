@@ -18,6 +18,7 @@ htmlcov
 
 experiments
 notebooks
+data/
 
 
 .env

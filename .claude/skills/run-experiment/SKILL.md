@@ -58,6 +58,7 @@ data_generation:
 
 training:
   method: sft                      # or rl
+  seeds: [0, 42, 123]             # Optional: run multiple seeds in parallel
   include_control: true            # Also train control variant in parallel
   # control_only: true             # Only train control (skip main)
   args:
@@ -83,7 +84,29 @@ analysis:
     bir: true
     ba: true
     plot: true
+    variance_across: seed          # Optional: generate variance plots split by column
 ```
+
+## Multi-seed support (`training.seeds`)
+
+Run multiple training seeds in parallel for statistical robustness:
+
+```yaml
+training:
+  method: sft
+  seeds: [0, 42, 123]
+  include_control: true
+  args:
+    run_name: llama-bct-sa
+```
+
+- Each seed produces a separate run with `-s{N}` suffixed name (e.g., `llama-bct-sa-s0`, `llama-bct-sa-s42`)
+- Seeds × control are crossed: 3 seeds + control = 6 parallel training runs
+- Each checkpoint gets its own eval directory (also `-s{N}` suffixed)
+- **Main plots** pool all seeds (more data, binomial SE) — identical to single-run behavior
+- **Variance plots** (`analysis.args.variance_across: seed`) show per-seed means with cross-seed SE
+- The `--variance-across` flag is generic: can also split by `dataset`, `prompt_style`, `bias_type`, etc.
+- Not compatible with `data_mode: sequential`
 
 ## Control and base model support
 

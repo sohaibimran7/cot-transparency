@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -450,19 +451,81 @@ def _load_model_registry() -> None:
 _load_model_registry()
 
 
+_SEED_SUFFIX_RE = re.compile(r"-s(\d+)$")
+
+
+def _strip_seed_suffix(name: str) -> tuple[str, int | None]:
+    """Strip -s{N} seed suffix from a dir name component. Returns (stripped, seed_or_None)."""
+    m = _SEED_SUFFIX_RE.search(name)
+    if m:
+        return name[:m.start()], int(m.group(1))
+    return name, None
+
+
+def _strip_model_prefix(dir_name: str) -> str:
+    """Strip model prefix from directory name, returning the suffix."""
+    n = dir_name.lower()
+    for prefix in sorted(_MODEL_PREFIXES, key=len, reverse=True):
+        if n.startswith(prefix):
+            return n[len(prefix):]
+    return n
+
+
 def _get_training_type_from_dir(dir_name: str) -> str | None:
     """Extract training type from directory name.
 
     Expected naming: {model}-{suffix} where suffix is a key in _DIR_TO_TRAINING_TYPE.
     Prefixes are loaded from model_registry.json so new models work automatically.
+    Handles seed suffixes (-s{N}) by stripping them before lookup, and
+    control+seed combos like bct-sa-s42-ctrl.
     """
-    n = dir_name.lower()
-    # Sort prefixes longest-first to match "gpt-oss-120b-" before "gpt-"
-    for prefix in sorted(_MODEL_PREFIXES, key=len, reverse=True):
-        if n.startswith(prefix):
-            n = n[len(prefix):]
-            break
-    return _DIR_TO_TRAINING_TYPE.get(n)
+    n = _strip_model_prefix(dir_name)
+
+    # 1. Try original name first (handles e.g. rlct-s50 = "step 50")
+    result = _DIR_TO_TRAINING_TYPE.get(n)
+    if result is not None:
+        return result
+
+    # 2. Try with seed suffix stripped (e.g. bct-sa-s42 -> bct-sa)
+    n_no_seed, _ = _strip_seed_suffix(n)
+    if n_no_seed != n:
+        result = _DIR_TO_TRAINING_TYPE.get(n_no_seed)
+        if result is not None:
+            return result
+
+    # 3. Handle control+seed (e.g. bct-sa-s42-ctrl -> bct-sa-ctrl)
+    if n.endswith("-ctrl"):
+        n_no_ctrl = n[:-5]
+        n_no_ctrl_no_seed, _ = _strip_seed_suffix(n_no_ctrl)
+        if n_no_ctrl_no_seed != n_no_ctrl:
+            return _DIR_TO_TRAINING_TYPE.get(n_no_ctrl_no_seed + "-ctrl")
+
+    return None
+
+
+def _get_seed_from_dir(dir_name: str) -> int | None:
+    """Extract seed from directory name's -s{N} suffix, if present.
+
+    Returns None if the full suffix (with -s{N}) is already a known training type
+    (collision guard: e.g. rlct-s50 means 'step 50', not 'seed 50').
+    """
+    n = _strip_model_prefix(dir_name)
+
+    # If the full name is already registered, it's not a seed variant
+    if n in _DIR_TO_TRAINING_TYPE:
+        return None
+
+    # Check for seed directly (e.g. bct-sa-s42)
+    _, seed = _strip_seed_suffix(n)
+    if seed is not None:
+        return seed
+
+    # Check for seed before -ctrl (e.g. bct-sa-s42-ctrl)
+    if n.endswith("-ctrl"):
+        _, seed = _strip_seed_suffix(n[:-5])
+        return seed
+
+    return None
 
 
 def _get_model_family_from_dir(dir_name: str) -> str | None:
@@ -514,6 +577,7 @@ def load_sample_data(
         model_family = _get_model_family_from_dir(dir_name)
         if training_type is None or model_family is None:
             continue
+        seed = _get_seed_from_dir(dir_name)
 
         for eval_file in sorted(model_dir.glob("*.eval")):
             try:
@@ -546,6 +610,7 @@ def load_sample_data(
                     "_source_dir": dir_name,
                     "model_family": model_family,
                     "training_type": training_type,
+                    "seed": seed,
                 }
 
                 # Extract values from each scorer
@@ -1387,6 +1452,91 @@ def plot_all_bir_ba(
                     )
 
 
+def plot_variance_across(
+    sample_df: pd.DataFrame,
+    metric: str,
+    split_by: str,
+    model_family: str,
+    variant: str = "biased",
+    prompt_style: str | None = None,
+    training_biases: set[str] | None = None,
+    output_path: str | None = None,
+) -> None:
+    """Plot variance across groups defined by split_by.
+
+    Shows per-(bias_type, training_type) means with SE computed across the
+    split_by groups, revealing how much results vary by e.g. seed or dataset.
+
+    The n= labels show number of groups (not total samples).
+    """
+    mask = sample_df["model_family"] == model_family
+    if "variant" in sample_df.columns:
+        mask &= sample_df["variant"] == variant
+    if prompt_style and "prompt_style" in sample_df.columns:
+        mask &= sample_df["prompt_style"] == prompt_style
+
+    if split_by not in sample_df.columns:
+        print(f"  Warning: column '{split_by}' not in data, skipping variance plot")
+        return
+
+    filtered = sample_df[mask].copy()
+    filtered = filtered.dropna(subset=[split_by])
+
+    n_groups = filtered[split_by].nunique()
+    if n_groups < 2:
+        print(f"  Only {n_groups} group(s) for split_by='{split_by}', skipping variance plot")
+        return
+
+    # Step 1: Per-group means
+    group_means = (
+        filtered.groupby([split_by, "bias_type", "training_type"])[metric]
+        .mean()
+        .reset_index()
+        .rename(columns={metric: "group_mean"})
+    )
+
+    # Step 2: Aggregate across groups
+    results = []
+    for (bt, tt), grp in group_means.groupby(["bias_type", "training_type"]):
+        means = grp["group_mean"].dropna()
+        k = len(means)
+        if k == 0:
+            continue
+        overall_mean = means.mean()
+        se = means.std(ddof=1) / k**0.5 if k > 1 else 0.0
+        results.append({
+            "bias_type": bt,
+            "training_type": tt,
+            f"{metric}_mean": overall_mean,
+            f"{metric}_stderr": se,
+            "n_valid": k,
+        })
+
+    agg = pd.DataFrame(results)
+    if agg.empty:
+        return
+
+    mean_col = f"{metric}_mean"
+    err_col = f"{metric}_stderr"
+    pivot_val = agg.pivot(index="bias_type", columns="training_type", values=mean_col)
+    pivot_err = agg.pivot(index="bias_type", columns="training_type", values=err_col)
+    pivot_n = agg.pivot(index="bias_type", columns="training_type", values="n_valid")
+
+    ylabel = METRIC_DISPLAY.get(metric, metric)
+    title = f"{model_family.upper()} - {variant.title()} - {ylabel} (Variance across {split_by})"
+    if prompt_style:
+        title += f" ({prompt_style})"
+
+    plot_grouped_bars(
+        pivot_val, pivot_err, pivot_n,
+        title=title,
+        ylabel=ylabel,
+        show_n_labels=True,
+        output_path=output_path,
+        training_biases=training_biases,
+    )
+
+
 def plot_all_analyses(
     sample_df: pd.DataFrame,
     output_dir: str = "plots",
@@ -1530,6 +1680,7 @@ def compute_per_question_bir(
         model_family = _get_model_family_from_dir(dir_name)
         if training_type is None:
             continue
+        seed = _get_seed_from_dir(dir_name)
 
         for log_file in sorted(model_dir.glob("*.eval")):
             try:
@@ -1589,7 +1740,7 @@ def compute_per_question_bir(
                 nta = fsc_score.value.get("non_target_answered", np.nan) if (fsc_score and fsc_score.value) else np.nan
 
                 key = (dir_name, training_type, model_family, prompt_style,
-                       sample.id, original_dataset)
+                       sample.id, original_dataset, seed)
 
                 if variant == "biased":
                     results[key]["biased"][bias_type] = {
@@ -1601,7 +1752,7 @@ def compute_per_question_bir(
     # Build BRR DataFrame
     bir_data = []
     for key, data in results.items():
-        model, training_type, model_family, prompt_style, hash_id, dataset = key
+        model, training_type, model_family, prompt_style, hash_id, dataset, seed = key
         if data["unbiased"] is None:
             continue
         ub = data["unbiased"]
@@ -1621,6 +1772,7 @@ def compute_per_question_bir(
                 "hash": hash_id,
                 "dataset": dataset,
                 "bias_type": bt,
+                "seed": seed,
                 "biased_bmr": bd["bmr"],
                 "unbiased_bmr": ub["bmr"],
                 "bir": bd["bmr"] - ub["bmr"],
@@ -2047,6 +2199,8 @@ def main():
                         help="Bias types considered as 'trained on' for ordering and averages (default: suggested_answer)")
     parser.add_argument("--aggregate", action="store_true",
                         help="Aggregate BCT/RLCT/Control models into group averages")
+    parser.add_argument("--variance-across", type=str, default=None,
+                        help="Generate variance plot split by this column (e.g. seed, dataset, prompt_style)")
     args = parser.parse_args()
 
     # Backward compat: --save-bir implies --bir --save, --save-ba implies --ba --save
@@ -2085,6 +2239,22 @@ def main():
                 include_splits=not args.no_splits,
                 training_biases=training_biases_set,
             )
+
+            # Variance plots for BIR/BA
+            if args.variance_across:
+                split = args.variance_across
+                print(f"\nGenerating BIR/BA variance plots split by '{split}'...")
+                _var_models = args.model or sorted(bir_df["model_family"].unique())
+                for mf in _var_models:
+                    _styles = args.prompt_style or (["cot", "no_cot"] if mf == "llama" else ["no_cot"])
+                    for ps in _styles:
+                        for metric_col in ["bir", "bias_acknowledged"]:
+                            plot_variance_across(
+                                bir_df, metric_col, split, mf,
+                                prompt_style=ps,
+                                training_biases=training_biases_set,
+                                output_path=f"{args.output_dir}/{mf}_{metric_col}_{ps}_var_{split}.png",
+                            )
 
         models = args.model or ["llama", "gpt"]
         show_n = not args.no_n
@@ -2262,6 +2432,33 @@ def main():
         prompt_styles_filter=args.prompt_style,
         training_biases=training_biases_set,
     )
+
+    # Variance plots
+    if args.variance_across:
+        split = args.variance_across
+        if split not in sample_df.columns:
+            print(f"Error: '{split}' is not a valid column. "
+                  f"Available: {sorted(sample_df.columns.tolist())}")
+        else:
+            n_groups = sample_df[split].nunique()
+            if n_groups < 2:
+                print(f"Only {n_groups} group(s) for '{split}', skipping variance plots")
+            else:
+                print(f"\nGenerating variance plots split by '{split}' ({n_groups} groups)...")
+                _var_models = args.model or sorted(sample_df["model_family"].unique())
+                _var_variants = args.variant or ["biased", "unbiased"]
+                for mf in _var_models:
+                    _styles = args.prompt_style or (["cot", "no_cot"] if mf == "llama" else ["no_cot"])
+                    for ps in _styles:
+                        for variant in _var_variants:
+                            for metric in ["correct", "matches_bias"]:
+                                plot_variance_across(
+                                    sample_df, metric, split, mf,
+                                    variant=variant, prompt_style=ps,
+                                    training_biases=training_biases_set,
+                                    output_path=f"{args.output_dir}/{mf}_{variant}_{metric}_{ps}_var_{split}.png",
+                                )
+
     print_summary_table(sample_df)
 
 

@@ -5,7 +5,7 @@ Shared code between SFT and RL training.
 """
 
 import subprocess
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -29,7 +29,7 @@ class LoRAConfig(BaseModel):
 class AdamConfig(BaseModel):
     """Adam optimizer and learning rate schedule configuration."""
     learning_rate: Optional[float] = None  # None = use get_recommended_lr(model)
-    lr_schedule: str = "linear"  # "linear", "cosine", or "constant"
+    lr_schedule: Literal["constant", "linear", "cosine"] = "linear"
     beta1: float = 0.9
     beta2: float = 0.95  # cookbook default
     eps: float = 1e-8

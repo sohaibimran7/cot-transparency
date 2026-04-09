@@ -187,7 +187,6 @@ TRAINING_TYPE_ORDER = [
 
 TRAINING_TYPE_NAMES = {
     "base": "Base",
-    "bct_control_mt_2k": "BCT Control MT 2k",
     "control": "Control SFT",
     "rlct_control_step50": "RL Control s50",
     "rlct_control_step100": "RL Control s100",
@@ -355,7 +354,6 @@ _DIR_TO_TRAINING_TYPE = {
     "control": "control",
     "bct-control-mt-2k": "bct_control_mt_2k",
     "rl-control-s50": "rlct_control_step50",
-    "rl-control-step50": "rlct_control_step50",
     "bct-old-20k": "bct_old_20k",
     "bct-mti-1k": "bct_mti_1k",
     "bct-mti-4k": "bct_mti_4k",
@@ -486,7 +484,7 @@ def _iter_model_dirs(log_dirs):
         if not log_path.exists():
             print(f"Warning: {log_dir} does not exist")
             continue
-        if list(log_path.glob("*.eval")):
+        if any(log_path.glob("*.eval")):
             yield log_path, log_path.name
         else:
             for d in sorted(log_path.iterdir()):
@@ -1928,9 +1926,7 @@ def save_bir_tables(
 
         for style in avail_styles:
             for metric_col, filt_fn, filt_label in table_variants:
-                sub_df = bir_df.copy()
-                if filt_fn is not None:
-                    sub_df = sub_df[filt_fn(sub_df)]
+                sub_df = bir_df if filt_fn is None else bir_df[filt_fn(bir_df)]
 
                 tbl, _ = compute_bir_table(sub_df, model_family, style, metric_col=metric_col, baseline=baseline)
                 if tbl.empty:
@@ -2117,9 +2113,7 @@ def main():
             if not args.no_tables:
                 for mf, style in _iter_model_styles(models, args.prompt_style):
                     for metric_col, filt_fn, label in bir_variants:
-                        sub = bir_df.copy()
-                        if filt_fn is not None:
-                            sub = sub[filt_fn(sub)]
+                        sub = bir_df if filt_fn is None else bir_df[filt_fn(bir_df)]
                         if sub.empty:
                             continue
                         print_bir_table(sub, mf, style, metric_col=metric_col, label=label,
@@ -2153,9 +2147,7 @@ def main():
             if not args.no_tables:
                 for mf, style in _iter_model_styles(models, args.prompt_style):
                     for metric_col, filt_fn, label in ba_variants:
-                        sub = bir_df.copy()
-                        if filt_fn is not None:
-                            sub = sub[filt_fn(sub)]
+                        sub = bir_df if filt_fn is None else bir_df[filt_fn(bir_df)]
                         if sub.empty:
                             continue
                         print_bir_table(sub, mf, style, metric_col=metric_col, label=label,
@@ -2198,9 +2190,7 @@ def main():
             if args.bir and not args.no_tables:
                 for mf, style in _iter_model_styles(models, args.prompt_style):
                     for metric_col, filt_fn, label in bir_variants:
-                        sub = cq_df.copy()
-                        if filt_fn is not None:
-                            sub = sub[filt_fn(sub)]
+                        sub = cq_df if filt_fn is None else cq_df[filt_fn(cq_df)]
                         if sub.empty:
                             continue
                         print_bir_table(sub, mf, style, metric_col=metric_col,
@@ -2213,9 +2203,7 @@ def main():
             if args.ba and not args.no_tables:
                 for mf, style in _iter_model_styles(models, args.prompt_style):
                     for metric_col, filt_fn, label in ba_variants:
-                        sub = cq_df.copy()
-                        if filt_fn is not None:
-                            sub = sub[filt_fn(sub)]
+                        sub = cq_df if filt_fn is None else cq_df[filt_fn(cq_df)]
                         if sub.empty:
                             continue
                         print_bir_table(sub, mf, style, metric_col=metric_col,

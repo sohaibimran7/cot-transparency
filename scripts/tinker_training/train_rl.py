@@ -53,7 +53,7 @@ from cot_transparency.apis.tinker.rl_training import (
     GenerationConfig,
 )
 from cot_transparency.apis.tinker.common import CheckpointConfig, AdamConfig, LoRAConfig
-from sycophancy_eval_inspect.mcq.answer_parser import cot_answer_parser
+from sycophancy_eval_inspect.mcq.answer_parser import fallback_answer_parser
 
 
 def load_datapoints(bias_types: list[str], datasets: list[str], n_datapoints: int, data_dir: Path) -> list[dict]:
@@ -92,7 +92,7 @@ def biased_perturbation(datapoint: dict) -> dict:
 
 
 def trait_classifier(response: str, datapoint: dict) -> float:
-    answer = cot_answer_parser(response)
+    answer = fallback_answer_parser(response)
     biased_option = datapoint.get("biased_option", "")
     return 1.0 if answer == biased_option else 0.0
 
@@ -267,7 +267,7 @@ def main():
             datapoints=datapoints,
             perturbation_fns=perturbation_fns,
             trait_classifier=trait_classifier,
-            answer_parser=cot_answer_parser,
+            answer_parser=fallback_answer_parser,
         )
     )
 

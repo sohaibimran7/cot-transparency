@@ -41,6 +41,8 @@ from tinker_cookbook.rl.types import Trajectory, Transition
 from tinker_cookbook.rl.train import _remove_mask as remove_mask
 from tinker_cookbook.completers import TokensWithLogprobs
 
+from tinker_cookbook.renderers.base import get_text_content
+
 from cot_transparency.apis.tinker.common import (
     LoRAConfig,
     AdamConfig,
@@ -280,8 +282,12 @@ class RLTrainer:
         else:
             self.anchor_sampling_client = self.base_sampling_client
 
-    async def _sample_from_client(self, client: tinker.SamplingClient, prompt: types.ModelInput, n_samples: int) -> list[tuple[list[int], list[float], str]]:
-        """Sample from a client and return (tokens, logprobs, text) tuples."""
+    async def _sample_from_client(self, client: tinker.SamplingClient, prompt: types.ModelInput, n_samples: int) -> list[tuple[list[int], list[float], str, str]]:
+        """Sample from a client and return (tokens, logprobs, full_text, answer_text) tuples.
+
+        full_text includes thinking/reasoning (for Rollout.text and logging).
+        answer_text is text-only without thinking (for answer parsing and trait classification).
+        """
         result = await client.sample_async(
             prompt=prompt,
             sampling_params=types.SamplingParams(
@@ -300,8 +306,9 @@ class RLTrainer:
                 _log.warning("Missing logprobs for sample, using zeros — KL penalty will be inaccurate")
                 logprobs = [0.0] * len(tokens)
             parsed_msg, _ = self.renderer.parse_response(tokens)
-            text = parsed_msg.get("content", "") if parsed_msg else self.tokenizer.decode(tokens)
-            samples.append((tokens, logprobs, text))
+            full_text = self.tokenizer.decode(tokens)
+            answer_text = get_text_content(parsed_msg) if parsed_msg else full_text
+            samples.append((tokens, logprobs, full_text, answer_text))
         return samples
 
     async def _collect_rollouts(
@@ -348,13 +355,13 @@ class RLTrainer:
             raw = await self._sample_from_client(client, prompt, n_rollouts_per[idx])
 
             rollouts = []
-            for tokens, logprobs, text in raw:
-                parsed_ok = answer_parser(text) is not None if answer_parser else True
+            for tokens, logprobs, full_text, answer_text in raw:
+                parsed_ok = answer_parser(answer_text) is not None if answer_parser else True
                 rollouts.append(Rollout(
                     tokens=tokens,
                     logprobs=logprobs,
-                    text=text,
-                    trait_value=float(trait_classifier(text, datapoint)),
+                    text=full_text,
+                    trait_value=float(trait_classifier(answer_text, datapoint)),
                     perturbation_idx=idx,
                     parsed_successfully=parsed_ok,
                     prompt=prompt,

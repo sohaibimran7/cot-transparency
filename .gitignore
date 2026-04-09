@@ -18,8 +18,21 @@ htmlcov
 
 experiments
 notebooks
-data/uploaded_finetuning_files
+data/
 
 
 .env
 wandb
+cache/
+claude/
+
+*.jsonl
+
+# Logs and plots (large/generated), except eval results we want to keep
+/logs/
+/plots/
+*archive/
+sycophancy_eval_inspect/logs/*
+!sycophancy_eval_inspect/logs/cot_100samples/
+sycophancy_eval_inspect/plots/*
+!sycophancy_eval_inspect/plots/cot_100samples/

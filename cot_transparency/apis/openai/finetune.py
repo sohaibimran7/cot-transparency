@@ -183,10 +183,12 @@ class WandbSyncer:
         self.run = run
 
     @staticmethod
-    def create(project_name: str, notes: Optional[str] = None) -> "WandbSyncer":
+    def create(project_name: str, name: Optional[str] = None, notes: Optional[str] = None) -> "WandbSyncer":
         run: Run = wandb.init(  # type: ignore
             # set the wandb project where this run will be logged
             project=project_name,
+            # name is the run name (displayed in wandb UI)
+            name=name,
             # notes are a short description of the run
             notes=notes,
         )

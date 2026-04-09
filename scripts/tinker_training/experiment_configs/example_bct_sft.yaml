@@ -1,0 +1,65 @@
+# BCT (Bias Consistency Training) via SFT
+# Generates training data from test bias files, trains with SFT, evaluates, and plots.
+#
+# Usage:
+#   python scripts/tinker_training/run_experiment.py scripts/tinker_training/experiment_configs/example_bct_sft.yaml
+#   python scripts/tinker_training/run_experiment.py scripts/tinker_training/experiment_configs/example_bct_sft.yaml --start-from eval
+#   python scripts/tinker_training/run_experiment.py scripts/tinker_training/experiment_configs/example_bct_sft.yaml --stages eval,analysis
+
+name: bct-sa-llama-4k
+model: meta-llama/Llama-3.1-8B-Instruct
+
+data_generation:
+  script: generate_bct_from_test
+  args:
+    bias: suggested_answer
+    datasets: [mmlu, truthfulqa]
+    limits: [1183, 817]              # ~2000 total samples
+    batch_size: 64
+
+# data_preparation:                  # Uncomment to combine/clean data files
+#   enabled: true
+#   args:
+#     inputs:
+#       - "auto:bct_cot"
+#       - "auto:instruct:half"
+#     shuffle: true
+#     output: dataset_dumps/train_seed_42/llama-3-1-8b-instruct/mixed.jsonl
+
+training:
+  method: sft
+  include_control: true               # Also train control (unbiased data) in parallel
+  # control_only: false               # Set true to only run control training
+  # checkpoint: "tinker://..."        # Set this when using --start-from eval
+  args:
+    experiment_name: bct_suggested_answer
+    run_name: llama-bct-mti-4k
+    data: auto                        # Resolved from data_generation outputs
+    lr: 1.0e-4
+    batch_size: 128
+    lora_rank: 8
+    save_every: 5
+    epochs: 1
+
+evaluation:
+  include_base: true                  # Also evaluate base model in parallel
+  # base_only: false                  # Set true to only evaluate base model
+  args:
+    bias_types: "suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares"
+    datasets: "hellaswag,logiqa"
+    prompt_styles: "cot,no_cot"
+    log_dir: sycophancy_eval_inspect/logs/tinker_evals
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+
+# Optional: register model in visualization system for new model types
+# viz_registration:
+#   dir_suffix: bct-mti-4k
+#   display_name: "BCT MTI 4k"
+#   color: "#4292c6"
+#   hatch: "//"
+#   training_biases: [suggested_answer]

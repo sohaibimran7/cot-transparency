@@ -1,0 +1,53 @@
+# RLCT (Reinforcement Learning Consistency Training)
+# Trains with RL directly on bias data (no data generation step needed),
+# evaluates, and plots.
+#
+# Usage:
+#   python scripts/tinker_training/run_experiment.py scripts/tinker_training/experiment_configs/example_rlct.yaml
+#   python scripts/tinker_training/run_experiment.py scripts/tinker_training/experiment_configs/example_rlct.yaml --stages train,eval,analysis
+
+name: rlct-sa-llama-s50
+model: meta-llama/Llama-3.1-8B-Instruct
+
+# No data_generation needed for RL — it loads from dataset_dumps/test/ directly
+
+training:
+  method: rl
+  include_control: true               # Also train control variant in parallel
+  # control_only: false               # Set true to only run control training
+  # checkpoint: "tinker://..."        # Set this when using --start-from eval
+  args:
+    experiment_name: rl_suggested_answer
+    run_name: llama-rlct-s50
+    bias_types: suggested_answer
+    datasets: "mmlu,truthfulqa"
+    n_datapoints: 100
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.5
+    loss_fn: ppo
+    n_ref_rollouts: 128
+    n_train_rollouts: 128
+    checkpoint_every: 50
+    refresh_every: 1
+
+evaluation:
+  include_base: true                  # Also evaluate base model in parallel
+  # base_only: false                  # Set true to only evaluate base model
+  args:
+    bias_types: "suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares"
+    datasets: "hellaswag,logiqa"
+    prompt_styles: "cot,no_cot"
+    log_dir: sycophancy_eval_inspect/logs/tinker_evals
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+
+# viz_registration:
+#   dir_suffix: rlct-s50
+#   display_name: "RLCT s50"
+#   color: "#a1d99b"
+#   training_biases: [suggested_answer]

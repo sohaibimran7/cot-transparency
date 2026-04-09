@@ -142,6 +142,8 @@ def main():
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--lora-rank", type=int, default=8)
+    parser.add_argument("--seed", type=int, default=None,
+                        help="Random seed for training reproducibility")
     parser.add_argument("--save-every", type=int, default=5)
     parser.add_argument("--save-state", action="store_true",
                         help="Save full optimizer state for intermediate checkpoints (for resuming)")
@@ -194,7 +196,7 @@ def main():
         experiment_name=args.experiment_name,
         run_name=args.run_name,
         model=args.model,
-        lora=LoRAConfig(rank=args.lora_rank),
+        lora=LoRAConfig(rank=args.lora_rank, seed=args.seed),
         optimizer=AdamConfig(learning_rate=args.lr),
         n_epochs=args.epochs,
         batch_size=args.batch_size,
@@ -211,8 +213,9 @@ def main():
     print()
     print(f"Model: {config.model}")
     print(f"Experiment: {config.experiment_name} / {config.run_name}")
+    seed_str = f", seed={args.seed}" if args.seed is not None else ""
     print(f"Hyperparams: lr={args.lr or 'auto'}, batch={args.batch_size}, "
-          f"epochs={args.epochs}, lora_rank={args.lora_rank}")
+          f"epochs={args.epochs}, lora_rank={args.lora_rank}{seed_str}")
     print(f"Steps: {n_steps}, checkpoints: ~{n_ckpts} intermediate + 1 final")
     print(f"Final checkpoint: always saves full state (for resuming)")
     if args.save_state:

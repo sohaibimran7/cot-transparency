@@ -506,17 +506,22 @@ def _resolve_training_data(config: dict, st: dict, is_control: bool) -> list[str
     return [f"<auto:resolved-from-{tag}>"]
 
 
-def build_training_cmd(config: dict, st: dict, is_control: bool = False) -> list[str]:
+def build_training_cmd(
+    config: dict, st: dict, is_control: bool = False, seed: int | None = None,
+) -> list[str]:
     """Build the command for a single training run.
 
     Args:
         is_control: If True, build the control variant (SFT uses control data, RL adds --control).
+        seed: If set, append -s{seed} to run_name and pass --seed to the training script.
     """
     tr = config.get("training", {})
     method = tr.get("method", "sft")
     args = tr.get("args", {})
 
     run_name = str(args.get("run_name", "default"))
+    if seed is not None:
+        run_name = f"{run_name}-s{seed}"
     if is_control:
         run_name = f"{run_name}-ctrl"
 
@@ -547,6 +552,9 @@ def build_training_cmd(config: dict, st: dict, is_control: bool = False) -> list
         for key in ("lr", "batch_size", "epochs", "lora_rank", "save_every", "skip_near_final"):
             if key in args:
                 cmd += [f"--{key.replace('_', '-')}", str(args[key])]
+
+        if seed is not None:
+            cmd += ["--seed", str(seed)]
 
         if args.get("save_state"):
             cmd.append("--save-state")
@@ -585,6 +593,9 @@ def build_training_cmd(config: dict, st: dict, is_control: bool = False) -> list
             if key in args:
                 cmd += [f"--{key.replace('_', '-')}", str(args[key])]
 
+        if seed is not None:
+            cmd += ["--seed", str(seed)]
+
         if args.get("save_state"):
             cmd.append("--save-state")
         if is_control or args.get("control"):
@@ -608,18 +619,26 @@ def build_training_cmd(config: dict, st: dict, is_control: bool = False) -> list
 def build_training_cmds(config: dict, st: dict) -> list[tuple[list[str], str]]:
     """Build training commands. Returns list of (cmd, label) tuples.
 
-    Supports include_control (parallel main + control) and control_only.
+    Supports include_control (parallel main + control), control_only, and
+    multi-seed (training.seeds list). Seeds and control are crossed:
+    e.g. seeds=[0,42] + include_control produces 4 parallel runs.
     For data_mode=sequential, returns commands for each data step (run serially by caller).
     """
     tr = config.get("training", {})
     control_only = tr.get("control_only", False)
     include_control = tr.get("include_control", False) or control_only
+    seeds = tr.get("seeds")  # None or list[int]
 
     cmds = []
-    if not control_only:
-        cmds.append((build_training_cmd(config, st, is_control=False), "main"))
-    if include_control:
-        cmds.append((build_training_cmd(config, st, is_control=True), "control"))
+    seed_list = seeds if seeds else [None]
+
+    for seed in seed_list:
+        if not control_only:
+            label = f"main-s{seed}" if seed is not None else "main"
+            cmds.append((build_training_cmd(config, st, is_control=False, seed=seed), label))
+        if include_control:
+            label = f"control-s{seed}" if seed is not None else "control"
+            cmds.append((build_training_cmd(config, st, is_control=True, seed=seed), label))
     return cmds
 
 
@@ -760,26 +779,50 @@ def build_eval_cmds(
         cmds.append((cmd, "base"))
 
     if not base_only:
-        # Main checkpoint
-        checkpoint = (
-            checkpoint_override
-            or stage_outputs(st, "training").get("checkpoint")
-            or tr.get("checkpoint")
-        )
-        if checkpoint:
-            cmd = _build_single_eval_cmd(
-                config, args, checkpoint=checkpoint, eval_name=_eval_name(config),
-            )
-            cmds.append((cmd, "main"))
+        training_outputs = stage_outputs(st, "training")
+        seeds = tr.get("seeds")
 
-        # Control checkpoint (auto-detected from training outputs)
-        control_checkpoint = stage_outputs(st, "training").get("control_checkpoint")
-        if control_checkpoint:
-            cmd = _build_single_eval_cmd(
-                config, args, checkpoint=control_checkpoint,
-                eval_name=_eval_name(config, suffix="-ctrl"),
+        if seeds and not checkpoint_override:
+            # Multi-seed: eval each seed's checkpoint
+            for seed in seeds:
+                main_key = f"main-s{seed}_checkpoint"
+                ckpt = training_outputs.get(main_key)
+                if ckpt:
+                    cmd = _build_single_eval_cmd(
+                        config, args, checkpoint=ckpt,
+                        eval_name=_eval_name(config, suffix=f"-s{seed}"),
+                    )
+                    cmds.append((cmd, f"main-s{seed}"))
+
+                ctrl_key = f"control-s{seed}_checkpoint"
+                ctrl_ckpt = training_outputs.get(ctrl_key)
+                if ctrl_ckpt:
+                    cmd = _build_single_eval_cmd(
+                        config, args, checkpoint=ctrl_ckpt,
+                        eval_name=_eval_name(config, suffix=f"-s{seed}-ctrl"),
+                    )
+                    cmds.append((cmd, f"control-s{seed}"))
+        else:
+            # Single-seed: existing logic
+            checkpoint = (
+                checkpoint_override
+                or training_outputs.get("checkpoint")
+                or tr.get("checkpoint")
             )
-            cmds.append((cmd, "control"))
+            if checkpoint:
+                cmd = _build_single_eval_cmd(
+                    config, args, checkpoint=checkpoint, eval_name=_eval_name(config),
+                )
+                cmds.append((cmd, "main"))
+
+            # Control checkpoint (auto-detected from training outputs)
+            control_checkpoint = training_outputs.get("control_checkpoint")
+            if control_checkpoint:
+                cmd = _build_single_eval_cmd(
+                    config, args, checkpoint=control_checkpoint,
+                    eval_name=_eval_name(config, suffix="-ctrl"),
+                )
+                cmds.append((cmd, "control"))
 
     return cmds
 
@@ -820,6 +863,8 @@ def build_analysis_cmd(config: dict, st: dict) -> list[str]:
         cmd.append("--summary")
     if args.get("common_questions"):
         cmd.append("--common-questions")
+    if args.get("variance_across"):
+        cmd += ["--variance-across", str(args["variance_across"])]
 
     return cmd
 
@@ -898,6 +943,13 @@ def validate_config(config: dict, stages_to_run: list[str], st: dict, checkpoint
     """Validate that required inputs exist for each stage to run."""
     tr = config.get("training", {})
     tr_args = tr.get("args", {})
+
+    seeds = tr.get("seeds")
+    if seeds is not None:
+        if not isinstance(seeds, list) or not all(isinstance(s, int) for s in seeds):
+            raise ValueError("training.seeds must be a list of integers")
+        if tr.get("data_mode") == "sequential":
+            raise ValueError("Multi-seed with data_mode=sequential is not yet supported")
 
     if "training" in stages_to_run:
         method = tr.get("method", "sft")
@@ -1108,9 +1160,19 @@ def run_pipeline(
                     if not dry_run:
                         for (ret, output), (_, label) in zip(results, cmds):
                             parsed = parse_training_output(output)
-                            key_prefix = "control_" if label == "control" else ""
                             if parsed.get("checkpoint"):
-                                outputs[f"{key_prefix}checkpoint"] = parsed["checkpoint"]
+                                if label == "main":
+                                    outputs["checkpoint"] = parsed["checkpoint"]
+                                elif label == "control":
+                                    outputs["control_checkpoint"] = parsed["checkpoint"]
+                                else:
+                                    # Multi-seed: label is "main-s{N}" or "control-s{N}"
+                                    outputs[f"{label}_checkpoint"] = parsed["checkpoint"]
+                                    # Also update primary keys for backward compat
+                                    if label.startswith("main"):
+                                        outputs["checkpoint"] = parsed["checkpoint"]
+                                    elif label.startswith("control"):
+                                        outputs["control_checkpoint"] = parsed["checkpoint"]
                             if ret != 0:
                                 rc = ret
 
@@ -1209,6 +1271,8 @@ def _build_combined_analysis_cmd(configs: list[dict]) -> list[str]:
         cmd.append("--summary")
     if args.get("common_questions"):
         cmd.append("--common-questions")
+    if args.get("variance_across"):
+        cmd += ["--variance-across", str(args["variance_across"])]
 
     return cmd
 

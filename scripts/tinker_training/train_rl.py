@@ -118,6 +118,8 @@ def main():
     parser.add_argument("--lr", type=float, default=None, help="Learning rate (default: auto from Tinker's get_recommended_lr)")
     parser.add_argument("--lr-schedule", default="constant", choices=["constant", "linear", "cosine"])
     parser.add_argument("--lora-rank", type=int, default=8)
+    parser.add_argument("--seed", type=int, default=None,
+                        help="Random seed for training reproducibility")
     parser.add_argument("--kl-coef", type=float, default=0.05)
     parser.add_argument("--anchor-weight", type=float, default=0.5, help="Anchor weight (alpha): 0=pure consistency, 1=pure anchor, 0.5=equal")
     parser.add_argument("--anchor-model", default="base", choices=["base", "initial_policy"], help="Model for anchor reference rate: 'base' (frozen base) or 'initial_policy' (policy at init, incl. resumed ckpt)")
@@ -173,7 +175,7 @@ def main():
         experiment_name=args.experiment_name,
         run_name=args.run_name,
         model=args.model,
-        lora=LoRAConfig(rank=args.lora_rank),
+        lora=LoRAConfig(rank=args.lora_rank, seed=args.seed),
         optimizer=AdamConfig(
             learning_rate=args.lr,
             lr_schedule=args.lr_schedule,
@@ -220,6 +222,8 @@ def main():
     print(f"  Perturbations:      {pert_desc}")
     print(f"  LR:                 {args.lr} ({args.lr_schedule})")
     print(f"  LoRA rank:          {args.lora_rank}")
+    if args.seed is not None:
+        print(f"  Seed:               {args.seed}")
     print(f"  Batch size:         {args.batch_size}")
     print(f"  Grad accum steps:   {args.gradient_accumulation_steps}")
     print(f"  N epochs:           {args.n_epochs}")

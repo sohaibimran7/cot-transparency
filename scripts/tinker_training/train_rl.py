@@ -120,6 +120,7 @@ def main():
     parser.add_argument("--lora-rank", type=int, default=8)
     parser.add_argument("--kl-coef", type=float, default=0.05)
     parser.add_argument("--anchor-weight", type=float, default=0.5, help="Anchor weight (alpha): 0=pure consistency, 1=pure anchor, 0.5=equal")
+    parser.add_argument("--anchor-model", default="base", choices=["base", "initial_policy"], help="Model for anchor reference rate: 'base' (frozen base) or 'initial_policy' (policy at init, incl. resumed ckpt)")
     parser.add_argument("--loss-fn", default="ppo", choices=["ppo", "reinforce"])
 
     # === Sampling ===
@@ -204,6 +205,7 @@ def main():
         kl_coef=args.kl_coef,
         loss_fn=args.loss_fn,
         anchor_weight=args.anchor_weight,
+        anchor_model=args.anchor_model,
         log_base_dir="logs",
     )
 
@@ -229,6 +231,7 @@ def main():
     print(f"  n_anchor_rollouts:  {args.n_anchor_rollouts}")
     print(f"  KL coef:            {args.kl_coef}")
     print(f"  Anchor weight:      {args.anchor_weight}")
+    print(f"  Anchor model:       {args.anchor_model}")
     print(f"  Loss fn:            {args.loss_fn}")
     if args.resume_from:
         print(f"  Resume from:        {args.resume_from}")

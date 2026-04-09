@@ -167,10 +167,10 @@ def build_mock_trainer(
     # Training always takes TRAIN_DELAY. This creates varied sampling costs.
 
     async def mock_collect_rollouts(datapoint, perturbation_fns, trait_classifier,
-                                    use_base_model=False, answer_parser=None,
+                                    sampling_client=None, answer_parser=None,
                                     rates_only=False):
         sit_id = datapoint.get("id", "?")
-        source = "base" if use_base_model else "policy"
+        source = "anchor" if sampling_client is not None else "policy"
         delay = (sit_id / 1000.0) if isinstance(sit_id, (int, float)) else SAMPLE_DELAY
         log_event("sample_start", f"sit={sit_id} source={source}")
         await asyncio.sleep(delay)
@@ -479,10 +479,10 @@ async def run_test_empty_batch_skip():
     original_mock = trainer._collect_rollouts
 
     async def mock_collect_with_empty(datapoint, perturbation_fns, trait_classifier,
-                                       use_base_model=False, answer_parser=None,
+                                       sampling_client=None, answer_parser=None,
                                        rates_only=False):
         sit_id = datapoint.get("id", "?")
-        source = "base" if use_base_model else "policy"
+        source = "anchor" if sampling_client is not None else "policy"
         log_event("sample_start", f"sit={sit_id} source={source}")
         await asyncio.sleep(SAMPLE_DELAY)
         log_event("sample_end", f"sit={sit_id} source={source}")
@@ -797,13 +797,13 @@ async def run_test_refresh_invalidates_prefetch():
     # After a queue flush, fresh tasks overwrite stale entries in the dict.
     config = trainer.config
     async def versioned_collect(datapoint, perturbation_fns, trait_classifier,
-                                 use_base_model=False, answer_parser=None, rates_only=False):
+                                 sampling_client=None, answer_parser=None, rates_only=False):
         sit_id = datapoint.get("id", "?")
-        if not use_base_model:
+        if sampling_client is None:
             version = trainer.sampling_client._policy_version
             sample_version_by_sit[sit_id] = version
 
-        source = "base" if use_base_model else "policy"
+        source = "anchor" if sampling_client is not None else "policy"
         log_event("sample_start", f"sit={sit_id} source={source}")
         await asyncio.sleep(0.001)
         log_event("sample_end", f"sit={sit_id}")
@@ -892,9 +892,9 @@ async def run_test_step0_base_rate_optimization():
     # Custom _collect_rollouts with sit_id-dependent delays
     config = trainer.config
     async def slow_collect(datapoint, perturbation_fns, trait_classifier,
-                            use_base_model=False, answer_parser=None, rates_only=False):
+                            sampling_client=None, answer_parser=None, rates_only=False):
         sit_id = datapoint.get("id", "?")
-        source = "base" if use_base_model else "policy"
+        source = "anchor" if sampling_client is not None else "policy"
         delay = 0.0 if sit_id == 0 else 0.2  # 0ms vs 200ms
 
         log_event("sample_start", f"sit={sit_id} source={source}")

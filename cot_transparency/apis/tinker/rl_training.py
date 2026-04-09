@@ -25,7 +25,7 @@ import sys
 import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Sequence, Callable, Any
+from typing import Literal, Optional, Sequence, Callable, Any
 
 import tinker
 from tinker import types
@@ -110,7 +110,7 @@ class RateEstimationConfig(BaseModel):
     """Rate estimation config (reference or perturbation rates)."""
     perturbation_indices: list[int] | str = [0]
     n_rollouts: int = 64
-    aggregation: Optional[str] = "mean"
+    aggregation: Optional[Literal["mean", "min", "max"]] = "mean"
 
 
 class TrainingSamplingConfig(BaseModel):
@@ -149,8 +149,9 @@ class RLConfig(BaseModel):
     checkpoint: CheckpointConfig = CheckpointConfig()
     kl_coef: float = 0.05
     kl_discount_factor: float = 0.0
-    loss_fn: str = "ppo"
+    loss_fn: Literal["ppo", "reinforce"] = "ppo"
     anchor_weight: float = 0.5
+    anchor_model: Literal["base", "initial_policy"] = "base"
     log_base_dir: str = "logs"
 
 
@@ -245,6 +246,7 @@ class RLTrainer:
         self.training_client: tinker.TrainingClient | None = None
         self.sampling_client: tinker.SamplingClient | None = None
         self.base_sampling_client: tinker.SamplingClient | None = None
+        self.anchor_sampling_client: tinker.SamplingClient | None = None
         self.renderer: Any = None
         self.tokenizer: Any = None
 
@@ -271,6 +273,12 @@ class RLTrainer:
         self.base_sampling_client = self.service_client.create_sampling_client(
             base_model=self.config.model
         )
+        # Anchor client: used for computing p_ref_init (the anchor target rate).
+        # "base" = frozen base model; "initial_policy" = policy at init (base + any resumed ckpt).
+        if self.config.anchor_model == "initial_policy":
+            self.anchor_sampling_client = self.sampling_client
+        else:
+            self.anchor_sampling_client = self.base_sampling_client
 
     async def _sample_from_client(self, client: tinker.SamplingClient, prompt: types.ModelInput, n_samples: int) -> list[tuple[list[int], list[float], str]]:
         """Sample from a client and return (tokens, logprobs, text) tuples."""
@@ -301,7 +309,7 @@ class RLTrainer:
         datapoint: dict,
         perturbation_fns: list[Callable[[dict], dict]],
         trait_classifier: Callable[[str, dict], float],
-        use_base_model: bool = False,
+        sampling_client: Optional[tinker.SamplingClient] = None,
         answer_parser: Optional[Callable[[str], Optional[str]]] = None,
         rates_only: bool = False,
     ) -> RolloutResult:
@@ -312,8 +320,10 @@ class RLTrainer:
         subset retains tokens/logprobs.
 
         Args:
+            sampling_client: Explicit client to sample from. Defaults to
+                self.sampling_client (current policy).
             rates_only: If True, skip gradient rollout selection and return empty
-                rollout lists. Used for base sampling where only rates are needed.
+                rollout lists. Used for anchor/base sampling where only rates are needed.
         """
         n_perts = len(perturbation_fns)
         training_idx = set(_resolve_indices(self.config.training.perturbation_indices, n_perts))
@@ -328,7 +338,7 @@ class RLTrainer:
             for idx in all_idx
         }
 
-        client = self.base_sampling_client if use_base_model else self.sampling_client
+        client = sampling_client if sampling_client is not None else self.sampling_client
 
         async def rollout_perturbation(idx: int) -> tuple[int, list[Rollout]]:
             pert_result = perturbation_fns[idx](datapoint)
@@ -604,13 +614,19 @@ class RLTrainer:
             async def collect_for_datapoint(dp_idx: int) -> BatchItem:
                 dp = datapoints[dp_idx]
 
-                # Step 0: policy == base model, so policy rollouts give base rate too
-                need_base = need_p_ref_init and dp_idx not in initial_reference_rates
+                # Step 0 optimization: when the initial policy IS the anchor model,
+                # we can extract p_ref_init from policy rollouts directly (no extra API call).
+                # True for "initial_policy" always; true for "base" only when not resuming.
+                need_anchor = need_p_ref_init and dp_idx not in initial_reference_rates
+                step0_is_anchor = (
+                    self.config.anchor_model == "initial_policy"
+                    or self.resume_from is None
+                )
                 step_snapshot = global_step  # Capture before await; prefetched coroutines read this after yield
                 result = await self._collect_rollouts(dp, perturbation_fns, trait_classifier, answer_parser=answer_parser)
 
-                if need_base and step_snapshot == 0:
-                    # At step 0, policy IS base model — extract p_ref_init directly
+                if need_anchor and step_snapshot == 0 and step0_is_anchor:
+                    # At step 0, policy matches anchor model — extract p_ref_init directly
                     p_ref_init_val = self._aggregate_ref_rates(result.rates, ref_idx)
                     if p_ref_init_val is not None:
                         initial_reference_rates[dp_idx] = p_ref_init_val
@@ -673,22 +689,34 @@ class RLTrainer:
                     print(f"\n⚠️  Low parse rate ({parse_rate:.1%}) at step {global_step + 1}")
 
                 # ── Resolve p_ref_init for anchor (if needed) ─────────────
+                # Launch all missing anchor rate samples concurrently
+                if need_p_ref_init:
+                    items_needing_anchor = [
+                        item for item in batch_items
+                        if item.p_ref_init is None and item.datapoint_idx not in initial_reference_rates
+                    ]
+                    if items_needing_anchor:
+                        print(f"  ⏳ Anchor rate missing for {len(items_needing_anchor)} datapoint(s), sampling from {self.config.anchor_model}...")
+
+                        async def _sample_anchor(item: BatchItem) -> tuple[BatchItem, Optional[float]]:
+                            result = await self._collect_rollouts(
+                                datapoints[item.datapoint_idx], perturbation_fns, trait_classifier,
+                                sampling_client=self.anchor_sampling_client, answer_parser=answer_parser, rates_only=True,
+                            )
+                            return item, self._aggregate_ref_rates(result.rates, ref_idx)
+
+                        anchor_results = await asyncio.gather(*[_sample_anchor(item) for item in items_needing_anchor])
+                        for item, p_ref_init_val in anchor_results:
+                            if p_ref_init_val is None:
+                                print(f"  ⚠️  Could not compute base rate for datapoint {item.datapoint_idx}, skipping")
+                            else:
+                                initial_reference_rates[item.datapoint_idx] = p_ref_init_val
+
                 resolved_items = []
                 for item in batch_items:
                     if item.p_ref_init is None and need_p_ref_init:
-                        # Launch on-demand base sampling
-                        if item.datapoint_idx not in initial_reference_rates:
-                            print(f"  ⏳ Base rate missing for datapoint {item.datapoint_idx}, sampling now...")
-                            base_result = await self._collect_rollouts(
-                                datapoints[item.datapoint_idx], perturbation_fns, trait_classifier,
-                                use_base_model=True, answer_parser=answer_parser, rates_only=True,
-                            )
-                            p_ref_init_val = self._aggregate_ref_rates(base_result.rates, ref_idx)
-                            if p_ref_init_val is None:
-                                print(f"  ⚠️  Could not compute base rate for datapoint {item.datapoint_idx}, skipping")
-                                continue
-                            initial_reference_rates[item.datapoint_idx] = p_ref_init_val
-                        item.p_ref_init = initial_reference_rates[item.datapoint_idx]
+                        if item.datapoint_idx in initial_reference_rates:
+                            item.p_ref_init = initial_reference_rates[item.datapoint_idx]
 
                     if item.p_ref is None:
                         if item.p_ref_init is not None:

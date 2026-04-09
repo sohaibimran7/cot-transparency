@@ -31,6 +31,7 @@ claude/
 # Logs and plots (large/generated), except eval results we want to keep
 /logs/
 /plots/
+*archive/
 sycophancy_eval_inspect/logs/*
 !sycophancy_eval_inspect/logs/cot_100samples/
 sycophancy_eval_inspect/plots/*

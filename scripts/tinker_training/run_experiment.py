@@ -31,8 +31,11 @@ import subprocess
 import sys
 import tempfile
 import threading
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 
 import yaml
 
@@ -1002,6 +1005,826 @@ def validate_config(config: dict, stages_to_run: list[str], st: dict, checkpoint
 
 
 # ---------------------------------------------------------------------------
+# Task graph: data structures
+# ---------------------------------------------------------------------------
+
+# Sentinel default for build_cmd / parse_output that take no real work
+_NO_OUTPUT: Callable[[str], dict] = lambda _out: {}
+
+
+@dataclass
+class Task:
+    """A single subprocess task in the experiment DAG.
+
+    `build_cmd` is invoked lazily, just before execution, with a dict mapping
+    each upstream task id (from `deps`) to that task's parsed outputs. This is
+    how downstream tasks (e.g., eval) pull values from upstream tasks (e.g.,
+    a checkpoint path produced by training) without needing placeholders.
+    """
+    id: str
+    stage: str
+    label: str
+    deps: list[str]
+    build_cmd: Callable[[dict], list[str]]
+    parse_output: Callable[[str], dict] = field(default=_NO_OUTPUT)
+    dry_run_outputs: dict = field(default_factory=dict)
+
+
+def _overlay_stage_outputs(st: dict, **stage_outputs_overlay) -> dict:
+    """Return a shallow copy of state with the given stages' outputs replaced.
+
+    Used inside lazy build_cmd closures so that helpers like
+    `_resolve_training_data(config, st, ...)` see the *current* upstream task
+    outputs, not the snapshot taken at graph build time.
+    """
+    new_st = dict(st)
+    new_stages = {k: dict(v) for k, v in st.get("stages", {}).items()}
+    for stage_name, outs in stage_outputs_overlay.items():
+        if outs is None:
+            continue
+        new_stages.setdefault(stage_name, {})
+        new_stages[stage_name] = dict(new_stages[stage_name])
+        new_stages[stage_name]["outputs"] = outs
+    new_st["stages"] = new_stages
+    return new_st
+
+
+# ---------------------------------------------------------------------------
+# Task graph: executor
+# ---------------------------------------------------------------------------
+
+class TaskGraph:
+    """A DAG of subprocess tasks executed with topological scheduling.
+
+    Tasks become eligible the moment all of their dependencies have completed
+    successfully. Independent tasks run in parallel via a ThreadPoolExecutor;
+    a failure cancels only the failing task's transitive descendants — sibling
+    branches keep running.
+    """
+
+    TERMINAL = {"completed", "failed", "cancelled", "skipped"}
+
+    def __init__(self, tasks: list[Task]):
+        self.tasks: dict[str, Task] = {}
+        for t in tasks:
+            if t.id in self.tasks:
+                raise ValueError(f"Duplicate task id: {t.id}")
+            self.tasks[t.id] = t
+        for t in tasks:
+            for d in t.deps:
+                if d not in self.tasks:
+                    raise ValueError(
+                        f"Task {t.id!r} depends on unknown task {d!r}"
+                    )
+
+    def topo_order(self) -> list[str]:
+        """Return task ids in a stable topological order (dep before dependant)."""
+        order: list[str] = []
+        visited: set[str] = set()
+        temp: set[str] = set()
+
+        def visit(tid: str) -> None:
+            if tid in visited:
+                return
+            if tid in temp:
+                raise ValueError(f"Cycle detected at task {tid!r}")
+            temp.add(tid)
+            for d in self.tasks[tid].deps:
+                visit(d)
+            temp.discard(tid)
+            visited.add(tid)
+            order.append(tid)
+
+        for tid in self.tasks:
+            visit(tid)
+        return order
+
+    def run(
+        self,
+        config: dict,
+        st: dict,
+        dry_run: bool,
+        max_parallel: int | None,
+        force: bool,
+    ) -> dict[str, dict]:
+        """Run the graph. Returns {task_id: {status, outputs, error}}.
+
+        State is persisted incrementally via `save_state(config, st)` so that
+        a Ctrl-C in the middle leaves the on-disk state coherent for resume.
+        """
+        # Initialise task state, optionally pre-populating from prior run
+        status: dict[str, str] = {tid: "pending" for tid in self.tasks}
+        outputs: dict[str, dict] = {tid: {} for tid in self.tasks}
+        errors: dict[str, str] = {tid: "" for tid in self.tasks}
+
+        prior_tasks = (st.get("tasks") or {}) if not force else {}
+        for tid in self.tasks:
+            prior = prior_tasks.get(tid)
+            if prior and prior.get("status") == "completed":
+                status[tid] = "completed"
+                outputs[tid] = dict(prior.get("outputs", {}))
+
+        # In dry-run we walk the topo order serially: no subprocess execution,
+        # but each build_cmd is called with placeholder dep outputs to verify
+        # the graph wires up correctly.
+        if dry_run:
+            return self._run_dry(config, st, status, outputs)
+
+        return self._run_live(config, st, status, outputs, errors, max_parallel)
+
+    # -- dry-run path -------------------------------------------------------
+
+    def _run_dry(
+        self,
+        config: dict,
+        st: dict,
+        status: dict[str, str],
+        outputs: dict[str, dict],
+    ) -> dict[str, dict]:
+        _print(f"\nTask graph ({len(self.tasks)} tasks, topological order):")
+        for tid in self.topo_order():
+            t = self.tasks[tid]
+            dep_str = f" deps={t.deps}" if t.deps else ""
+            _print(f"  [{t.stage}] {tid}{dep_str}")
+        _print()
+
+        for tid in self.topo_order():
+            t = self.tasks[tid]
+            if status[tid] == "completed":
+                _print(f"\n[{tid}] (already completed in prior run, skipping)")
+                continue
+
+            deps_outs = {d: outputs[d] for d in t.deps}
+            try:
+                cmd = t.build_cmd(deps_outs)
+            except Exception as e:
+                _print(f"\n[{tid}] build_cmd ERROR: {e}")
+                status[tid] = "failed"
+                continue
+
+            cmd_str = " \\\n    ".join(cmd)
+            _print(f"\n{'='*60}")
+            _print(f"  [dry-run] {tid}")
+            _print(f"{'='*60}")
+            _print(f"Command:\n  {cmd_str}\n")
+
+            # Pretend completion using declared dry-run outputs
+            outputs[tid] = dict(t.dry_run_outputs)
+            status[tid] = "completed"
+
+        return {
+            tid: {
+                "status": "pending",  # don't persist as completed on dry-run
+                "outputs": outputs[tid],
+                "error": "",
+            }
+            for tid in self.tasks
+        }
+
+    # -- live execution path ------------------------------------------------
+
+    def _run_live(
+        self,
+        config: dict,
+        st: dict,
+        status: dict[str, str],
+        outputs: dict[str, dict],
+        errors: dict[str, str],
+        max_parallel: int | None,
+    ) -> dict[str, dict]:
+        lock = threading.Lock()
+        cond = threading.Condition(lock)
+
+        def _persist(tid: str) -> None:
+            # Caller must hold lock
+            tasks_state = st.setdefault("tasks", {})
+            entry = tasks_state.setdefault(tid, {})
+            entry["status"] = status[tid]
+            entry["stage"] = self.tasks[tid].stage
+            entry["label"] = self.tasks[tid].label
+            if status[tid] == "running":
+                entry["started_at"] = datetime.now(timezone.utc).isoformat()
+            elif status[tid] in ("completed", "failed", "cancelled"):
+                entry["completed_at"] = datetime.now(timezone.utc).isoformat()
+            if outputs[tid]:
+                entry["outputs"] = outputs[tid]
+            if errors[tid]:
+                entry["error"] = errors[tid]
+            save_state(config, st)
+
+        def _propagate_cancellation() -> list[str]:
+            """Mark any pending task whose deps include a failed/cancelled task."""
+            newly_cancelled = []
+            changed = True
+            while changed:
+                changed = False
+                for tid, t in self.tasks.items():
+                    if status[tid] != "pending":
+                        continue
+                    if any(status[d] in ("failed", "cancelled") for d in t.deps):
+                        status[tid] = "cancelled"
+                        errors[tid] = "upstream task failed"
+                        _persist(tid)
+                        newly_cancelled.append(tid)
+                        changed = True
+            return newly_cancelled
+
+        def _ready_tasks() -> list[str]:
+            ready = []
+            for tid, t in self.tasks.items():
+                if status[tid] != "pending":
+                    continue
+                if all(status[d] == "completed" for d in t.deps):
+                    ready.append(tid)
+            return ready
+
+        # Capture parent thread's prefix so child threads inherit it
+        parent_prefix = getattr(_thread_local, "prefix", "")
+
+        def _run_task(tid: str) -> None:
+            t = self.tasks[tid]
+            # Combine parent prefix (multi-config) with task id
+            task_prefix = f"{parent_prefix}/{tid}" if parent_prefix else tid
+            _thread_local.prefix = task_prefix
+            try:
+                deps_outs = {d: dict(outputs[d]) for d in t.deps}
+                try:
+                    cmd = t.build_cmd(deps_outs)
+                except Exception as e:
+                    with cond:
+                        status[tid] = "failed"
+                        errors[tid] = f"build_cmd failed: {e}"
+                        _persist(tid)
+                        cond.notify_all()
+                    return
+
+                # Reuse run_stage_command for subprocess + per-task log file
+                # The log file lands at logs/{stage}_{label}.log
+                log_label = f"{t.stage}_{t.label}"
+                rc, out = run_stage_command(cmd, log_label, config, dry_run=False)
+
+                parsed: dict = {}
+                if rc == 0:
+                    try:
+                        parsed = t.parse_output(out)
+                    except Exception as e:
+                        parsed = {}
+                        errors[tid] = f"parse_output failed: {e}"
+
+                with cond:
+                    if rc == 0:
+                        status[tid] = "completed"
+                        outputs[tid] = parsed
+                    else:
+                        status[tid] = "failed"
+                        errors[tid] = errors[tid] or f"exit code {rc}"
+                    _persist(tid)
+                    cond.notify_all()
+            finally:
+                _thread_local.prefix = parent_prefix
+
+        # ThreadPoolExecutor caps concurrency. None / 0 means "default" — we
+        # pick a generous upper bound so a typical seeds × control fan-out
+        # never queues unnecessarily, but the user can dial it down via
+        # --max-parallel or `parallelism:` in the YAML.
+        workers = max_parallel if max_parallel and max_parallel > 0 else max(8, len(self.tasks))
+        executor = ThreadPoolExecutor(max_workers=workers)
+
+        try:
+            with cond:
+                # Persist initial state for any tasks already marked completed
+                # via resume so the on-disk state reflects the new tasks dict.
+                for tid in self.tasks:
+                    if status[tid] == "completed":
+                        _persist(tid)
+
+                # Cancel any tasks that became unreachable due to prior failures
+                _propagate_cancellation()
+
+                while True:
+                    ready = _ready_tasks()
+                    for tid in ready:
+                        status[tid] = "running"
+                        _persist(tid)
+                        executor.submit(_run_task, tid)
+
+                    if all(status[tid] in self.TERMINAL for tid in self.tasks):
+                        break
+
+                    # Wait for any task to finish (or be cancelled)
+                    cond.wait()
+                    _propagate_cancellation()
+        finally:
+            executor.shutdown(wait=True)
+
+        return {
+            tid: {
+                "status": status[tid],
+                "outputs": outputs[tid],
+                "error": errors[tid],
+            }
+            for tid in self.tasks
+        }
+
+
+# ---------------------------------------------------------------------------
+# Task graph: builders
+# ---------------------------------------------------------------------------
+
+def _eval_suffix_for(seed: int | None, is_control: bool) -> str:
+    suffix = ""
+    if seed is not None:
+        suffix += f"-s{seed}"
+    if is_control:
+        suffix += "-ctrl"
+    return suffix
+
+
+def build_task_graph(
+    config: dict,
+    st: dict,
+    stages_to_run: list[str],
+    checkpoint_override: str | None,
+) -> TaskGraph:
+    """Construct the task DAG for one experiment config.
+
+    Notes:
+    - Analysis is intentionally NOT a graph task. Multi-config runs combine
+      analysis across all configs at the very end (handled in main()).
+    - Lazy `build_cmd` closures pull outputs from completed dep tasks via the
+      `deps_outs` dict, so eval picks up the actual checkpoint produced by its
+      training task without any string placeholders.
+    """
+    tasks: list[Task] = []
+
+    # ----- data_generation -----
+    dg_task_ids: list[str] = []
+    if "data_generation" in stages_to_run and config.get("data_generation"):
+        steps = _get_data_gen_steps(config)
+        seen_ids: dict[str, int] = {}
+        for step in steps:
+            script = step.get("script", "datagen")
+            base_id = f"datagen:{script}"
+            seen_ids[base_id] = seen_ids.get(base_id, 0) + 1
+            tid = base_id if seen_ids[base_id] == 1 else f"{base_id}:{seen_ids[base_id] - 1}"
+
+            cmd = _build_single_data_gen_cmd(config, step)
+
+            def _make_builder(_cmd):
+                def _build(_deps):
+                    return _cmd
+                return _build
+
+            tasks.append(Task(
+                id=tid,
+                stage="data_generation",
+                label=script,
+                deps=[],
+                build_cmd=_make_builder(cmd),
+                parse_output=parse_data_gen_output,
+                # Dry-run placeholders cover both main and control file naming
+                # so _resolve_training_data picks up something for either variant.
+                dry_run_outputs={
+                    "data_files": [
+                        f"<dry-run:{script}>/bct_cot.jsonl",
+                        f"<dry-run:{script}>/control_cot.jsonl",
+                    ],
+                },
+            ))
+            dg_task_ids.append(tid)
+
+    def _merged_dg_outputs(deps_outs: dict) -> dict:
+        merged: dict = {}
+        merged.update(stage_outputs(st, "data_generation"))
+        for dtid in dg_task_ids:
+            for k, v in deps_outs.get(dtid, {}).items():
+                # Special handling: data_files lists should concatenate, not overwrite
+                if k == "data_files" and isinstance(v, list):
+                    merged.setdefault("data_files", [])
+                    merged["data_files"] = list(merged["data_files"]) + list(v)
+                else:
+                    merged[k] = v
+        return merged
+
+    # ----- data_preparation -----
+    dp_task_id: str | None = None
+    dp_cfg = config.get("data_preparation", {})
+    if (
+        "data_preparation" in stages_to_run
+        and dp_cfg.get("enabled", False)
+    ):
+        dp_task_id = "dataprep"
+
+        def _build_dp(deps_outs):
+            local_st = _overlay_stage_outputs(
+                st, data_generation=_merged_dg_outputs(deps_outs)
+            )
+            cmd = build_data_prep_cmd(config, local_st)
+            if cmd is None:
+                # Should not happen since we gated on enabled, but be safe
+                raise RuntimeError("data_preparation enabled but build_data_prep_cmd returned None")
+            return cmd
+
+        tasks.append(Task(
+            id=dp_task_id,
+            stage="data_preparation",
+            label="dataprep",
+            deps=list(dg_task_ids),
+            build_cmd=_build_dp,
+            dry_run_outputs={"output_path": "<dry-run-dataprep-output>"},
+        ))
+
+    # ----- training -----
+    train_units: list[tuple[str, str, bool, int | None]] = []  # (task_id, label, is_control, seed)
+    tr = config.get("training", {})
+    if "training" in stages_to_run and tr:
+        data_mode = tr.get("data_mode", "concat")
+        base_train_deps = [dp_task_id] if dp_task_id else list(dg_task_ids)
+
+        if data_mode == "sequential":
+            train_units.extend(
+                _build_sequential_training_tasks(
+                    config, st, tasks, base_train_deps, dg_task_ids, dp_task_id
+                )
+            )
+        else:
+            control_only = tr.get("control_only", False)
+            include_control = tr.get("include_control", False) or control_only
+            seeds = tr.get("seeds")
+            seed_list: list[int | None] = list(seeds) if seeds else [None]
+
+            for seed in seed_list:
+                if not control_only:
+                    label = f"main-s{seed}" if seed is not None else "main"
+                    tid = f"train:{label}"
+
+                    def _make_train_builder(_seed, _is_ctrl):
+                        def _build(deps_outs):
+                            local_st = _overlay_stage_outputs(
+                                st,
+                                data_generation=_merged_dg_outputs(deps_outs),
+                                data_preparation=(
+                                    deps_outs.get(dp_task_id, {})
+                                    if dp_task_id and dp_task_id in deps_outs
+                                    else None
+                                ),
+                            )
+                            return build_training_cmd(
+                                config, local_st, is_control=_is_ctrl, seed=_seed,
+                            )
+                        return _build
+
+                    tasks.append(Task(
+                        id=tid,
+                        stage="training",
+                        label=label,
+                        deps=list(base_train_deps),
+                        build_cmd=_make_train_builder(seed, False),
+                        parse_output=parse_training_output,
+                        dry_run_outputs={"checkpoint": f"tinker://dry-run-{label}"},
+                    ))
+                    train_units.append((tid, label, False, seed))
+
+                if include_control:
+                    label = f"control-s{seed}" if seed is not None else "control"
+                    tid = f"train:{label}"
+
+                    def _make_train_builder_ctrl(_seed, _is_ctrl):
+                        def _build(deps_outs):
+                            local_st = _overlay_stage_outputs(
+                                st,
+                                data_generation=_merged_dg_outputs(deps_outs),
+                                data_preparation=(
+                                    deps_outs.get(dp_task_id, {})
+                                    if dp_task_id and dp_task_id in deps_outs
+                                    else None
+                                ),
+                            )
+                            return build_training_cmd(
+                                config, local_st, is_control=_is_ctrl, seed=_seed,
+                            )
+                        return _build
+
+                    tasks.append(Task(
+                        id=tid,
+                        stage="training",
+                        label=label,
+                        deps=list(base_train_deps),
+                        build_cmd=_make_train_builder_ctrl(seed, True),
+                        parse_output=parse_training_output,
+                        dry_run_outputs={"checkpoint": f"tinker://dry-run-{label}"},
+                    ))
+                    train_units.append((tid, label, True, seed))
+
+    # ----- evaluation -----
+    if "evaluation" in stages_to_run:
+        ev = config.get("evaluation", {})
+        ev_args = ev.get("args", {})
+        base_only = ev.get("base_only", False)
+        include_base = ev.get("include_base", False) or base_only
+
+        if include_base:
+            model_prefix = sanitize_model_name(config["model"]).split("-")[0]
+            base_name = f"{model_prefix}-base"
+            base_cmd = _build_single_eval_cmd(
+                config, ev_args, checkpoint=None, eval_name=base_name,
+            )
+
+            def _make_base_builder(_cmd):
+                def _build(_deps):
+                    return _cmd
+                return _build
+
+            tasks.append(Task(
+                id="eval:base",
+                stage="evaluation",
+                label="base",
+                deps=[],
+                build_cmd=_make_base_builder(base_cmd),
+            ))
+
+        if not base_only:
+            if train_units:
+                for tid, label, is_ctrl, seed in train_units:
+                    eval_id = f"eval:{label}"
+
+                    def _make_eval_builder(_train_tid, _label, _is_ctrl, _seed):
+                        def _build(deps_outs):
+                            ckpt = checkpoint_override
+                            if not ckpt:
+                                ckpt = deps_outs.get(_train_tid, {}).get("checkpoint")
+                            if not ckpt:
+                                raise RuntimeError(
+                                    f"No checkpoint available for eval:{_label} "
+                                    f"(upstream {_train_tid} produced none)"
+                                )
+                            return _build_single_eval_cmd(
+                                config, ev_args, checkpoint=ckpt,
+                                eval_name=_eval_name(
+                                    config, suffix=_eval_suffix_for(_seed, _is_ctrl),
+                                ),
+                            )
+                        return _build
+
+                    tasks.append(Task(
+                        id=eval_id,
+                        stage="evaluation",
+                        label=label,
+                        deps=[tid],
+                        build_cmd=_make_eval_builder(tid, label, is_ctrl, seed),
+                    ))
+            else:
+                # No training in this run — fall back to checkpoint sources
+                # already in state or supplied via --checkpoint.
+                training_outputs = stage_outputs(st, "training")
+                main_ckpt = (
+                    checkpoint_override
+                    or training_outputs.get("checkpoint")
+                    or tr.get("checkpoint")
+                )
+                if main_ckpt:
+                    main_cmd = _build_single_eval_cmd(
+                        config, ev_args, checkpoint=main_ckpt,
+                        eval_name=_eval_name(config),
+                    )
+
+                    def _make_static(_cmd):
+                        def _build(_deps):
+                            return _cmd
+                        return _build
+
+                    tasks.append(Task(
+                        id="eval:main",
+                        stage="evaluation",
+                        label="main",
+                        deps=[],
+                        build_cmd=_make_static(main_cmd),
+                    ))
+
+                ctrl_ckpt = training_outputs.get("control_checkpoint")
+                if ctrl_ckpt:
+                    ctrl_cmd = _build_single_eval_cmd(
+                        config, ev_args, checkpoint=ctrl_ckpt,
+                        eval_name=_eval_name(config, suffix="-ctrl"),
+                    )
+
+                    def _make_static_ctrl(_cmd):
+                        def _build(_deps):
+                            return _cmd
+                        return _build
+
+                    tasks.append(Task(
+                        id="eval:control",
+                        stage="evaluation",
+                        label="control",
+                        deps=[],
+                        build_cmd=_make_static_ctrl(ctrl_cmd),
+                    ))
+
+    return TaskGraph(tasks)
+
+
+def _build_sequential_training_tasks(
+    config: dict,
+    st: dict,
+    out_tasks: list[Task],
+    base_train_deps: list[str],
+    dg_task_ids: list[str],
+    dp_task_id: str | None,
+) -> list[tuple[str, str, bool, int | None]]:
+    """Add sequential-mode training tasks to `out_tasks` and return their unit tuples.
+
+    Each step depends on the previous step's task; its build_cmd injects the
+    upstream checkpoint into the --resume-from placeholder.
+    """
+    tr = config.get("training", {})
+    args = tr.get("args", {})
+    base_run_name = str(args.get("run_name", "default"))
+
+    # We need the resolved data paths up front so we know how many steps to chain.
+    # Resolution may depend on data_gen outputs that haven't run yet, so use the
+    # current state snapshot — assumption: sequential mode is configured with
+    # explicit data files, not auto-resolved at graph build time. (Validation
+    # already rejects sequential + multi-seed.)
+    main_paths = _resolve_training_data(config, st, is_control=False)
+    train_units: list[tuple[str, str, bool, int | None]] = []
+
+    def _make_seq_builder(_cmd_template, _step_idx):
+        def _build(deps_outs):
+            cmd = list(_cmd_template)
+            if _step_idx > 0 and "<auto:previous-checkpoint>" in cmd:
+                # Pull checkpoint from the immediately preceding train task
+                prev_id = train_units[_step_idx - 1][0]
+                ckpt = deps_outs.get(prev_id, {}).get("checkpoint")
+                if not ckpt:
+                    raise RuntimeError(
+                        f"Sequential training step {_step_idx} missing upstream checkpoint"
+                    )
+                idx = cmd.index("<auto:previous-checkpoint>")
+                cmd[idx] = ckpt
+            return cmd
+        return _build
+
+    seq_cmds = build_sequential_training_cmds(config, st, main_paths)
+    prior_tid: str | None = None
+    for i, (cmd_template, label) in enumerate(seq_cmds):
+        tid = f"train:{label}"
+        deps = list(base_train_deps) + ([prior_tid] if prior_tid else [])
+        out_tasks.append(Task(
+            id=tid,
+            stage="training",
+            label=label,
+            deps=deps,
+            build_cmd=_make_seq_builder(cmd_template, i),
+            parse_output=parse_training_output,
+            dry_run_outputs={"checkpoint": f"tinker://dry-run-{label}"},
+        ))
+        train_units.append((tid, label, False, None))
+        prior_tid = tid
+
+    # Sequential control variant
+    if tr.get("include_control") or tr.get("control_only"):
+        ctrl_paths = _resolve_training_data(config, st, is_control=True)
+        ctrl_cmds = build_sequential_training_cmds(config, st, ctrl_paths)
+        ctrl_units: list[tuple[str, str, bool, int | None]] = []
+
+        def _make_seq_ctrl_builder(_cmd_template, _step_idx):
+            def _build(deps_outs):
+                cmd = list(_cmd_template)
+                # Adjust run name for control variant
+                if "--run-name" in cmd:
+                    rn_idx = cmd.index("--run-name") + 1
+                    if not cmd[rn_idx].endswith("-ctrl"):
+                        cmd[rn_idx] = f"{cmd[rn_idx]}-ctrl"
+                if _step_idx > 0 and "<auto:previous-checkpoint>" in cmd:
+                    prev_id = ctrl_units[_step_idx - 1][0]
+                    ckpt = deps_outs.get(prev_id, {}).get("checkpoint")
+                    if not ckpt:
+                        raise RuntimeError(
+                            f"Sequential control step {_step_idx} missing upstream checkpoint"
+                        )
+                    idx = cmd.index("<auto:previous-checkpoint>")
+                    cmd[idx] = ckpt
+                return cmd
+            return _build
+
+        prior_ctrl_tid: str | None = None
+        for i, (cmd_template, label) in enumerate(ctrl_cmds):
+            tid = f"train:{label}-ctrl"
+            deps = list(base_train_deps) + ([prior_ctrl_tid] if prior_ctrl_tid else [])
+            out_tasks.append(Task(
+                id=tid,
+                stage="training",
+                label=f"{label}-ctrl",
+                deps=deps,
+                build_cmd=_make_seq_ctrl_builder(cmd_template, i),
+                parse_output=parse_training_output,
+                dry_run_outputs={"checkpoint": f"tinker://dry-run-{label}-ctrl"},
+            ))
+            ctrl_units.append((tid, f"{label}-ctrl", True, None))
+            prior_ctrl_tid = tid
+        train_units.extend(ctrl_units)
+
+    return train_units
+
+
+def _migrate_legacy_state(st: dict, graph: TaskGraph) -> None:
+    """Pre-populate `st['tasks']` from legacy stage-level state for resume."""
+    if st.get("tasks"):
+        return  # Already in new format
+
+    legacy = st.get("stages") or {}
+    if not any(info.get("status") == "completed" for info in legacy.values()):
+        return  # Nothing to migrate
+
+    st["tasks"] = {}
+    for tid, task in graph.tasks.items():
+        stage_info = legacy.get(task.stage, {})
+        if stage_info.get("status") != "completed":
+            continue
+
+        stage_outs = stage_info.get("outputs", {})
+        task_outs: dict = {}
+
+        if task.stage == "training":
+            label = task.label
+            keyed = f"{label}_checkpoint"
+            if keyed in stage_outs:
+                task_outs = {"checkpoint": stage_outs[keyed]}
+            elif label == "main" and "checkpoint" in stage_outs:
+                task_outs = {"checkpoint": stage_outs["checkpoint"]}
+            elif label == "control" and "control_checkpoint" in stage_outs:
+                task_outs = {"checkpoint": stage_outs["control_checkpoint"]}
+            else:
+                continue  # Can't resolve — re-run this task
+        elif task.stage == "data_generation":
+            task_outs = dict(stage_outs)
+        elif task.stage == "data_preparation":
+            task_outs = dict(stage_outs)
+        # evaluation tasks have no outputs to migrate; just mark completed
+
+        st["tasks"][tid] = {
+            "status": "completed",
+            "stage": task.stage,
+            "label": task.label,
+            "outputs": task_outs,
+        }
+
+
+def _rollup_stage_status(st: dict, graph: TaskGraph, results: dict[str, dict]) -> None:
+    """Aggregate per-task results into legacy stage-level state for compat."""
+    by_stage: dict[str, list[str]] = {}
+    for tid, task in graph.tasks.items():
+        by_stage.setdefault(task.stage, []).append(tid)
+
+    for stage, tids in by_stage.items():
+        statuses = [results[t]["status"] for t in tids]
+        if any(s == "failed" for s in statuses):
+            stage_status_val = "failed"
+        elif any(s == "cancelled" for s in statuses):
+            stage_status_val = "failed"
+        elif all(s == "completed" for s in statuses):
+            stage_status_val = "completed"
+        elif all(s == "pending" for s in statuses):
+            stage_status_val = "pending"
+        else:
+            stage_status_val = "running"
+
+        # Merge task outputs into a stage-level rollup, preserving the
+        # legacy keys (`checkpoint`, `control_checkpoint`, `<label>_checkpoint`)
+        # so downstream consumers (e.g. resuming with --start-from eval) keep
+        # working.
+        rollup_outputs: dict = {}
+        for tid in tids:
+            task = graph.tasks[tid]
+            outs = results[tid]["outputs"]
+            if not outs:
+                continue
+            if stage == "training":
+                ckpt = outs.get("checkpoint")
+                if ckpt:
+                    rollup_outputs[f"{task.label}_checkpoint"] = ckpt
+                    if task.label == "main":
+                        rollup_outputs["checkpoint"] = ckpt
+                    elif task.label == "control":
+                        rollup_outputs["control_checkpoint"] = ckpt
+                    elif task.label.startswith("main"):
+                        rollup_outputs.setdefault("checkpoint", ckpt)
+                    elif task.label.startswith("control"):
+                        rollup_outputs.setdefault("control_checkpoint", ckpt)
+            else:
+                # Data gen / prep: merge outputs (concatenating data_files)
+                for k, v in outs.items():
+                    if k == "data_files" and isinstance(v, list):
+                        rollup_outputs.setdefault("data_files", [])
+                        rollup_outputs["data_files"] = list(rollup_outputs["data_files"]) + list(v)
+                    else:
+                        rollup_outputs[k] = v
+
+        mark_stage(st, stage, stage_status_val, outputs=rollup_outputs)
+
+
+# ---------------------------------------------------------------------------
 # Main pipeline
 # ---------------------------------------------------------------------------
 
@@ -1034,8 +1857,15 @@ def run_pipeline(
     checkpoint_override: str | None,
     force: bool,
     dry_run: bool,
+    max_parallel: int | None = None,
 ) -> bool:
     """Run a single experiment pipeline (all stages except analysis).
+
+    The pipeline is executed as a task DAG: each subprocess (data-gen step,
+    training run, eval run) is a node, and dependencies between nodes are
+    explicit. As soon as a training task finishes, its eval task fires —
+    independent of whether other training tasks (e.g., other seeds) are still
+    running.
 
     Returns True on success, False on failure.
     """
@@ -1053,177 +1883,80 @@ def run_pipeline(
             return False
     st["config_hash"] = current_hash
 
-    for stage in stages_to_run:
-        if stage == "analysis":
-            continue  # Deferred to caller
+    # Build the DAG. Analysis is intentionally outside the graph (handled by
+    # main() so multi-config runs can combine analysis at the end).
+    graph_stages = [s for s in stages_to_run if s != "analysis"]
+    graph = build_task_graph(config, st, graph_stages, checkpoint_override)
 
-        if stage_status(st, stage) == "completed" and not force:
-            _print(f"Skipping {stage} (already completed, use --force to re-run)")
-            continue
+    if not graph.tasks:
+        _print(f"  No tasks to run for {config['name']}")
+        return True
 
-        mark_stage(st, stage, "running")
+    # One-time backfill from legacy stage-level state so resume keeps working.
+    # Skip in dry-run so we don't create/touch state files just for previewing.
+    if not dry_run:
+        _migrate_legacy_state(st, graph)
         save_state(config, st)
+    else:
+        # Dry-run still wants to read prior task state for skip-display, but
+        # without persisting the migration. Migrate into the in-memory copy
+        # only (the on-disk state.json is untouched).
+        _migrate_legacy_state(st, graph)
 
-        try:
-            if stage == "data_generation":
-                steps = _get_data_gen_steps(config)
-                cmds = [
-                    (_build_single_data_gen_cmd(config, step), step.get("script", "datagen"))
-                    for step in steps
-                ]
-                if len(cmds) == 1:
-                    rc, output = run_stage_command(cmds[0][0], stage, config, dry_run)
-                    outputs = parse_data_gen_output(output) if not dry_run else {}
-                else:
-                    results = run_parallel_commands(cmds, stage, config, dry_run)
-                    outputs = {}
-                    rc = 0
-                    if not dry_run:
-                        for (ret, output), (_, label) in zip(results, cmds):
-                            outputs.update(parse_data_gen_output(output))
-                            if ret != 0:
-                                rc = ret
+    # Resolve parallelism: CLI override > config > default (unbounded-ish)
+    if max_parallel is None:
+        max_parallel = config.get("parallelism")
 
-            elif stage == "data_preparation":
-                cmd = build_data_prep_cmd(config, st)
-                if cmd is None:
-                    mark_stage(st, stage, "skipped")
-                    save_state(config, st)
-                    continue
-                rc, output = run_stage_command(cmd, stage, config, dry_run)
-                outputs = {}
+    # Run the graph
+    try:
+        results = graph.run(
+            config=config,
+            st=st,
+            dry_run=dry_run,
+            max_parallel=max_parallel,
+            force=force,
+        )
+    except Exception as e:
+        _print(f"\n  Pipeline FAILED: {e}")
+        return False
 
-            elif stage == "training":
-                tr = config.get("training", {})
-                data_mode = tr.get("data_mode", "concat")
+    if dry_run:
+        # Don't persist anything from a dry-run (placeholder outputs would
+        # contaminate state.json and break subsequent dry-runs / real runs).
+        return True
 
-                if data_mode == "sequential":
-                    # Sequential: train on each data file in order, chaining checkpoints
-                    dg_outputs = stage_outputs(st, "data_generation")
-                    data_paths = _resolve_training_data(config, st, is_control=False)
-                    seq_cmds = build_sequential_training_cmds(config, st, data_paths)
-
-                    outputs = {}
-                    rc = 0
-                    prev_checkpoint = None
-                    for seq_cmd, label in seq_cmds:
-                        # Replace placeholder with actual previous checkpoint
-                        if prev_checkpoint and "<auto:previous-checkpoint>" in seq_cmd:
-                            idx = seq_cmd.index("<auto:previous-checkpoint>")
-                            seq_cmd[idx] = prev_checkpoint
-
-                        ret, out = run_stage_command(seq_cmd, f"{stage} [{label}]", config, dry_run)
-                        if not dry_run:
-                            parsed = parse_training_output(out)
-                            if parsed.get("checkpoint"):
-                                prev_checkpoint = parsed["checkpoint"]
-                            if ret != 0:
-                                rc = ret
-                                break
-
-                    if prev_checkpoint:
-                        outputs["checkpoint"] = prev_checkpoint
-
-                    # Sequential control variant (if enabled)
-                    if tr.get("include_control") or tr.get("control_only"):
-                        ctrl_paths = _resolve_training_data(config, st, is_control=True)
-                        ctrl_cmds = build_sequential_training_cmds(config, st, ctrl_paths)
-                        prev_ctrl_ckpt = None
-                        for seq_cmd, label in ctrl_cmds:
-                            # Adjust run name for control
-                            if "--run-name" in seq_cmd:
-                                rn_idx = seq_cmd.index("--run-name") + 1
-                                if not seq_cmd[rn_idx].endswith("-ctrl"):
-                                    seq_cmd[rn_idx] = f"{seq_cmd[rn_idx]}-ctrl"
-                            if prev_ctrl_ckpt and "<auto:previous-checkpoint>" in seq_cmd:
-                                idx = seq_cmd.index("<auto:previous-checkpoint>")
-                                seq_cmd[idx] = prev_ctrl_ckpt
-                            ret, out = run_stage_command(
-                                seq_cmd, f"{stage} [{label}-ctrl]", config, dry_run,
-                            )
-                            if not dry_run:
-                                parsed = parse_training_output(out)
-                                if parsed.get("checkpoint"):
-                                    prev_ctrl_ckpt = parsed["checkpoint"]
-                                if ret != 0:
-                                    rc = ret
-                                    break
-                        if prev_ctrl_ckpt:
-                            outputs["control_checkpoint"] = prev_ctrl_ckpt
-                else:
-                    # concat or interleave: build commands and run in parallel
-                    cmds = build_training_cmds(config, st)
-                    results = run_parallel_commands(cmds, stage, config, dry_run)
-
-                    outputs = {}
-                    rc = 0
-                    if not dry_run:
-                        for (ret, output), (_, label) in zip(results, cmds):
-                            parsed = parse_training_output(output)
-                            if parsed.get("checkpoint"):
-                                if label == "main":
-                                    outputs["checkpoint"] = parsed["checkpoint"]
-                                elif label == "control":
-                                    outputs["control_checkpoint"] = parsed["checkpoint"]
-                                else:
-                                    # Multi-seed: label is "main-s{N}" or "control-s{N}"
-                                    outputs[f"{label}_checkpoint"] = parsed["checkpoint"]
-                                    # Also update primary keys for backward compat
-                                    if label.startswith("main"):
-                                        outputs["checkpoint"] = parsed["checkpoint"]
-                                    elif label.startswith("control"):
-                                        outputs["control_checkpoint"] = parsed["checkpoint"]
-                            if ret != 0:
-                                rc = ret
-
-            elif stage == "evaluation":
-                cmds = build_eval_cmds(config, st, checkpoint_override)
-                if not cmds:
-                    mark_stage(st, stage, "skipped", outputs={})
-                    save_state(config, st)
-                    _print(f"  Skipping {stage} (no checkpoints or base eval to run)")
-                    continue
-                results = run_parallel_commands(cmds, stage, config, dry_run)
-
-                outputs = {}
-                rc = 0
-                if not dry_run:
-                    for (ret, _), (_, label) in zip(results, cmds):
-                        if ret != 0:
-                            rc = ret
-
-            else:
-                _print(f"Unknown stage: {stage}")
-                continue
-
-            if dry_run:
-                mark_stage(st, stage, "pending")
-            elif rc == 0:
-                mark_stage(st, stage, "completed", outputs=outputs)
-                _print(f"\n  {stage} completed successfully")
-                if outputs:
-                    for k, v in outputs.items():
-                        _print(f"    {k}: {v}")
-            else:
-                mark_stage(st, stage, "failed", error=f"Exit code {rc}")
-                save_state(config, st)
-                _print(f"\n  {stage} FAILED (exit code {rc})")
-                _print(f"  Check logs: {state_dir(config)}/logs/{stage}_*.log")
-                _print(f"  Fix the issue and re-run with: --start-from {stage}")
-                return False
-
-        except Exception as e:
-            mark_stage(st, stage, "failed", error=str(e))
-            save_state(config, st)
-            _print(f"\n  {stage} FAILED: {e}")
-            return False
-
-        save_state(config, st)
+    # Roll up task results into stage-level state for backward compat
+    _rollup_stage_status(st, graph, results)
+    save_state(config, st)
 
     # Save config alongside state for reference
     config_copy = state_dir(config) / "config.yaml"
     with open(config_copy, "w") as f:
         yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+    # Report
+    failed = [tid for tid, r in results.items() if r["status"] == "failed"]
+    cancelled = [tid for tid, r in results.items() if r["status"] == "cancelled"]
+    completed = [tid for tid, r in results.items() if r["status"] == "completed"]
+
+    _print(f"\n{'='*60}")
+    _print(f"  Pipeline summary: {config['name']}")
+    _print(f"{'='*60}")
+    _print(f"  Completed: {len(completed)} / {len(results)}")
+    if failed:
+        _print(f"  Failed:    {len(failed)}")
+        for tid in failed:
+            err = results[tid]["error"] or "see logs"
+            _print(f"    - {tid}: {err}")
+    if cancelled:
+        _print(f"  Cancelled: {len(cancelled)} (upstream failure)")
+        for tid in cancelled:
+            _print(f"    - {tid}")
+
+    if failed or cancelled:
+        _print(f"\n  Check logs: {state_dir(config)}/logs/")
+        _print(f"  Fix the issue and re-run the same command — completed tasks will skip.")
+        return False
 
     return True
 
@@ -1311,6 +2044,18 @@ def main():
         action="store_true",
         help="Print commands without executing",
     )
+    parser.add_argument(
+        "--max-parallel",
+        type=int,
+        default=None,
+        metavar="N",
+        help=(
+            "Cap the number of subprocesses running concurrently across the "
+            "task DAG. Default: unbounded (limited only by ThreadPoolExecutor "
+            "default). Can also be set via top-level `parallelism: N` in the "
+            "YAML config; the CLI flag takes precedence."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -1349,7 +2094,10 @@ def main():
         _print(f"\nStages to run: {', '.join(s for s in stages if s != 'analysis')}")
         _print()
 
-        ok = run_pipeline(config, stages, args.checkpoint, args.force, args.dry_run)
+        ok = run_pipeline(
+            config, stages, args.checkpoint, args.force, args.dry_run,
+            max_parallel=args.max_parallel,
+        )
         if not ok:
             sys.exit(1)
 
@@ -1372,7 +2120,10 @@ def main():
         def _run_one(config, stages):
             try:
                 _thread_local.prefix = config["name"]
-                ok = run_pipeline(config, stages, args.checkpoint, args.force, args.dry_run)
+                ok = run_pipeline(
+                    config, stages, args.checkpoint, args.force, args.dry_run,
+                    max_parallel=args.max_parallel,
+                )
                 results[config["name"]] = ok
             except Exception as e:
                 results[config["name"]] = False

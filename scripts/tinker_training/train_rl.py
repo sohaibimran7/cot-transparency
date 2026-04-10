@@ -54,6 +54,7 @@ from cot_transparency.apis.tinker.rl_training import (
 )
 from cot_transparency.apis.tinker.common import CheckpointConfig, AdamConfig, LoRAConfig
 from sycophancy_eval_inspect.mcq.answer_parser import fallback_answer_parser
+from sycophancy_eval_inspect.mcq.dataset import strip_cot_from_message
 
 
 def load_datapoints(bias_types: list[str], datasets: list[str], n_datapoints: int, data_dir: Path) -> list[dict]:
@@ -83,12 +84,25 @@ def load_datapoints(bias_types: list[str], datasets: list[str], n_datapoints: in
     return datapoints
 
 
-def unbiased_perturbation(datapoint: dict) -> dict:
-    return {"messages": datapoint["unbiased_question"]}
+def _apply_prompt_style(messages: list[dict], prompt_style: str) -> list[dict]:
+    """Strip CoT instructions from user messages if prompt_style is 'no_cot'."""
+    if prompt_style != "no_cot":
+        return messages
+    out = []
+    for m in messages:
+        if m.get("role") == "user":
+            out.append({**m, "content": strip_cot_from_message(m["content"])})
+        else:
+            out.append(m)
+    return out
 
 
-def biased_perturbation(datapoint: dict) -> dict:
-    return {"messages": datapoint["biased_question"]}
+def make_perturbation_fns(prompt_style: str):
+    def unbiased_perturbation(datapoint: dict) -> dict:
+        return {"messages": _apply_prompt_style(datapoint["unbiased_question"], prompt_style)}
+    def biased_perturbation(datapoint: dict) -> dict:
+        return {"messages": _apply_prompt_style(datapoint["biased_question"], prompt_style)}
+    return unbiased_perturbation, biased_perturbation
 
 
 def trait_classifier(response: str, datapoint: dict) -> float:
@@ -109,6 +123,7 @@ def main():
     parser.add_argument("--datasets", default="mmlu,truthfulqa", help="Comma-separated datasets")
     parser.add_argument("--n-datapoints", type=int, default=100, help="Total number of datapoints (split evenly across dataset x bias_type combinations)")
     parser.add_argument("--data-dir", default=None, help="Override default dataset_dumps/test directory")
+    parser.add_argument("--prompt-style", choices=["cot", "no_cot"], default="cot", help="Strip CoT instructions for reasoning models (e.g. gpt-oss)")
 
     # === Naming ===
     parser.add_argument("--experiment-name", required=True, help="Experiment name")
@@ -254,6 +269,7 @@ def main():
             print("Aborted.")
             sys.exit(0)
 
+    unbiased_perturbation, biased_perturbation = make_perturbation_fns(args.prompt_style)
     if args.control:
         perturbation_fns = [unbiased_perturbation, unbiased_perturbation]
     else:

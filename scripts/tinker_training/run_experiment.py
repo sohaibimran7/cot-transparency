@@ -121,6 +121,35 @@ def sanitize_model_name(model: str) -> str:
     return name.replace(".", "-")
 
 
+def get_model_prefix(model: str) -> str:
+    """Return the registered model prefix for a model name (e.g. 'gpt-oss-20b-').
+
+    Matches the longest registered prefix from the model registry, falling back
+    to the first hyphen-separated token. This matches the logic in
+    visualize_results.py so that base model eval directories end up in the
+    same group as trained checkpoints.
+    """
+    sanitized = sanitize_model_name(model)
+    # Append "-" so that "gpt-oss-20b" matches the registered prefix "gpt-oss-20b-".
+    sanitized_with_sep = sanitized + "-"
+    registry_path = _PROJECT_ROOT / "sycophancy_eval_inspect" / "model_registry.json"
+    prefixes: list[str] = []
+    if registry_path.exists():
+        try:
+            with open(registry_path) as f:
+                prefixes = json.load(f).get("model_prefixes", [])
+        except (json.JSONDecodeError, OSError):
+            pass
+    # Fallback built-in prefixes (keep in sync with visualize_results.py)
+    for p in ["llama-", "gpt-oss-120b-", "gpt-oss-20b-", "gpt-", "qwen3-"]:
+        if p not in prefixes:
+            prefixes.append(p)
+    for prefix in sorted(prefixes, key=len, reverse=True):
+        if sanitized_with_sep.startswith(prefix):
+            return prefix.rstrip("-")
+    return sanitized.split("-")[0]
+
+
 # ---------------------------------------------------------------------------
 # State management
 # ---------------------------------------------------------------------------
@@ -591,7 +620,7 @@ def build_training_cmd(
             "n_ref_rollouts", "n_train_rollouts", "n_consistency_rollouts",
             "n_anchor_rollouts", "temperature", "max_new_tokens",
             "n_epochs", "batch_size", "gradient_accumulation_steps",
-            "refresh_every", "checkpoint_every",
+            "refresh_every", "checkpoint_every", "prompt_style",
         ):
             if key in args:
                 cmd += [f"--{key.replace('_', '-')}", str(args[key])]
@@ -709,7 +738,7 @@ def _eval_name(config: dict, suffix: str = "") -> str:
     tr_args = config.get("training", {}).get("args", {})
     ev_args = config.get("evaluation", {}).get("args", {})
     name = ev_args.get("name") or tr_args.get("run_name") or "model"
-    model_prefix = sanitize_model_name(config["model"]).split("-")[0]
+    model_prefix = get_model_prefix(config["model"])
     if not name.lower().startswith(model_prefix):
         name = f"{model_prefix}-{name}"
     return f"{name}{suffix}"
@@ -776,7 +805,7 @@ def build_eval_cmds(
 
     # Base model eval (no checkpoint)
     if include_base:
-        model_prefix = sanitize_model_name(config["model"]).split("-")[0]
+        model_prefix = get_model_prefix(config["model"])
         base_name = f"{model_prefix}-base"
         cmd = _build_single_eval_cmd(config, args, checkpoint=None, eval_name=base_name)
         cmds.append((cmd, "base"))
@@ -901,7 +930,7 @@ def update_model_registry(config: dict) -> None:
         registry = {"model_prefixes": [], "models": {}}
 
     # Ensure model prefix is registered
-    model_prefix = sanitize_model_name(config["model"]).split("-")[0] + "-"
+    model_prefix = get_model_prefix(config["model"]) + "-"
     if model_prefix not in registry.get("model_prefixes", []):
         registry.setdefault("model_prefixes", []).append(model_prefix)
 

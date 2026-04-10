@@ -1,0 +1,48 @@
+# RLCT batch size sweep: bs=4 (suggested_answer)
+# Train on MMLU suggested_answer, eval on TruthfulQA (5 biases, 200 samples)
+# 128 datapoints, checkpoint at midpoint (64 datapoints = step 16)
+
+name: rlct-sa-20b-bs4
+model: openai/gpt-oss-20b
+
+training:
+  method: rl
+  include_control: true
+  args:
+    experiment_name: rl_suggested_answer
+    run_name: gpt-oss-20b-rlct-sa-bs4
+    bias_types: suggested_answer
+    datasets: mmlu
+    n_datapoints: 128
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.0
+    loss_fn: ppo
+    n_ref_rollouts: 64
+    n_train_rollouts: 64
+    n_consistency_rollouts: 16
+    refresh_every: 1
+    batch_size: 4
+    checkpoint_every: 16
+
+evaluation:
+  include_base: true
+  args:
+    bias_types: "distractor_fact,distractor_argument,suggested_answer,wrong_few_shot,spurious_few_shot_squares"
+    datasets: truthfulqa
+    prompt_styles: "no_cot"
+    limit: 200
+    log_dir: sycophancy_eval_inspect/logs/tinker_evals
+    base_model: openai/gpt-oss-20b
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+
+viz_registration:
+  dir_suffix: rlct-sa-bs4
+  display_name: "RLCT SA bs4"
+  color: "#9ecae1"
+  training_biases: [suggested_answer]

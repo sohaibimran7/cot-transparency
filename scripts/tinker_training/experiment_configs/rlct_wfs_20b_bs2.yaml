@@ -1,0 +1,49 @@
+# RLCT batch size sweep: bs=2 (wrong_few_shot / truthfulqa for hparam tuning)
+# Train: WFS on TruthfulQA, 64 datapoints
+# Val: 2 held-out biases (spurious_few_shot_squares, post_hoc) on logiqa, 200 samples each
+
+name: rlct-wfs-20b-bs2
+model: openai/gpt-oss-20b
+
+training:
+  method: rl
+  include_control: true
+  args:
+    experiment_name: rl_wrong_few_shot
+    run_name: gpt-oss-20b-rlct-wfs-bs2
+    bias_types: wrong_few_shot
+    datasets: truthfulqa
+    n_datapoints: 64
+    prompt_style: no_cot
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.0
+    loss_fn: ppo
+    n_ref_rollouts: 64
+    n_train_rollouts: 64
+    n_consistency_rollouts: 16
+    refresh_every: 1
+    batch_size: 2
+    checkpoint_every: 0
+
+evaluation:
+  include_base: false  # base eval handled by bs1 config (parallel runs share same dir)
+  args:
+    bias_types: "spurious_few_shot_squares,post_hoc"
+    datasets: logiqa
+    prompt_styles: "no_cot"
+    limit: 200
+    log_dir: sycophancy_eval_inspect/logs/rlct_wfs_hparam_sweep
+    base_model: openai/gpt-oss-20b
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+
+viz_registration:
+  dir_suffix: rlct-wfs-bs2
+  display_name: "RLCT WFS bs2"
+  color: "#6baed6"
+  training_biases: [wrong_few_shot]

@@ -42,6 +42,150 @@
       "hatch": "//",
       "edgecolor": "black",
       "training_biases": []
+    },
+    "rlct-da-bs1": {
+      "training_type": "rlct_da_bs1",
+      "display_name": "RLCT DA bs1",
+      "color": "#4292c6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument"
+      ]
+    },
+    "rlct-da-bs1-ctrl": {
+      "training_type": "rlct_da_bs1_ctrl",
+      "display_name": "RLCT DA bs1 Control",
+      "color": "#8dbddc",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-bs2": {
+      "training_type": "rlct_da_bs2",
+      "display_name": "RLCT DA bs2",
+      "color": "#6baed6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument"
+      ]
+    },
+    "rlct-da-bs2-ctrl": {
+      "training_type": "rlct_da_bs2_ctrl",
+      "display_name": "RLCT DA bs2 Control",
+      "color": "#a6cee6",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-bs4": {
+      "training_type": "rlct_da_bs4",
+      "display_name": "RLCT DA bs4",
+      "color": "#9ecae1",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument"
+      ]
+    },
+    "rlct-da-bs4-ctrl": {
+      "training_type": "rlct_da_bs4_ctrl",
+      "display_name": "RLCT DA bs4 Control",
+      "color": "#c4dfed",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-bs8": {
+      "training_type": "rlct_da_bs8",
+      "display_name": "RLCT DA bs8",
+      "color": "#c6dbef",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument"
+      ]
+    },
+    "rlct-da-bs8-ctrl": {
+      "training_type": "rlct_da_bs8_ctrl",
+      "display_name": "RLCT DA bs8 Control",
+      "color": "#dce9f5",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-wfs-bs1": {
+      "training_type": "rlct_wfs_bs1",
+      "display_name": "RLCT WFS bs1",
+      "color": "#4292c6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "wrong_few_shot"
+      ]
+    },
+    "rlct-wfs-bs1-ctrl": {
+      "training_type": "rlct_wfs_bs1_ctrl",
+      "display_name": "RLCT WFS bs1 Control",
+      "color": "#8dbddc",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-wfs-bs2": {
+      "training_type": "rlct_wfs_bs2",
+      "display_name": "RLCT WFS bs2",
+      "color": "#6baed6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "wrong_few_shot"
+      ]
+    },
+    "rlct-wfs-bs2-ctrl": {
+      "training_type": "rlct_wfs_bs2_ctrl",
+      "display_name": "RLCT WFS bs2 Control",
+      "color": "#a6cee6",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-wfs-bs4": {
+      "training_type": "rlct_wfs_bs4",
+      "display_name": "RLCT WFS bs4",
+      "color": "#9ecae1",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "wrong_few_shot"
+      ]
+    },
+    "rlct-wfs-bs4-ctrl": {
+      "training_type": "rlct_wfs_bs4_ctrl",
+      "display_name": "RLCT WFS bs4 Control",
+      "color": "#c4dfed",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-wfs-bs8": {
+      "training_type": "rlct_wfs_bs8",
+      "display_name": "RLCT WFS bs8",
+      "color": "#c6dbef",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "wrong_few_shot"
+      ]
+    },
+    "rlct-wfs-bs8-ctrl": {
+      "training_type": "rlct_wfs_bs8_ctrl",
+      "display_name": "RLCT WFS bs8 Control",
+      "color": "#dce9f5",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
     }
   }
 }

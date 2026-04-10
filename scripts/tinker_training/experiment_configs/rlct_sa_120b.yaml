@@ -1,0 +1,49 @@
+# RLCT actual experiment: gpt-oss-120b
+# Train: suggested_answer on TruthfulQA, 64 datapoints, bs=1, all rollouts for backprop
+# Test: 5 biases (spurious_few_shot_squares, post_hoc, wrong_few_shot, are_you_sure, suggested_answer) on hellaswag, 200 samples each
+
+name: rlct-sa-120b
+model: openai/gpt-oss-120b
+
+training:
+  method: rl
+  include_control: true
+  args:
+    experiment_name: rl_suggested_answer
+    run_name: gpt-oss-120b-rlct-sa
+    bias_types: suggested_answer
+    datasets: truthfulqa
+    n_datapoints: 64
+    prompt_style: no_cot
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.0
+    loss_fn: ppo
+    n_ref_rollouts: 64
+    n_train_rollouts: 64
+    n_consistency_rollouts: 64   # = n_train_rollouts, so all parsed are used for backprop
+    refresh_every: 1
+    batch_size: 1
+    checkpoint_every: 0
+
+evaluation:
+  include_base: true
+  args:
+    bias_types: "spurious_few_shot_squares,post_hoc,wrong_few_shot,are_you_sure,suggested_answer"
+    datasets: hellaswag
+    prompt_styles: "no_cot"
+    limit: 200
+    log_dir: sycophancy_eval_inspect/logs/rlct_sa_120b_test
+    base_model: openai/gpt-oss-120b
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+
+viz_registration:
+  dir_suffix: rlct-sa
+  display_name: "RLCT SA"
+  color: "#41ab5d"
+  training_biases: [suggested_answer]

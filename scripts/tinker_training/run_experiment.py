@@ -1340,11 +1340,62 @@ def _eval_suffix_for(seed: int | None, is_control: bool) -> str:
     return suffix
 
 
+def _csv_to_list(value) -> list[str]:
+    """Normalize a config CSV-or-list value into a clean list of strings."""
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [v.strip() for v in value.split(",") if v.strip()]
+    if isinstance(value, list):
+        return [str(v).strip() for v in value if str(v).strip()]
+    return []
+
+
+def _load_base_eval_coverage(log_dir: Path, base_name: str) -> set[tuple[str, str]]:
+    """Return the set of (bias_type, dataset) pairs already covered by base eval logs.
+
+    Reads only the header of each .eval file (cheap) and derives bias_type +
+    dataset from the task_args.dataset_path the same way visualize_results.py
+    does. Used to skip a redundant eval:base task when the base model has
+    already been evaluated on every (bias_type × dataset) combo the current
+    config asks for.
+    """
+    base_dir = log_dir / base_name
+    if not base_dir.exists():
+        return set()
+
+    try:
+        from inspect_ai.log import read_eval_log
+    except ImportError:
+        return set()
+
+    coverage: set[tuple[str, str]] = set()
+    for eval_file in base_dir.glob("*.eval"):
+        try:
+            log = read_eval_log(str(eval_file), header_only=True)
+        except Exception:
+            continue
+        task_args = log.eval.task_args or {}
+        dataset_path = task_args.get("dataset_path", "")
+        if not dataset_path:
+            continue
+        bias_type = Path(dataset_path).parent.name
+        if not bias_type or bias_type == "unbiased":
+            # Unbiased variants are auto-paired with each biased eval; the
+            # bias_type column from the wanted-set is what matters.
+            continue
+        dataset_stem = Path(dataset_path).stem
+        dataset = dataset_stem.replace(f"_{bias_type}", "")
+        coverage.add((bias_type, dataset))
+    return coverage
+
+
 def build_task_graph(
     config: dict,
     st: dict,
     stages_to_run: list[str],
     checkpoint_override: str | None,
+    force: bool = False,
 ) -> TaskGraph:
     """Construct the task DAG for one experiment config.
 
@@ -1526,22 +1577,54 @@ def build_task_graph(
         if include_base:
             model_prefix = sanitize_model_name(config["model"]).split("-")[0]
             base_name = f"{model_prefix}-base"
-            base_cmd = _build_single_eval_cmd(
-                config, ev_args, checkpoint=None, eval_name=base_name,
-            )
 
-            def _make_base_builder(_cmd):
-                def _build(_deps):
-                    return _cmd
-                return _build
+            # Skip the base eval if it has already been (at least started) for
+            # every (bias_type × dataset) combo this config asks for. The user
+            # can force a re-run with --force.
+            should_fire_base = True
+            if not force:
+                wanted_biases = _csv_to_list(ev_args.get("bias_types"))
+                wanted_datasets = _csv_to_list(ev_args.get("datasets"))
+                if wanted_biases and wanted_datasets:
+                    log_dir = Path(
+                        ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+                    )
+                    coverage = _load_base_eval_coverage(log_dir, base_name)
+                    wanted = {(b, d) for b in wanted_biases for d in wanted_datasets}
+                    missing = wanted - coverage
+                    if not missing:
+                        _print(
+                            f"  Skipping eval:base for {base_name}: all "
+                            f"{len(wanted)} (bias × dataset) combos already "
+                            f"present under {log_dir / base_name} "
+                            f"(use --force to re-run)"
+                        )
+                        should_fire_base = False
+                    elif len(missing) < len(wanted):
+                        _print(
+                            f"  eval:base for {base_name}: {len(wanted) - len(missing)}"
+                            f"/{len(wanted)} combos already present, will re-fire to "
+                            f"cover the {len(missing)} missing combo(s) "
+                            f"(narrow base_only run to skip): {sorted(missing)}"
+                        )
 
-            tasks.append(Task(
-                id="eval:base",
-                stage="evaluation",
-                label="base",
-                deps=[],
-                build_cmd=_make_base_builder(base_cmd),
-            ))
+            if should_fire_base:
+                base_cmd = _build_single_eval_cmd(
+                    config, ev_args, checkpoint=None, eval_name=base_name,
+                )
+
+                def _make_base_builder(_cmd):
+                    def _build(_deps):
+                        return _cmd
+                    return _build
+
+                tasks.append(Task(
+                    id="eval:base",
+                    stage="evaluation",
+                    label="base",
+                    deps=[],
+                    build_cmd=_make_base_builder(base_cmd),
+                ))
 
         if not base_only:
             if train_units:
@@ -1886,7 +1969,7 @@ def run_pipeline(
     # Build the DAG. Analysis is intentionally outside the graph (handled by
     # main() so multi-config runs can combine analysis at the end).
     graph_stages = [s for s in stages_to_run if s != "analysis"]
-    graph = build_task_graph(config, st, graph_stages, checkpoint_override)
+    graph = build_task_graph(config, st, graph_stages, checkpoint_override, force=force)
 
     if not graph.tasks:
         _print(f"  No tasks to run for {config['name']}")

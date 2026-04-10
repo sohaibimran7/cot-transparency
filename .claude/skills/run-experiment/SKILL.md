@@ -14,8 +14,9 @@ Launch a full or partial experiment pipeline from a YAML config file.
 - `--start-from STAGE` — (Optional) Skip all stages before this one
 - `--stages STAGE,...` — (Optional) Run only these specific stages
 - `--checkpoint PATH` — (Optional) Override checkpoint for evaluation
-- `--force` — Re-run already-completed stages
+- `--force` — Re-run already-completed tasks
 - `--dry-run` — Print commands without executing
+- `--max-parallel N` — (Optional) Cap concurrent subprocesses (also `parallelism: N` in YAML)
 
 ## Stage names (with aliases)
 
@@ -119,9 +120,12 @@ training:
 ### Base model evaluation (`include_base: true`)
 - Evaluates the base model (no checkpoint) in parallel with finetuned checkpoints
 - Base model name is auto-generated as `{model_prefix}-base` (e.g., `llama-base`)
+- **Auto-skip when already covered**: before firing, the runner scans `{log_dir}/{base_name}/*.eval` (header-only reads) and computes the set of (bias_type, dataset) combos already present. If every combo from the config's `bias_types × datasets` is already covered, the `eval:base` task is skipped entirely. If only some are missing, the task fires as configured (re-running already-covered combos). Use `--force` to bypass the check and always re-run the base eval.
 
-### Parallel execution
-When multiple training runs or evals are needed (main + control, base + checkpoints), they run in parallel as separate subprocesses with labeled output.
+### Parallel execution (task DAG)
+The pipeline is executed as a task DAG, **not** strict stages. Each subprocess (data-gen step, training run, eval run) is a node with explicit deps. As soon as a training task finishes, its eval task fires — independent of whether other training tasks (e.g., other seeds) are still running. `eval:base` (when `include_base: true`) has no deps and starts immediately. Cap concurrency with `--max-parallel N` or top-level `parallelism: N` in the YAML if you're hitting Tinker rate limits.
+
+State is per-task in `experiments/{name}/state.json` under the `tasks` key. A failed task cancels only its transitive descendants — sibling branches keep running. Re-run the same command to skip completed tasks.
 
 ## Example configs
 

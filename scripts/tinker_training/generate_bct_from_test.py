@@ -31,6 +31,7 @@ from tinker import types  # noqa: E402
 from tqdm import tqdm  # noqa: E402
 
 from cot_transparency.apis.tinker.inference import TinkerSamplingClient, SamplingConfig  # noqa: E402
+from sycophancy_eval_inspect.mcq.dataset import strip_cot_from_message  # noqa: E402
 
 MessageDict = dict[str, str]
 SampleDict = dict[str, Any]
@@ -223,6 +224,11 @@ def main():
         default=42,
         help="Seed for shuffling combined samples"
     )
+    parser.add_argument(
+        "--non-cot",
+        action="store_true",
+        help="Strip CoT instructions from prompts and save as non_cot files"
+    )
     args = parser.parse_args()
 
     base_dir = Path(args.base_dir)
@@ -253,6 +259,21 @@ def main():
     # Extract unbiased and biased prompts
     unbiased_prompts = [s["unbiased_question"] for s in all_samples]
     biased_prompts = [s["biased_question"] for s in all_samples]
+
+    # Strip CoT instructions from user messages when --non-cot is requested
+    if args.non_cot:
+        unbiased_prompts = [
+            [{**msg, "content": strip_cot_from_message(msg["content"])} if msg["role"] == "user" else msg
+             for msg in prompt]
+            for prompt in unbiased_prompts
+        ]
+        biased_prompts = [
+            [{**msg, "content": strip_cot_from_message(msg["content"])} if msg["role"] == "user" else msg
+             for msg in prompt]
+            for prompt in biased_prompts
+        ]
+
+    prompt_style = "non_cot" if args.non_cot else "cot"
 
     # Setup output paths
     model_name = sanitize_model_name(args.model)
@@ -290,7 +311,7 @@ def main():
     print()
 
     # Checkpoint for resuming
-    checkpoint_file = control_output_dir / ".checkpoint_completions.jsonl"
+    checkpoint_file = control_output_dir / f".checkpoint_completions_{prompt_style}.jsonl"
 
     if args.fresh and checkpoint_file.exists():
         checkpoint_file.unlink()
@@ -348,8 +369,8 @@ def main():
     ]
 
     # Save outputs
-    save_jsonl(control_samples, control_output_dir / "control_cot.jsonl")
-    save_jsonl(bct_samples, train_output_dir / "bct_cot.jsonl")
+    save_jsonl(control_samples, control_output_dir / f"control_{prompt_style}.jsonl")
+    save_jsonl(bct_samples, train_output_dir / f"bct_{prompt_style}.jsonl")
 
     # Clean up checkpoint
     if checkpoint_file.exists():
@@ -363,8 +384,8 @@ def main():
         print(f"Total time: {total_time:.1f}s ({total_time/60:.1f} min)")
 
     print(f"\nDone!")
-    print(f"Control samples: {control_output_dir / 'control_cot.jsonl'}")
-    print(f"BCT samples: {train_output_dir / 'bct_cot.jsonl'}")
+    print(f"Control samples: {control_output_dir / f'control_{prompt_style}.jsonl'}")
+    print(f"BCT samples: {train_output_dir / f'bct_{prompt_style}.jsonl'}")
 
 
 if __name__ == "__main__":

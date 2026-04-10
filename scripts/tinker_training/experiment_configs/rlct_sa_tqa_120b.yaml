@@ -1,0 +1,62 @@
+# RLCT on gpt-oss-120b
+# Train: suggested_answer on TruthfulQA, no_cot, 64 datapoints, bs=8, 3 seeds
+# Eval: 5 biases on hellaswag, no_cot, 100 samples
+
+name: rlct_sa_tqa_120b
+model: openai/gpt-oss-120b
+
+training:
+  method: rl
+  seeds: [0, 42, 123]
+  include_control: true
+  args:
+    experiment_name: rlct_sa_tqa_120b
+    run_name: gpt-rlct-sa-tqa
+    bias_types: suggested_answer
+    datasets: truthfulqa
+    n_datapoints: 64
+    prompt_style: no_cot
+    lr_schedule: constant
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.0
+    anchor_model: base
+    loss_fn: ppo
+    n_ref_rollouts: 64
+    n_train_rollouts: 64
+    n_consistency_rollouts: 64
+    n_anchor_rollouts: 64
+    temperature: 1.0
+    max_new_tokens: 8192
+    n_epochs: 1
+    batch_size: 8
+    gradient_accumulation_steps: 1
+    refresh_every: 1
+    checkpoint_every: 0            # final checkpoint only
+    # lr omitted → auto-detection (falls back to 1e-4 for gpt-oss-120b)
+
+evaluation:
+  include_base: true
+  args:
+    bias_types: "spurious_few_shot_squares,post_hoc,wrong_few_shot,are_you_sure,suggested_answer"
+    datasets: hellaswag
+    prompt_styles: no_cot
+    limit: 100
+    max_tokens: 8192
+    max_tasks: 50
+    log_dir: sycophancy_eval_inspect/logs/rlct_sa_tqa_120b
+    base_model: openai/gpt-oss-120b
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+    variance_across: seeds
+
+viz_registration:
+  dir_suffix: rlct_sa_tqa_120b
+  display_name: "RLCT"
+  color: "#238b45"
+  control_color: "#bae4b3"
+  training_biases: [suggested_answer]

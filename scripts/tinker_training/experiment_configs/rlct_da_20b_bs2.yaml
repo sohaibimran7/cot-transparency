@@ -41,13 +41,7 @@ analysis:
     plot: true
 
 viz_registration:
-  - dir_suffix: rlct-da-bs2
-    display_name: "RLCT DA bs2"
-    color: "#6baed6"
-    hatch: ""
-    training_biases: [distractor_argument]
-  - dir_suffix: rlct-da-bs2-ctrl
-    display_name: "RLCT DA bs2 ctrl"
-    color: "#6baed6"
-    hatch: "//"
-    training_biases: [distractor_argument]
+  dir_suffix: rlct-da-bs2
+  display_name: "RLCT DA bs2"
+  color: "#6baed6"
+  training_biases: [distractor_argument]

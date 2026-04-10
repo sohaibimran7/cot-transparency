@@ -1,17 +1,17 @@
-# RLCT batch size sweep: bs=4
-# Train on MMLU distractor_argument, eval on TruthfulQA (5 biases)
-# 128 datapoints, checkpoint at midpoint (64 datapoints = step 16)
+# RLCT batch size sweep: bs=8 (suggested_answer)
+# Train on MMLU suggested_answer, eval on TruthfulQA (5 biases, 200 samples)
+# 128 datapoints, checkpoint at midpoint (64 datapoints = step 8)
 
-name: rlct-da-20b-bs4
+name: rlct-sa-20b-bs8
 model: openai/gpt-oss-20b
 
 training:
   method: rl
   include_control: true
   args:
-    experiment_name: rl_distractor_argument
-    run_name: gpt-oss-20b-rlct-da-bs4
-    bias_types: distractor_argument
+    experiment_name: rl_suggested_answer
+    run_name: gpt-oss-20b-rlct-sa-bs8
+    bias_types: suggested_answer
     datasets: mmlu
     n_datapoints: 128
     lora_rank: 8
@@ -22,8 +22,8 @@ training:
     n_train_rollouts: 64
     n_consistency_rollouts: 16
     refresh_every: 1
-    batch_size: 4
-    checkpoint_every: 16
+    batch_size: 8
+    checkpoint_every: 8
 
 evaluation:
   include_base: true
@@ -31,6 +31,7 @@ evaluation:
     bias_types: "distractor_fact,distractor_argument,suggested_answer,wrong_few_shot,spurious_few_shot_squares"
     datasets: truthfulqa
     prompt_styles: "no_cot"
+    limit: 200
     log_dir: sycophancy_eval_inspect/logs/tinker_evals
     base_model: openai/gpt-oss-20b
 
@@ -41,7 +42,7 @@ analysis:
     plot: true
 
 viz_registration:
-  dir_suffix: rlct-da-bs4
-  display_name: "RLCT DA bs4"
-  color: "#9ecae1"
-  training_biases: [distractor_argument]
+  dir_suffix: rlct-sa-bs8
+  display_name: "RLCT SA bs8"
+  color: "#c6dbef"
+  training_biases: [suggested_answer]

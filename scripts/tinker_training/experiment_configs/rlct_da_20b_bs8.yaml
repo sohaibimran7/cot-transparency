@@ -41,13 +41,7 @@ analysis:
     plot: true
 
 viz_registration:
-  - dir_suffix: rlct-da-bs8
-    display_name: "RLCT DA bs8"
-    color: "#c6dbef"
-    hatch: ""
-    training_biases: [distractor_argument]
-  - dir_suffix: rlct-da-bs8-ctrl
-    display_name: "RLCT DA bs8 ctrl"
-    color: "#c6dbef"
-    hatch: "//"
-    training_biases: [distractor_argument]
+  dir_suffix: rlct-da-bs8
+  display_name: "RLCT DA bs8"
+  color: "#c6dbef"
+  training_biases: [distractor_argument]

@@ -186,6 +186,78 @@
       "hatch": "//",
       "edgecolor": "black",
       "training_biases": []
+    },
+    "bct_sa_tqa_120b": {
+      "training_type": "bct_sa_tqa_120b",
+      "display_name": "BCT",
+      "color": "#2171b5",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct_sa_tqa_120b-ctrl": {
+      "training_type": "bct_sa_tqa_120b_ctrl",
+      "display_name": "BCT Control",
+      "color": "#bdd7e7",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct_sa_tqa_120b": {
+      "training_type": "rlct_sa_tqa_120b",
+      "display_name": "RLCT",
+      "color": "#238b45",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct_sa_tqa_120b-ctrl": {
+      "training_type": "rlct_sa_tqa_120b_ctrl",
+      "display_name": "RLCT Control",
+      "color": "#bae4b3",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "gpt-bct-sa-tqa": {
+      "training_type": "bct_sa_tqa_120b",
+      "display_name": "BCT",
+      "color": "#2171b5",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "gpt-bct-sa-tqa-ctrl": {
+      "training_type": "bct_sa_tqa_120b_ctrl",
+      "display_name": "BCT Control",
+      "color": "#bdd7e7",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "gpt-rlct-sa-tqa": {
+      "training_type": "rlct_sa_tqa_120b",
+      "display_name": "RLCT",
+      "color": "#238b45",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "gpt-rlct-sa-tqa-ctrl": {
+      "training_type": "rlct_sa_tqa_120b_ctrl",
+      "display_name": "RLCT Control",
+      "color": "#bae4b3",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
     }
   }
 }

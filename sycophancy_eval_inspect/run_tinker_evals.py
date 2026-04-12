@@ -75,6 +75,7 @@ def create_tinker_model(
     service_client: tinker.ServiceClient,
     temperature: float = 1.0,
     max_tokens: int = 8192,
+    seed: int | None = None,
 ) -> Model:
     """Create an Inspect Model backed by Tinker sampling."""
     sampling_client = service_client.create_sampling_client(
@@ -95,6 +96,7 @@ def create_tinker_model(
         config=GenerateConfig(
             temperature=temperature,
             max_tokens=max_tokens,
+            seed=seed,
         ),
     )
 
@@ -162,7 +164,11 @@ async def run(args):
         logger.info(f"  Renderer: {config.renderer}")
 
         if not args.dry_run:
-            model = create_tinker_model(config, service_client, max_tokens=args.max_tokens)
+            model = create_tinker_model(
+                config, service_client,
+                max_tokens=args.max_tokens,
+                seed=args.seed,
+            )
 
         tasks = []
 
@@ -228,6 +234,7 @@ def main():
     # Execution
     parser.add_argument("--max-tokens", type=int, default=8192, help="Max tokens for generation")
     parser.add_argument("--max-tasks", type=int, default=12, help="Max parallel tasks")
+    parser.add_argument("--seed", type=int, default=None, help="Sampling seed for reproducible generation (passed to Inspect GenerateConfig)")
     parser.add_argument("--max-connections", type=int, default=None, help="Max concurrent model API connections (controls per-model concurrency)")
     parser.add_argument("--dry-run", action="store_true", help="Print tasks without running")
     parser.add_argument("--log-dir", default="logs/tinker_evals", help="Base directory for logs")

@@ -36,6 +36,8 @@ MODEL_NAME_MAP = {
 BIAS_DISPLAY_NAMES = {
     "suggested_answer": "Suggested Answer",
     "wrong_few_shot": "Wrong Few-Shot",
+    "are_you_sure": "Are You Sure",
+    "post_hoc": "Post Hoc",
     "distractor_argument": "Distractor Argument",
     "distractor_fact": "Distractor Fact",
     "spurious_few_shot_hindsight": "Spurious: Hindsight",

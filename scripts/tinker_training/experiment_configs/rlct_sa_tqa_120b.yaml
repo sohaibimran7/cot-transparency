@@ -55,7 +55,7 @@ analysis:
     variance_across: seeds
 
 viz_registration:
-  dir_suffix: rlct_sa_tqa_120b
+  dir_suffix: gpt-rlct-sa-tqa
   display_name: "RLCT"
   color: "#238b45"
   control_color: "#bae4b3"

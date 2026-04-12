@@ -746,6 +746,7 @@ def _eval_name(config: dict, suffix: str = "") -> str:
 
 def _build_single_eval_cmd(
     config: dict, args: dict, checkpoint: str | None, eval_name: str,
+    seed: int | None = None,
 ) -> list[str]:
     """Build a single evaluation command."""
     cmd = [sys.executable, "-m", "sycophancy_eval_inspect.run_tinker_evals"]
@@ -755,6 +756,8 @@ def _build_single_eval_cmd(
 
     cmd += ["--base-model", config["model"]]
     cmd += ["--name", eval_name]
+    if seed is not None:
+        cmd += ["--seed", str(seed)]
 
     if "prompt_styles" in args:
         ps = args["prompt_styles"]
@@ -805,12 +808,23 @@ def build_eval_cmds(
 
     cmds = []
 
-    # Base model eval (no checkpoint)
+    # Base model eval (no checkpoint). When training.seeds is set, run the base
+    # eval once per seed with a matching sampling seed so variance across base is
+    # comparable to variance across trained runs.
     if include_base:
         model_prefix = get_model_prefix(config["model"])
-        base_name = f"{model_prefix}-base"
-        cmd = _build_single_eval_cmd(config, args, checkpoint=None, eval_name=base_name)
-        cmds.append((cmd, "base"))
+        base_seeds = tr.get("seeds")
+        if base_seeds:
+            for seed in base_seeds:
+                base_name = f"{model_prefix}-base-s{seed}"
+                cmd = _build_single_eval_cmd(
+                    config, args, checkpoint=None, eval_name=base_name, seed=seed,
+                )
+                cmds.append((cmd, f"base-s{seed}"))
+        else:
+            base_name = f"{model_prefix}-base"
+            cmd = _build_single_eval_cmd(config, args, checkpoint=None, eval_name=base_name)
+            cmds.append((cmd, "base"))
 
     if not base_only:
         training_outputs = stage_outputs(st, "training")
@@ -1606,56 +1620,65 @@ def build_task_graph(
         include_base = ev.get("include_base", False) or base_only
 
         if include_base:
-            model_prefix = sanitize_model_name(config["model"]).split("-")[0]
-            base_name = f"{model_prefix}-base"
+            model_prefix = get_model_prefix(config["model"])
+            # When training.seeds is set, fire one base eval per seed so base
+            # variance/precision matches the trained runs.
+            tr_cfg = config.get("training", {})
+            base_seeds = tr_cfg.get("seeds") or [None]
 
-            # Skip the base eval if it has already been (at least started) for
-            # every (bias_type × dataset) combo this config asks for. The user
-            # can force a re-run with --force.
-            should_fire_base = True
-            if not force:
-                wanted_biases = _csv_to_list(ev_args.get("bias_types"))
-                wanted_datasets = _csv_to_list(ev_args.get("datasets"))
-                if wanted_biases and wanted_datasets:
-                    log_dir = Path(
-                        ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+            for seed in base_seeds:
+                suffix = f"-s{seed}" if seed is not None else ""
+                base_name = f"{model_prefix}-base{suffix}"
+                task_id = f"eval:base{suffix}"
+                task_label = f"base{suffix}"
+
+                # Skip the base eval if it has already been (at least started) for
+                # every (bias_type × dataset) combo this config asks for. The user
+                # can force a re-run with --force.
+                should_fire_base = True
+                if not force:
+                    wanted_biases = _csv_to_list(ev_args.get("bias_types"))
+                    wanted_datasets = _csv_to_list(ev_args.get("datasets"))
+                    if wanted_biases and wanted_datasets:
+                        log_dir = Path(
+                            ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+                        )
+                        coverage = _load_base_eval_coverage(log_dir, base_name)
+                        wanted = {(b, d) for b in wanted_biases for d in wanted_datasets}
+                        missing = wanted - coverage
+                        if not missing:
+                            _print(
+                                f"  Skipping {task_id} for {base_name}: all "
+                                f"{len(wanted)} (bias × dataset) combos already "
+                                f"present under {log_dir / base_name} "
+                                f"(use --force to re-run)"
+                            )
+                            should_fire_base = False
+                        elif len(missing) < len(wanted):
+                            _print(
+                                f"  {task_id} for {base_name}: {len(wanted) - len(missing)}"
+                                f"/{len(wanted)} combos already present, will re-fire to "
+                                f"cover the {len(missing)} missing combo(s) "
+                                f"(narrow base_only run to skip): {sorted(missing)}"
+                            )
+
+                if should_fire_base:
+                    base_cmd = _build_single_eval_cmd(
+                        config, ev_args, checkpoint=None, eval_name=base_name, seed=seed,
                     )
-                    coverage = _load_base_eval_coverage(log_dir, base_name)
-                    wanted = {(b, d) for b in wanted_biases for d in wanted_datasets}
-                    missing = wanted - coverage
-                    if not missing:
-                        _print(
-                            f"  Skipping eval:base for {base_name}: all "
-                            f"{len(wanted)} (bias × dataset) combos already "
-                            f"present under {log_dir / base_name} "
-                            f"(use --force to re-run)"
-                        )
-                        should_fire_base = False
-                    elif len(missing) < len(wanted):
-                        _print(
-                            f"  eval:base for {base_name}: {len(wanted) - len(missing)}"
-                            f"/{len(wanted)} combos already present, will re-fire to "
-                            f"cover the {len(missing)} missing combo(s) "
-                            f"(narrow base_only run to skip): {sorted(missing)}"
-                        )
 
-            if should_fire_base:
-                base_cmd = _build_single_eval_cmd(
-                    config, ev_args, checkpoint=None, eval_name=base_name,
-                )
+                    def _make_base_builder(_cmd):
+                        def _build(_deps):
+                            return _cmd
+                        return _build
 
-                def _make_base_builder(_cmd):
-                    def _build(_deps):
-                        return _cmd
-                    return _build
-
-                tasks.append(Task(
-                    id="eval:base",
-                    stage="evaluation",
-                    label="base",
-                    deps=[],
-                    build_cmd=_make_base_builder(base_cmd),
-                ))
+                    tasks.append(Task(
+                        id=task_id,
+                        stage="evaluation",
+                        label=task_label,
+                        deps=[],
+                        build_cmd=_make_base_builder(base_cmd),
+                    ))
 
         if not base_only:
             if train_units:

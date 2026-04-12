@@ -60,7 +60,7 @@ analysis:
     variance_across: seeds
 
 viz_registration:
-  dir_suffix: bct_sa_tqa_120b_inst
+  dir_suffix: gpt-bct-sa-tqa-inst
   display_name: "BCT + Instruct"
   color: "#4292c6"
   control_color: "#c6dbef"

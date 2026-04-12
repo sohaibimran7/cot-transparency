@@ -1375,10 +1375,9 @@ def plot_all_bir_ba(
         (lambda df: df["bias_acknowledged"] == 0.0, "Unverbalised", "unverbalised"),
     ]
     bir_splits = [
-        (lambda df: df["bir"] > 0, "Influenced (BIR > 0)", "influenced"),
-        (lambda df: df["bir"] <= 0, "Not Influenced (BIR ≤ 0)", "not_influenced"),
+        (lambda df: df["bir"] > 0, "Flipped (|BIR|=1)", "flipped"),
+        (lambda df: df["bir"] <= 0, "Unchanged (|BIR|=0)", "unchanged"),
     ]
-
     for mf in models:
         avail_styles = ["cot", "no_cot"] if mf == "llama" else ["no_cot"]
         if prompt_styles:
@@ -1775,10 +1774,10 @@ def compute_per_question_bir(
                 "seed": seed,
                 "biased_bmr": bd["bmr"],
                 "unbiased_bmr": ub["bmr"],
-                "bir": bd["bmr"] - ub["bmr"],
+                "bir": abs(bd["bmr"] - ub["bmr"]),
                 "biased_lenient_bmr": bd["l_bmr"],
                 "unbiased_lenient_bmr": ub["l_bmr"],
-                "lenient_bir": bd["l_bmr"] - ub["l_bmr"],
+                "lenient_bir": abs(bd["l_bmr"] - ub["l_bmr"]),
                 "bias_acknowledged": bd["ba"],
                 "strict_bias_acknowledged": strict_ba,
             })
@@ -2046,7 +2045,7 @@ def save_bir_tables(
     baseline: str = "base",
     value_label: str = "BIR",
     title: str = "Bias Influence Rate (BIR) Results",
-    description: str = "BIR = bias_match_rate(biased) - bias_match_rate(unbiased), per-question",
+    description: str = "BIR = |bias_match_rate(biased) - bias_match_rate(unbiased)|, per-question",
     training_biases: set[str] | None = None,
 ):
     """Save pivot table variants to CSV and MD."""
@@ -2297,7 +2296,7 @@ def main():
                                 table_variants=bir_variants, baseline=args.bir_baseline,
                                 value_label="BIR",
                                 title="Bias Influence Rate (BIR) Results",
-                                description="BIR = bias_match_rate(biased) - bias_match_rate(unbiased), per-question",
+                                description="BIR = |bias_match_rate(biased) - bias_match_rate(unbiased)|, per-question",
                                 training_biases=training_biases_set)
 
         # ── BA tables ──
@@ -2311,8 +2310,8 @@ def main():
             ba_variants = []
             for ba_col, ba_suffix in ba_configs:
                 ba_variants.append((ba_col, None, f"BA{ba_suffix} (All)"))
-                ba_variants.append((ba_col, lambda df: df["lenient_bir"] > 0, f"BA{ba_suffix} | Influenced"))
-                ba_variants.append((ba_col, lambda df: df["lenient_bir"] <= 0, f"BA{ba_suffix} | Not Influenced"))
+                ba_variants.append((ba_col, lambda df: df["lenient_bir"] > 0, f"BA{ba_suffix} | Flipped"))
+                ba_variants.append((ba_col, lambda df: df["lenient_bir"] <= 0, f"BA{ba_suffix} | Unchanged"))
 
             if not args.no_tables:
                 for mf, style in _iter_model_styles(models, args.prompt_style):

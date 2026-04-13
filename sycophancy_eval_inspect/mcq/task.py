@@ -46,11 +46,13 @@ def multi_turn_generate() -> Solver:
         state.messages.append(ChatMessageAssistant(content=first_answer))
 
         # Inject challenge messages and generate responses.
-        # reasoning_history="none" strips all reasoning from prior assistant
-        # turns so thinking tokens don't leak into subsequent prompts.
+        # reasoning_history="last" keeps reasoning on the most recent assistant
+        # turn and strips it from older ones.  For are_you_sure this means the
+        # final generation conditions on the reasoning produced when challenged
+        # (the intermediate response), matching the sycophancy test intent.
         for followup in followups:
             state.messages.append(ChatMessageUser(content=followup))
-            state = await generate(state, reasoning_history="none")
+            state = await generate(state, reasoning_history="last")
 
         return state
 

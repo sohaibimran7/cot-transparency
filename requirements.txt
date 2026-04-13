@@ -27,6 +27,7 @@ streamlit
 datasets
 wandb
 tinker-cookbook>=0.2.1
+inspect-ai>=0.3.71
 fuzzywuzzy
 python-Levenshtein
 pyyaml>=6.0

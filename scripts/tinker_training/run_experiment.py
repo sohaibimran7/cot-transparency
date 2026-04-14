@@ -771,6 +771,8 @@ def _build_single_eval_cmd(
         cmd += ["--max-tokens", str(args["max_tokens"])]
     if "limit" in args:
         cmd += ["--limit", str(args["limit"])]
+    if "max_tasks" in args:
+        cmd += ["--max-tasks", str(args["max_tasks"])]
     if "hash_file" in args:
         cmd += ["--hash-file", str(args["hash_file"])]
     else:

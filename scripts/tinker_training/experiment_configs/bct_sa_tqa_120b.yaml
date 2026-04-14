@@ -1,0 +1,57 @@
+# BCT (pure SFT) on gpt-oss-120b
+# Train: suggested_answer on TruthfulQA (800 samples), no_cot, 3 seeds
+# Eval: 5 biases on hellaswag, no_cot, 100 samples
+
+name: bct_sa_tqa_120b
+model: openai/gpt-oss-120b
+
+data_generation:
+  script: generate_bct_from_test
+  args:
+    bias: suggested_answer
+    datasets: [truthfulqa]
+    limits: [800]
+    max_tokens: 8192
+    temperature: 1.0
+    non_cot: true                  # requires --non-cot flag in generate_bct_from_test.py
+    output_name: sa-tqa
+
+training:
+  method: sft
+  seeds: [0, 42, 123]
+  include_control: true
+  args:
+    experiment_name: bct_sa_tqa_120b
+    run_name: gpt-bct-sa-tqa
+    data: auto
+    batch_size: 128
+    epochs: 1
+    lora_rank: 8
+    save_every: 9999               # effectively final-only (save_every=0 causes ZeroDivisionError)
+    # lr omitted → auto-detection (falls back to 1e-4 for gpt-oss-120b)
+
+evaluation:
+  include_base: true
+  args:
+    bias_types: "spurious_few_shot_squares,post_hoc,wrong_few_shot,are_you_sure,suggested_answer"
+    datasets: hellaswag
+    prompt_styles: no_cot
+    limit: 100
+    max_tokens: 8192
+    max_tasks: 50
+    log_dir: sycophancy_eval_inspect/logs/bct_sa_tqa_120b
+    base_model: openai/gpt-oss-120b
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+    variance_across: seeds
+
+viz_registration:
+  dir_suffix: bct_sa_tqa_120b
+  display_name: "BCT"
+  color: "#2171b5"
+  control_color: "#bdd7e7"
+  training_biases: [suggested_answer]

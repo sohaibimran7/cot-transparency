@@ -227,7 +227,7 @@ def main():
 
     # Execution
     parser.add_argument("--max-tokens", type=int, default=8192, help="Max tokens for generation")
-    parser.add_argument("--max-tasks", type=int, default=12, help="Max parallel tasks")
+    parser.add_argument("--max-tasks", type=int, default=30, help="Max parallel tasks")
     parser.add_argument("--max-connections", type=int, default=None, help="Max concurrent model API connections (controls per-model concurrency)")
     parser.add_argument("--dry-run", action="store_true", help="Print tasks without running")
     parser.add_argument("--log-dir", default="logs/tinker_evals", help="Base directory for logs")

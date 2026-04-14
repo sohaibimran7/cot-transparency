@@ -91,6 +91,7 @@ python scripts/tinker_training/generate_bct_from_test.py \
     --bias suggested_answer \
     --limits 817 1183 \
     --batch-size 64 \
+    --non-cot \
     --output-dir dataset_dumps/train-from-test-mmlu-truthfulqa/suggested-answer/gpt_oss_120b
 ```
 
@@ -99,6 +100,7 @@ Key differences from `generate_bct_data.py`:
 - Generates from test data with explicit bias/unbiased question pairs
 - `--output-dir` puts both control and bct files in the same flat directory
 - `--limits` controls how many samples per dataset (in same order as `--datasets`)
+- `--non-cot` strips CoT instructions from prompts; outputs are saved as `control_non_cot.jsonl` / `bct_non_cot.jsonl`. **Default to `--non-cot` for reasoning models** (e.g. gpt-oss-120b) since they reason internally — asking for CoT in the prompt is redundant/harmful.
 
 ### Data format
 

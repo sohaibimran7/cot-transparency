@@ -15,7 +15,6 @@ from sycophancy_eval_inspect.mcq.dataset import (
 )
 from sycophancy_eval_inspect.mcq.scorer import (
     bias_acknowledged_scorer,
-    few_shot_confusion_scorer,
     mcq_bias_scorer,
     options_considered_scorer,
 )
@@ -149,7 +148,6 @@ def mcq_bias_eval(
             mcq_bias_scorer(),
             options_considered_scorer(),
             bias_acknowledged_scorer(),
-            few_shot_confusion_scorer(),
         ],
         metadata=metadata,
     )

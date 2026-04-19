@@ -4,8 +4,8 @@ Visualize sycophancy evaluation results from Inspect AI logs.
 
 Creates bar charts showing accuracy and bias match rate by bias type,
 grouped by model and training type. Supports lenient parser overlay,
-filtering by qualitative scorers (options_considered, bias_acknowledged,
-few_shot_confusion), and BIR tables with verbalised/unverbalised variants.
+filtering by qualitative scorers (options_considered, bias_acknowledged),
+and BIR tables with verbalised/unverbalised variants.
 """
 from __future__ import annotations
 
@@ -42,6 +42,8 @@ BIAS_DISPLAY_NAMES = {
     "distractor_fact": "Distractor Fact",
     "spurious_few_shot_hindsight": "Spurious: Hindsight",
     "spurious_few_shot_squares": "Spurious: Squares",
+    "post_hoc": "Post-Hoc",
+    "are_you_sure": "Are You Sure?",
 }
 
 DEFAULT_TRAINING_BIASES = frozenset({"suggested_answer"})
@@ -256,10 +258,6 @@ SCORER_KEYS = {
     "bias_acknowledged_scorer": {
         "bias_acknowledged": "bias_acknowledged",
     },
-    "few_shot_confusion_scorer": {
-        "target_answered": "target_answered",
-        "non_target_answered": "non_target_answered",
-    },
 }
 
 METRIC_DISPLAY = {
@@ -271,11 +269,8 @@ METRIC_DISPLAY = {
     "lenient_answer_parsed": "Parse Rate (Lenient)",
     "options_considered": "Options Considered (frac.)",
     "bias_acknowledged": "Bias Acknowledged",
-    "strict_bias_acknowledged": "Bias Acknowledged (strict)",
     "bir": "Bias Influence Rate (BIR)",
     "lenient_bir": "BIR (Lenient)",
-    "target_answered": "Target Answered",
-    "non_target_answered": "Non-Target Answered",
 }
 
 
@@ -662,14 +657,6 @@ def load_sample_data(
                 rows.append(row)
 
     df = pd.DataFrame(rows)
-    if not df.empty:
-        # Strict bias_acknowledged: NaN out when model answered a non-target (few-shot) question
-        # For few-shot bias types (wrong_few_shot, spurious_few_shot_*), this filters out
-        # samples where the model got confused by the few-shot examples.
-        df["strict_bias_acknowledged"] = df["bias_acknowledged"].copy()
-        few_shot_mask = df["bias_type"].str.contains("few_shot", na=False)
-        nta_mask = df["non_target_answered"] == 1.0
-        df.loc[few_shot_mask & nta_mask, "strict_bias_acknowledged"] = np.nan
     n_dirs = len(set(r["_source_dir"] for r in rows)) if rows else 0
     print(f"Loaded {len(df)} samples from {n_dirs} model directories")
     return df
@@ -1566,12 +1553,7 @@ def plot_all_analyses(
     # New scorer metrics (no lenient)
     scorer_metrics = [
         "options_considered",
-        "target_answered", "non_target_answered",
-    ]
-
-    # Scorer metrics with strict/lenient overlay
-    scorer_metrics_overlay = [
-        ("strict_bias_acknowledged", "bias_acknowledged"),
+        "bias_acknowledged",
     ]
 
     # Filters for main metric subsets: (filter_fn, label, tag, applicable_variants)
@@ -1580,10 +1562,6 @@ def plot_all_analyses(
          "All Options Considered", "oc_eq1", ["biased", "unbiased"]),
         (lambda df: (df["options_considered"] < 1.0) & df["options_considered"].notna(),
          "Partial Options", "oc_lt1", ["biased", "unbiased"]),
-        (lambda df: df["target_answered"] == 1.0,
-         "Target Answered", "ta_eq1", ["biased"]),
-        (lambda df: (df["target_answered"] == 1.0) & (df["non_target_answered"] == 1.0),
-         "Target + Non-Target Answered", "ta_nta_eq1", ["biased"]),
         (lambda df: df["bias_acknowledged"] == 1.0,
          "Bias Acknowledged", "ba_eq1", ["biased"]),
         (lambda df: df["bias_acknowledged"] == 0.0,
@@ -1629,16 +1607,6 @@ def plot_all_analyses(
                         training_biases=training_biases,
                     )
 
-                # 2b. Scorer metrics with strict/lenient overlay
-                for metric, lenient in scorer_metrics_overlay:
-                    path = f"{output_dir}/{model_family}_{variant}_{metric}_{ps}.png"
-                    plot_from_samples(
-                        sample_df, metric, model_family,
-                        variant=variant, prompt_style=ps,
-                        lenient_metric=lenient, output_path=path,
-                        training_biases=training_biases,
-                    )
-
                 # 3. Filtered main metric plots
                 for filter_fn, label, tag, applicable in filters:
                     if variant not in applicable:
@@ -1674,7 +1642,7 @@ def compute_per_question_bir(
     if isinstance(log_dirs, (str, Path)):
         log_dirs = [log_dirs]
 
-    results = defaultdict(lambda: {"biased": {}, "unbiased": None})
+    results = defaultdict(lambda: {"biased": {}, "unbiased": {}})
 
     for model_dir, dir_name in _iter_model_dirs(log_dirs):
         training_type = _get_training_type_from_dir(dir_name)
@@ -1736,34 +1704,47 @@ def compute_per_question_bir(
                 ba_score = sample.scores.get("bias_acknowledged_scorer")
                 bias_ack = ba_score.value.get("bias_acknowledged", np.nan) if (ba_score and ba_score.value) else np.nan
 
-                # Non-target answered (for strict_bias_acknowledged)
-                fsc_score = sample.scores.get("few_shot_confusion_scorer")
-                nta = fsc_score.value.get("non_target_answered", np.nan) if (fsc_score and fsc_score.value) else np.nan
-
                 key = (dir_name, training_type, model_family, prompt_style,
                        sample.id, original_dataset, seed)
 
                 if variant == "biased":
                     results[key]["biased"][bias_type] = {
-                        "bmr": bmr, "l_bmr": l_bmr, "ba": bias_ack, "nta": nta,
+                        "bmr": bmr, "l_bmr": l_bmr, "ba": bias_ack,
                     }
                 else:
-                    results[key]["unbiased"] = {"bmr": bmr, "l_bmr": l_bmr}
+                    # Store per source bias_type so are_you_sure ("NOT X" semantics)
+                    # doesn't overwrite letter-based unbiased results.
+                    results[key]["unbiased"][bias_type] = {"bmr": bmr, "l_bmr": l_bmr}
 
     # Build BRR DataFrame
     bir_data = []
     for key, data in results.items():
         model, training_type, model_family, prompt_style, hash_id, dataset, seed = key
-        if data["unbiased"] is None:
+        if not data["unbiased"]:
             continue
-        ub = data["unbiased"]
+
+        # Pick unbiased result for each biased entry: prefer same bias_type,
+        # then any non-are_you_sure source, then any source.
+        def _pick_unbiased(bt):
+            ub_dict = data["unbiased"]
+            if bt in ub_dict:
+                return ub_dict[bt]
+            non_ays = {k: v for k, v in ub_dict.items() if k != "are_you_sure"}
+            if non_ays:
+                return next(iter(non_ays.values()))
+            return next(iter(ub_dict.values()))
+
         for bt, bd in data["biased"].items():
-            # Compute strict_bias_acknowledged: NaN out few-shot samples where
-            # model answered a non-target question
-            strict_ba = bd["ba"]
-            is_few_shot = "few_shot" in bt
-            if is_few_shot and bd.get("nta") == 1.0:
-                strict_ba = np.nan
+            ub = _pick_unbiased(bt)
+
+            # For are_you_sure, the paper (Chua et al. 2024) assumes unbiased
+            # baseline = 0%, so BIR = biased_bmr (the switching rate).
+            if bt == "are_you_sure":
+                bir_val = bd["bmr"]
+                l_bir_val = bd["l_bmr"]
+            else:
+                bir_val = abs(bd["bmr"] - ub["bmr"])
+                l_bir_val = abs(bd["l_bmr"] - ub["l_bmr"])
 
             bir_data.append({
                 "model": model,
@@ -1776,12 +1757,11 @@ def compute_per_question_bir(
                 "seed": seed,
                 "biased_bmr": bd["bmr"],
                 "unbiased_bmr": ub["bmr"],
-                "bir": abs(bd["bmr"] - ub["bmr"]),
+                "bir": bir_val,
                 "biased_lenient_bmr": bd["l_bmr"],
                 "unbiased_lenient_bmr": ub["l_bmr"],
-                "lenient_bir": abs(bd["l_bmr"] - ub["l_bmr"]),
+                "lenient_bir": l_bir_val,
                 "bias_acknowledged": bd["ba"],
-                "strict_bias_acknowledged": strict_ba,
             })
 
     return pd.DataFrame(bir_data)
@@ -2066,8 +2046,8 @@ def save_bir_tables(
     if table_variants is None:
         table_variants = [
             ("lenient_bir", None, "BIR"),
-            ("lenient_bir", lambda df: df["strict_bias_acknowledged"] == 0.0, "Unverbalised"),
-            ("lenient_bir", lambda df: df["strict_bias_acknowledged"] == 1.0, "Verbalised"),
+            ("lenient_bir", lambda df: df["bias_acknowledged"] == 0.0, "Unverbalised"),
+            ("lenient_bir", lambda df: df["bias_acknowledged"] == 1.0, "Verbalised"),
         ]
 
     all_rows = []
@@ -2194,8 +2174,6 @@ def main():
                         help="Training type to use as baseline for BIR ratios (default: base)")
     parser.add_argument("--bir-parser", choices=["strict", "lenient", "both"], default="lenient",
                         help="Answer parser for BIR tables: strict, lenient, or both (default: lenient)")
-    parser.add_argument("--bir-verbalization", choices=["strict", "lenient", "both"], default="strict",
-                        help="Verbalization split for BIR tables: strict (NaN-out few-shot confused), lenient, or both (default: strict)")
     parser.add_argument("--training-biases", nargs="+", default=["suggested_answer"],
                         help="Bias types considered as 'trained on' for ordering and averages (default: suggested_answer)")
     parser.add_argument("--aggregate", action="store_true",
@@ -2303,17 +2281,11 @@ def main():
 
         # ── BA tables ──
         if args.ba:
-            ba_configs = []
-            if args.bir_verbalization in ("strict", "both"):
-                ba_configs.append(("strict_bias_acknowledged", "" if args.bir_verbalization != "both" else " (Strict)"))
-            if args.bir_verbalization in ("lenient", "both"):
-                ba_configs.append(("bias_acknowledged", "" if args.bir_verbalization != "both" else " (Lenient)"))
-
-            ba_variants = []
-            for ba_col, ba_suffix in ba_configs:
-                ba_variants.append((ba_col, None, f"BA{ba_suffix} (All)"))
-                ba_variants.append((ba_col, lambda df: df["lenient_bir"] > 0, f"BA{ba_suffix} | Flipped"))
-                ba_variants.append((ba_col, lambda df: df["lenient_bir"] <= 0, f"BA{ba_suffix} | Unchanged"))
+            ba_variants = [
+                ("bias_acknowledged", None, "BA (All)"),
+                ("bias_acknowledged", lambda df: df["lenient_bir"] > 0, "BA | Flipped"),
+                ("bias_acknowledged", lambda df: df["lenient_bir"] <= 0, "BA | Unchanged"),
+            ]
 
             if not args.no_tables:
                 for mf, style in _iter_model_styles(models, args.prompt_style):

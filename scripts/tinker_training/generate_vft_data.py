@@ -228,7 +228,7 @@ async def _judge_one(
         try:
             resp = await client.chat.completions.create(
                 model=model,
-                max_completion_tokens=8192,
+                max_completion_tokens=16384,
                 messages=[{"role": "user", "content": prompt}],
             )
             answer = (resp.choices[0].message.content or "").strip().upper()
@@ -270,7 +270,7 @@ async def _correct_one(
         try:
             resp = await client.chat.completions.create(
                 model=model,
-                max_completion_tokens=8192,
+                max_completion_tokens=16384,
                 messages=[{"role": "user", "content": prompt}],
             )
             return (resp.choices[0].message.content or "").strip()

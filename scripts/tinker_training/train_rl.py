@@ -146,7 +146,7 @@ def main():
     parser.add_argument("--n-consistency-rollouts", type=int, default=None, help="Consistency gradient rollouts (default: same as --n-train-rollouts)")
     parser.add_argument("--n-anchor-rollouts", type=int, default=None, help="Anchor gradient rollouts (default: all parsed ref rollouts)")
     parser.add_argument("--temperature", type=float, default=1.0)
-    parser.add_argument("--max-new-tokens", type=int, default=8192)
+    parser.add_argument("--max-new-tokens", type=int, default=16384)
 
     # === Training loop ===
     parser.add_argument("--n-epochs", type=int, default=1)

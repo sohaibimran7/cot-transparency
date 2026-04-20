@@ -4,7 +4,11 @@
     "gpt-oss-120b-",
     "gpt-oss-20b-",
     "gpt-",
-    "qwen3-"
+    "qwen3-",
+    "kimi-k2.5-",
+    "qwen3-30b-a3b-",
+    "qwen3-8b-",
+    "qwen3.5-4b-"
   ],
   "models": {
     "bct-sa": {

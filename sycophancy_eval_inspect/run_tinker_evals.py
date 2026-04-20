@@ -74,7 +74,7 @@ def create_tinker_model(
     config: ModelConfig,
     service_client: tinker.ServiceClient,
     temperature: float = 1.0,
-    max_tokens: int = 8192,
+    max_tokens: int = 16384,
     seed: int | None = None,
 ) -> Model:
     """Create an Inspect Model backed by Tinker sampling."""
@@ -97,6 +97,7 @@ def create_tinker_model(
             temperature=temperature,
             max_tokens=max_tokens,
             seed=seed,
+            max_connections=200,
         ),
     )
 
@@ -232,7 +233,7 @@ def main():
     parser.add_argument("--datasets", help="Filter to specific original datasets (comma-separated, e.g., hellaswag,logiqa)")
 
     # Execution
-    parser.add_argument("--max-tokens", type=int, default=8192, help="Max tokens for generation")
+    parser.add_argument("--max-tokens", type=int, default=16384, help="Max tokens for generation")
     parser.add_argument("--max-tasks", type=int, default=30, help="Max parallel tasks")
     parser.add_argument("--seed", type=int, default=None, help="Sampling seed for reproducible generation (passed to Inspect GenerateConfig)")
     parser.add_argument("--max-connections", type=int, default=None, help="Max concurrent model API connections (controls per-model concurrency)")

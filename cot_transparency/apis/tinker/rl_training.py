@@ -133,7 +133,7 @@ class TrainingLoopConfig(BaseModel):
 
 class GenerationConfig(BaseModel):
     """Generation config."""
-    max_new_tokens: int = 8192
+    max_new_tokens: int = 16384
     temperature: float = 0.7
 
 

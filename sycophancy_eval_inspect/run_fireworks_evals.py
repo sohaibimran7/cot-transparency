@@ -143,7 +143,7 @@ def main():
     parser.add_argument("--models", help="Filter models (comma-separated substrings)")
     parser.add_argument("--datasets", help="Filter to specific original datasets (comma-separated, e.g., hellaswag,logiqa)")
     parser.add_argument("--prompt-styles", help="Filter prompt styles (comma-separated: cot,no_cot)")
-    parser.add_argument("--max-tokens", type=int, default=8192, help="Max tokens for generation")
+    parser.add_argument("--max-tokens", type=int, default=16384, help="Max tokens for generation")
     parser.add_argument("--max-tasks", type=int, default=10, help="Max parallel tasks")
     parser.add_argument("--max-connections", type=int, default=None, help="Max concurrent model API connections (controls per-model concurrency)")
     parser.add_argument("--dry-run", action="store_true", help="Print tasks without running")

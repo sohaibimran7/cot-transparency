@@ -157,7 +157,7 @@ def main():
             n_epochs=1,
         ),
         generation=GenerationConfig(
-            max_new_tokens=8192,  # High limit - model stops naturally at EOS, no truncation risk
+            max_new_tokens=16384,  # High limit - model stops naturally at EOS, no truncation risk
             temperature=1.0,  # Higher temperature for more exploration
         ),
         checkpoint=CheckpointConfig(

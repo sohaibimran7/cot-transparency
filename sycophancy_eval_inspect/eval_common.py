@@ -201,13 +201,8 @@ def add_hash_filter_args(parser: argparse.ArgumentParser) -> None:
         "--hash-file",
         type=str,
         default=None,
-        help="Load pre-computed hashes from JSON file instead of computing them",
-    )
-    parser.add_argument(
-        "--save-hash-file",
-        type=str,
-        default=None,
-        help="Save computed hashes to this path (overrides default common_hashes.json in log dir)",
+        help="Path to precomputed common_hashes.json (required unless --skip-hash-filter). "
+             "Generate with: python -m sycophancy_eval_inspect.generate_hash_file",
     )
 
 
@@ -291,35 +286,36 @@ def prepare_evaluation(
     run_biased = not getattr(args, 'unbiased_only', False)
     run_unbiased = not getattr(args, 'biased_only', False)
 
-    # Hash filtering: either load from file or compute
+    # Hash filtering: must load from a precomputed file (or skip explicitly).
+    # Auto-generation was removed — run `python -m sycophancy_eval_inspect.generate_hash_file`
+    # first so multiple eval runs can load the same file in parallel without races.
     hash_filter = None
     skip_hash_filter = getattr(args, 'skip_hash_filter', False)
     hash_file = getattr(args, 'hash_file', None)
 
     if hash_file:
-        # Load pre-computed hashes from file
+        hash_path = Path(hash_file)
+        if not hash_path.exists():
+            raise FileNotFoundError(
+                f"Hash file not found: {hash_path}\n"
+                f"Precompute it with:\n"
+                f"  python -m sycophancy_eval_inspect.generate_hash_file \\\n"
+                f"      --datasets <comma-separated> \\\n"
+                f"      --bias-types <comma-separated> \\\n"
+                f"      --limit {args.limit} \\\n"
+                f"      --output {hash_path}"
+            )
         logger.info(f"Loading hashes from file: {hash_file}")
         hash_filter = load_hash_filter_from_file(hash_file)
     elif not skip_hash_filter:
-        logger.info("Computing common hashes across bias types...")
-        save_hash_file = getattr(args, 'save_hash_file', None)
-        if save_hash_file:
-            save_path = Path(save_hash_file)
-        elif log_base_dir:
-            save_path = Path(log_base_dir) / "common_hashes.json"
-            if save_path.exists():
-                raise FileExistsError(
-                    f"Hash file already exists at {save_path}. "
-                    f"Use --hash-file to load it, or specify a different path with --save-hash-file."
-                )
-        else:
-            save_path = None
-
-        hash_filter = compute_hash_filter(
-            datasets=datasets,
-            limit=args.limit,
-            save_to=save_path,
-            print_report=True,
+        raise ValueError(
+            "--hash-file is required (or pass --skip-hash-filter to disable filtering).\n"
+            "Precompute the hash file with:\n"
+            "  python -m sycophancy_eval_inspect.generate_hash_file \\\n"
+            "      --datasets <comma-separated> \\\n"
+            "      --bias-types <comma-separated> \\\n"
+            f"      --limit {args.limit} \\\n"
+            "      --output path/to/common_hashes.json"
         )
 
     # Build dataset configs

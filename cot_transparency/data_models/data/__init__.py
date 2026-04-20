@@ -10,10 +10,12 @@ from cot_transparency.data_models.data import (
     bbh,
     bbq,
     bbq_weak_evidence,
+    gpqa,
     hellaswag,
     hle,
     logiqa,
     mmlu,
+    mmlu_pro,
     openbook,
     truthful_qa,
     stereoset,
@@ -44,7 +46,7 @@ from cot_transparency.data_models.data.model_written_evals import (
 from cot_transparency.data_models.example_base import DataExampleBase
 from cot_transparency.json_utils.read_write import read_jsonl_file_into_basemodel
 
-COT_TESTING_TASKS = ["truthful_qa", "logiqa", "hellaswag", "mmlu_test", "hle"]
+COT_TESTING_TASKS = ["truthful_qa", "logiqa", "hellaswag", "mmlu_test", "hle", "gpqa", "mmlu_pro"]
 # if you really want to test on these tasks, we leave out a validation set during finetuning
 # but in general, we don't recommend testing on these tasks.
 # Please use the COT testing tasks instead, which are totally distinct tasks
@@ -77,6 +79,7 @@ TASK_LIST = {
     "bbq": BBQ_TASK_LIST,
     "cot_training": COT_TRAINING_TASKS,
     "cot_testing": COT_TESTING_TASKS,
+    "hle": ["hle"],
     "testing_plus_aqua": COT_TESTING_TASKS + ["aqua_train"],
     "aqua_big": ["aqua_train"],
     "train_and_test": COT_TRAINING_TASKS + COT_TESTING_TASKS,
@@ -94,6 +97,11 @@ TASK_LIST = {
     "karina": ["karina_hallucination"],
     "logiqa_train": ["logiqa_train"],
     "hle_test": ["hle"],
+    "gpqa": ["gpqa"],
+    "gpqa_test": ["gpqa"],
+    "mmlu_pro": ["mmlu_pro"],
+    "mmlu_pro_test": ["mmlu_pro"],
+    "frontier_test": ["hle", "gpqa", "mmlu_pro"],
     "cross_dataset_train": ["logiqa_train"],  # Train on LogiQA
     "cross_dataset_test": ["hle", "logiqa"],  # Test on HLE and LogiQA
     "inverse_scaling": InverseScalingTask.all_tasks(),
@@ -146,6 +154,10 @@ def get_list_of_examples(
             data = logiqa.train()
         elif task == "hle":
             data = hle.test()
+        elif task == "gpqa":
+            data = gpqa.test()
+        elif task == "mmlu_pro":
+            data = mmlu_pro.test()
         elif task == "mmlu":
             questions_per_task = 20
             data = mmlu.test(questions_per_task=questions_per_task)

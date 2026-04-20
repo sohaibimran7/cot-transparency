@@ -79,6 +79,8 @@ evaluation:
     datasets: "hellaswag,logiqa"
     prompt_styles: "cot,no_cot"
     log_dir: sycophancy_eval_inspect/logs/tinker_evals
+  base_args:                       # Optional: overrides merged on top of args for base eval only
+    limit: 500                     # e.g. smaller limit for the base model
 
 analysis:
   args:

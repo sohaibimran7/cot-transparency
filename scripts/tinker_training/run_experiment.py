@@ -803,6 +803,7 @@ def build_eval_cmds(
     ev = config.get("evaluation", {})
     tr = config.get("training", {})
     args = ev.get("args", {})
+    base_args = {**args, **ev.get("base_args", {})}
     base_only = ev.get("base_only", False)
     include_base = ev.get("include_base", False) or base_only
 
@@ -818,12 +819,12 @@ def build_eval_cmds(
             for seed in base_seeds:
                 base_name = f"{model_prefix}-base-s{seed}"
                 cmd = _build_single_eval_cmd(
-                    config, args, checkpoint=None, eval_name=base_name, seed=seed,
+                    config, base_args, checkpoint=None, eval_name=base_name, seed=seed,
                 )
                 cmds.append((cmd, f"base-s{seed}"))
         else:
             base_name = f"{model_prefix}-base"
-            cmd = _build_single_eval_cmd(config, args, checkpoint=None, eval_name=base_name)
+            cmd = _build_single_eval_cmd(config, base_args, checkpoint=None, eval_name=base_name)
             cmds.append((cmd, "base"))
 
     if not base_only:
@@ -1616,6 +1617,7 @@ def build_task_graph(
     if "evaluation" in stages_to_run:
         ev = config.get("evaluation", {})
         ev_args = ev.get("args", {})
+        base_ev_args = {**ev_args, **ev.get("base_args", {})}
         base_only = ev.get("base_only", False)
         include_base = ev.get("include_base", False) or base_only
 
@@ -1637,11 +1639,11 @@ def build_task_graph(
                 # can force a re-run with --force.
                 should_fire_base = True
                 if not force:
-                    wanted_biases = _csv_to_list(ev_args.get("bias_types"))
-                    wanted_datasets = _csv_to_list(ev_args.get("datasets"))
+                    wanted_biases = _csv_to_list(base_ev_args.get("bias_types"))
+                    wanted_datasets = _csv_to_list(base_ev_args.get("datasets"))
                     if wanted_biases and wanted_datasets:
                         log_dir = Path(
-                            ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+                            base_ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
                         )
                         coverage = _load_base_eval_coverage(log_dir, base_name)
                         wanted = {(b, d) for b in wanted_biases for d in wanted_datasets}
@@ -1664,7 +1666,7 @@ def build_task_graph(
 
                 if should_fire_base:
                     base_cmd = _build_single_eval_cmd(
-                        config, ev_args, checkpoint=None, eval_name=base_name, seed=seed,
+                        config, base_ev_args, checkpoint=None, eval_name=base_name, seed=seed,
                     )
 
                     def _make_base_builder(_cmd):

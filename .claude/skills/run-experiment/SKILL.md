@@ -157,6 +157,22 @@ python scripts/tinker_training/run_experiment.py config.yaml \
 python scripts/tinker_training/run_experiment.py config.yaml --dry-run
 ```
 
+## Hash file precomputation
+
+The evaluation stage requires a `common_hashes.json` file to ensure all checkpoints are evaluated on identical questions. The pipeline handles this automatically:
+
+- Before dispatching any eval command, `build_eval_cmds` synchronously runs `python -m sycophancy_eval_inspect.generate_hash_file` with the `evaluation.args` config (datasets, bias_types, limit)
+- The precomputed file defaults to `{log_dir}/common_hashes.json`; override with `evaluation.args.hash_file`
+- If the file already exists, precomputation is a no-op
+- Because the file is created before eval commands start, multi-seed and parallel checkpoint evals can all load it concurrently without races
+
+Manual precomputation (e.g. if you want to pre-warm for a shared `log_dir`):
+```bash
+python -m sycophancy_eval_inspect.generate_hash_file \
+    --datasets hellaswag,logiqa --bias-types suggested_answer,... \
+    --limit 200 --output sycophancy_eval_inspect/logs/EVAL_DIR/common_hashes.json
+```
+
 ## State and resumption
 
 Pipeline state is saved to `experiments/{name}/state.json`. If a stage fails:

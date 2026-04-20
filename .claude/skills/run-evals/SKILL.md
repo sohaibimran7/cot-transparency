@@ -52,7 +52,19 @@ This gives: 5 biased + 1 unbiased per dataset x 2 datasets = **12 eval files per
 
 ## Command template
 
-**Always pass `--hash-file`** to ensure all models are evaluated on exactly the same questions:
+**Step 1 — precompute the hash file** (required). This is a one-time setup step, takes ~2 seconds, and lets you run multiple eval commands in parallel against the same hash set:
+
+```bash
+python -m sycophancy_eval_inspect.generate_hash_file \
+    --datasets hellaswag,logiqa \
+    --bias-types suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares \
+    --limit 200 \
+    --output sycophancy_eval_inspect/logs/EVAL_DIR/common_hashes.json
+```
+
+The command is idempotent (no-op if the file already exists with identical content, errors out if it exists with different content unless you pass `--overwrite`).
+
+**Step 2 — run evals** using `--hash-file` (required unless `--skip-hash-filter`):
 
 ### Single checkpoint
 ```bash
@@ -63,7 +75,8 @@ python -m sycophancy_eval_inspect.run_tinker_evals \
     --bias-types suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares \
     --datasets hellaswag,logiqa \
     --prompt-styles cot,no_cot \
-    --hash-file sycophancy_eval_inspect/logs/cot_100samples/common_hashes.json \
+    --limit 200 \
+    --hash-file sycophancy_eval_inspect/logs/EVAL_DIR/common_hashes.json \
     --log-dir sycophancy_eval_inspect/logs/EVAL_DIR
 ```
 
@@ -75,12 +88,18 @@ python -m sycophancy_eval_inspect.run_tinker_evals \
     --bias-types suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares \
     --datasets hellaswag,logiqa \
     --prompt-styles cot,no_cot \
-    --hash-file sycophancy_eval_inspect/logs/cot_100samples/common_hashes.json \
+    --limit 200 \
+    --hash-file sycophancy_eval_inspect/logs/EVAL_DIR/common_hashes.json \
     --log-dir sycophancy_eval_inspect/logs/EVAL_DIR
 ```
 
-### Multiple checkpoints (run sequentially)
-For multiple checkpoints, run separate commands for each, varying `--checkpoint`, `--name`, and the log subdirectory.
+### Multiple checkpoints in parallel
+Since the hash file is precomputed, all checkpoint evals can run simultaneously:
+```bash
+python -m sycophancy_eval_inspect.run_tinker_evals --checkpoint CKPT1 --name NAME1 ... --hash-file $HASH_FILE &
+python -m sycophancy_eval_inspect.run_tinker_evals --checkpoint CKPT2 --name NAME2 ... --hash-file $HASH_FILE &
+wait
+```
 
 ## Available bias types (all 8)
 
@@ -135,12 +154,14 @@ Without it, `spurious_few_shot_hindsight` produces zero eval tasks (silently ski
 
 ## Hash filtering (important)
 
-The `common_hashes.json` file in each log directory contains curated hashes per dataset. **Always pass `--hash-file`** to use it.
+The `common_hashes.json` file in each log directory contains curated hashes per dataset that ensure all evals compare the same questions.
 
-If you run without `--hash-file` and a `common_hashes.json` already exists in the log dir, the eval runner will error out with `FileExistsError` to prevent accidental overwrites. Options:
-1. `--hash-file path/to/common_hashes.json` — load existing (normal case)
-2. `--save-hash-file other_path.json` — compute new hashes and save elsewhere
-3. `--skip-hash-filter` — disable filtering entirely (not recommended)
+**Workflow:**
+1. Precompute the hash file once with `python -m sycophancy_eval_inspect.generate_hash_file` (see Step 1 above)
+2. Pass `--hash-file path/to/common_hashes.json` on every eval run (step 2 above)
+3. If you need to disable filtering entirely, use `--skip-hash-filter` (not recommended — breaks cross-bias BIR comparison)
+
+`run_tinker_evals` does NOT auto-generate the hash file. If `--hash-file` points to a non-existent path, it errors out with a hint to run `generate_hash_file` first. This is intentional: precomputation lets parallel eval runs load the same file without races.
 
 ## After running: register for visualization
 
@@ -162,3 +183,15 @@ When re-running evals with different sample counts or parameters, append a suffi
 ## Script location
 
 `sycophancy_eval_inspect/run_tinker_evals.py` (run as module: `python -m sycophancy_eval_inspect.run_tinker_evals`)
+
+## Dependencies: openai package version
+
+⚠️ **This eval pipeline requires `openai>=2.8.0`** (via `inspect_ai`). If dataset regeneration (`scripts/dump_datasets_for_release.py`, which depends on `cot_transparency` and requires `openai<1.0`) was run recently, the environment will have `openai==0.28.1` and every eval will fail immediately with a `PrerequisiteError` saved into a tiny ~6KB `.eval` file.
+
+Before running evals, verify and upgrade if needed:
+```bash
+python -c "import openai; print(openai.__version__)"   # must be >= 2.8.0
+pip install 'openai>=2.8.0'                             # upgrade if needed
+```
+
+If a run already failed due to this, delete/archive the tiny `.eval` files (they contain `status=error` and 0 samples) before rerunning, otherwise the visualizer will try to load them.

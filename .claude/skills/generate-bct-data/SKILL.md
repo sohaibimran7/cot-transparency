@@ -91,7 +91,6 @@ python scripts/tinker_training/generate_bct_from_test.py \
     --bias suggested_answer \
     --limits 817 1183 \
     --batch-size 64 \
-    --non-cot \
     --output-dir dataset_dumps/train-from-test-mmlu-truthfulqa/suggested-answer/gpt_oss_120b
 ```
 
@@ -100,7 +99,6 @@ Key differences from `generate_bct_data.py`:
 - Generates from test data with explicit bias/unbiased question pairs
 - `--output-dir` puts both control and bct files in the same flat directory
 - `--limits` controls how many samples per dataset (in same order as `--datasets`)
-- `--non-cot` strips CoT instructions from prompts; outputs are saved as `control_non_cot.jsonl` / `bct_non_cot.jsonl`. **Default to `--non-cot` for reasoning models** (e.g. gpt-oss-120b) since they reason internally — asking for CoT in the prompt is redundant/harmful.
 
 ### Data format
 
@@ -120,3 +118,16 @@ python scripts/prepare_datasets.py \
 - `scripts/tinker_training/generate_bct_data.py` — Generate from training prompts (control_seed_42/train_seed_42)
 - `scripts/tinker_training/generate_bct_from_test.py` — Generate from test data (biased/unbiased pairs)
 - `scripts/prepare_datasets.py` — Combine, shuffle, limit datasets
+
+## Regenerating test datasets: openai version conflict
+
+⚠️ If BCT data is being generated from `dataset_dumps/test/` (via `generate_bct_from_test.py`), those test files may need regeneration via `scripts/dump_datasets_for_release.py`. That script depends on the legacy `cot_transparency` package and requires **`openai<1.0`** (use `0.28.1`), which is incompatible with the eval pipeline's requirement of **`openai>=2.8.0`**.
+
+Workflow:
+```bash
+pip install 'openai<1.0'    # for dataset regen via dump_datasets_for_release.py
+# ... run regen ...
+pip install 'openai>=2.8.0' # back to the version required for evals + training
+```
+
+See the README's "Regenerating test datasets" section for details.

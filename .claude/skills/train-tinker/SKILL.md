@@ -149,7 +149,7 @@ RLConfig(
         refresh_policy_every_n_steps=1,
     ),
     generation=GenerationConfig(
-        max_new_tokens=8192,
+        max_new_tokens=16384,
         temperature=1.0,
     ),
     checkpoint=CheckpointConfig(save_every_n_steps=50),
@@ -182,7 +182,7 @@ RLConfig(
 | `--n-consistency-rollouts N` | Consistency gradient rollouts (default: same as `--n-train-rollouts`) |
 | `--n-anchor-rollouts N` | Anchor gradient rollouts (default: all parsed ref rollouts) |
 | `--temperature FLOAT` | Sampling temperature (default: 1.0) |
-| `--max-new-tokens N` | Max generation tokens (default: 8192) |
+| `--max-new-tokens N` | Max generation tokens (default: 16384) |
 | `--batch-size N` | Datapoints per gradient step (default: 1) |
 | `--gradient-accumulation-steps N` | Gradient accumulation (default: 1) |
 | `--refresh-every N` | Refresh sampling policy every N steps (default: 1). Higher values enable deeper prefetch pipelining but use slightly staler samples. |

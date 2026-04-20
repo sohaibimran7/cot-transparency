@@ -776,20 +776,58 @@ def _build_single_eval_cmd(
         cmd += ["--limit", str(args["limit"])]
     if "max_tasks" in args:
         cmd += ["--max-tasks", str(args["max_tasks"])]
+    # Hash file: either explicit (args["hash_file"]) or default to common_hashes.json
+    # in the log dir. Actual precomputation happens in build_eval_cmds before the
+    # eval commands are handed off; here we just reference the expected path.
     if "hash_file" in args:
         cmd += ["--hash-file", str(args["hash_file"])]
     else:
-        # Auto-detect existing hash file to avoid FileExistsError
         log_dir = args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
-        hash_path = Path(log_dir) / "common_hashes.json"
-        if hash_path.exists():
-            cmd += ["--hash-file", str(hash_path)]
+        cmd += ["--hash-file", str(Path(log_dir) / "common_hashes.json")]
     if args.get("biased_only"):
         cmd.append("--biased-only")
     if args.get("unbiased_only"):
         cmd.append("--unbiased-only")
 
     return cmd
+
+
+def _precompute_hash_file_for_eval(args: dict) -> None:
+    """Precompute common_hashes.json synchronously before building eval commands.
+
+    Having the hash file exist up-front lets multiple eval runs (different
+    checkpoints/models) load it in parallel without racing to create it.
+    """
+    if args.get("skip_hash_filter"):
+        return
+
+    # Resolve the expected hash file path (either explicit or default in log dir)
+    if "hash_file" in args:
+        hash_path = Path(args["hash_file"])
+    else:
+        log_dir = args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+        hash_path = Path(log_dir) / "common_hashes.json"
+
+    if hash_path.exists():
+        # Trust the existing file (matches --hash-file behavior in run_tinker_evals)
+        return
+
+    # Build generate_hash_file CLI args from eval config
+    datasets = args.get("datasets")
+    bias_types = args.get("bias_types")
+    if not datasets or not bias_types:
+        # Can't precompute without these; let run_tinker_evals error clearly
+        return
+
+    cmd = [
+        sys.executable, "-m", "sycophancy_eval_inspect.generate_hash_file",
+        "--datasets", datasets if isinstance(datasets, str) else ",".join(datasets),
+        "--bias-types", bias_types if isinstance(bias_types, str) else ",".join(bias_types),
+        "--output", str(hash_path),
+    ]
+    if "limit" in args:
+        cmd += ["--limit", str(args["limit"])]
+    subprocess.run(cmd, check=True)
 
 
 def build_eval_cmds(
@@ -803,9 +841,12 @@ def build_eval_cmds(
     ev = config.get("evaluation", {})
     tr = config.get("training", {})
     args = ev.get("args", {})
-    base_args = {**args, **ev.get("base_args", {})}
     base_only = ev.get("base_only", False)
     include_base = ev.get("include_base", False) or base_only
+
+    # Precompute the hash file once so parallel eval runs can all load it
+    # without racing to create it.
+    _precompute_hash_file_for_eval(args)
 
     cmds = []
 
@@ -819,12 +860,12 @@ def build_eval_cmds(
             for seed in base_seeds:
                 base_name = f"{model_prefix}-base-s{seed}"
                 cmd = _build_single_eval_cmd(
-                    config, base_args, checkpoint=None, eval_name=base_name, seed=seed,
+                    config, args, checkpoint=None, eval_name=base_name, seed=seed,
                 )
                 cmds.append((cmd, f"base-s{seed}"))
         else:
             base_name = f"{model_prefix}-base"
-            cmd = _build_single_eval_cmd(config, base_args, checkpoint=None, eval_name=base_name)
+            cmd = _build_single_eval_cmd(config, args, checkpoint=None, eval_name=base_name)
             cmds.append((cmd, "base"))
 
     if not base_only:
@@ -1617,7 +1658,6 @@ def build_task_graph(
     if "evaluation" in stages_to_run:
         ev = config.get("evaluation", {})
         ev_args = ev.get("args", {})
-        base_ev_args = {**ev_args, **ev.get("base_args", {})}
         base_only = ev.get("base_only", False)
         include_base = ev.get("include_base", False) or base_only
 
@@ -1639,11 +1679,11 @@ def build_task_graph(
                 # can force a re-run with --force.
                 should_fire_base = True
                 if not force:
-                    wanted_biases = _csv_to_list(base_ev_args.get("bias_types"))
-                    wanted_datasets = _csv_to_list(base_ev_args.get("datasets"))
+                    wanted_biases = _csv_to_list(ev_args.get("bias_types"))
+                    wanted_datasets = _csv_to_list(ev_args.get("datasets"))
                     if wanted_biases and wanted_datasets:
                         log_dir = Path(
-                            base_ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+                            ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
                         )
                         coverage = _load_base_eval_coverage(log_dir, base_name)
                         wanted = {(b, d) for b in wanted_biases for d in wanted_datasets}
@@ -1666,7 +1706,7 @@ def build_task_graph(
 
                 if should_fire_base:
                     base_cmd = _build_single_eval_cmd(
-                        config, base_ev_args, checkpoint=None, eval_name=base_name, seed=seed,
+                        config, ev_args, checkpoint=None, eval_name=base_name, seed=seed,
                     )
 
                     def _make_base_builder(_cmd):

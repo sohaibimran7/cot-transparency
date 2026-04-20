@@ -294,7 +294,12 @@ class DataExampleBase(BaseModel, ABC):
     def biased_ans(self) -> MultipleChoiceAnswer:
         rng = random.Random(self.get_parsed_input())  # seed with question
         n_choices = len(self._get_options())
-        biased_ans_idx = rng.randrange(0, n_choices)  # select random answer for bias metrics
+        # Sample from incorrect answers only — a bias that points at the correct
+        # answer cannot influence the model toward a wrong answer, so would be
+        # wasted at eval time (previously dropped by filter_bias_on_wrong).
+        gt_idx = self.ground_truth_idx()
+        candidate_indices = [i for i in range(n_choices) if i != gt_idx]
+        biased_ans_idx = rng.choice(candidate_indices)
         biased_ans_letter: MultipleChoiceAnswer = ascii_uppercase[biased_ans_idx]  # type: ignore
         return biased_ans_letter
 

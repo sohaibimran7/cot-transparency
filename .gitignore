@@ -18,7 +18,7 @@ htmlcov
 
 experiments
 notebooks
-data/
+/data/
 
 
 .env
@@ -27,6 +27,7 @@ cache/
 claude/
 
 *.jsonl
+!dataset_dumps/test/**/*.jsonl
 
 # Logs and plots (large/generated), except eval results we want to keep
 /logs/

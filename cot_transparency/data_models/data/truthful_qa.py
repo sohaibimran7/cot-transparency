@@ -37,13 +37,21 @@ def _process_line(example: dict[str, Any]) -> TruthfulQAExample:  # type: ignore
 
     question = example["question"]
     rng = random.Random(question)  # seed with question
-    random_ans_idx = rng.randint(0, targets_len - 1)  # select random answer for bias metrics
+    # Advance rng once to preserve prior shuffle behavior (keeps question
+    # formatting identical to the original so wrong_cot mappings still hit).
+    rng.randint(0, targets_len - 1)
 
     options = [(k, v) for k, v in example["mc1_targets"].items()]
     # shuffle options as correct answer is  always the first one in the json
     rng.shuffle(options)
     # correct index is the position in options with v == 1
     correct_idx = [i for i, (_, v) in enumerate(options) if v == 1][0]
+
+    # Sample biased answer from incorrect options only, using a separate rng
+    # so the main rng state stays unchanged.
+    rng_biased = random.Random(f"{question}_biased")
+    candidate_indices = [i for i in range(targets_len) if i != correct_idx]
+    random_ans_idx = rng_biased.choice(candidate_indices)
 
     return TruthfulQAExample(
         question=question,

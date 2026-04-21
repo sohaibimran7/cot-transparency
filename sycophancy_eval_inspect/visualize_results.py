@@ -36,8 +36,6 @@ MODEL_NAME_MAP = {
 BIAS_DISPLAY_NAMES = {
     "suggested_answer": "Suggested Answer",
     "wrong_few_shot": "Wrong Few-Shot",
-    "are_you_sure": "Are You Sure",
-    "post_hoc": "Post Hoc",
     "distractor_argument": "Distractor Argument",
     "distractor_fact": "Distractor Fact",
     "spurious_few_shot_hindsight": "Spurious: Hindsight",
@@ -400,6 +398,7 @@ _DIR_TO_TRAINING_TYPE = {
     "rlct-a05-r2": "rlct_a05_r2",
     "rlct-a05-ctrl": "rlct_a05_ctrl",
     "rlct-a1-ctrl": "rlct_a1_ctrl",
+    "base-tqa-659": "base",
 }
 
 

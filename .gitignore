@@ -40,5 +40,6 @@ sycophancy_eval_inspect/logs/*
 !sycophancy_eval_inspect/logs/base_200_ays/
 !sycophancy_eval_inspect/logs/rlct_wfs_hparam_sweep/
 !sycophancy_eval_inspect/logs/tinker_evals/
+!sycophancy_eval_inspect/logs/llama_base_tqa_659samples/
 sycophancy_eval_inspect/plots/*
 !sycophancy_eval_inspect/plots/cot_100samples/

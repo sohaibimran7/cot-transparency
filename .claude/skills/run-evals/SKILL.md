@@ -127,6 +127,14 @@ For reasoning models (gpt-oss-120b, o1, etc.), the eval pipeline uses Inspect's 
 
 `hindsight_neglect` — **only** available for `spurious_few_shot_hindsight`
 
+### Custom dataset filenames (gotcha)
+
+The eval pipeline derives the "original dataset name" by stripping the bias suffix from the filename stem (see `get_original_dataset_name` in `sycophancy_eval_inspect/eval_common.py`). So a file like `dataset_dumps/test/suggested_answer/mmlu_7000samples_suggested_answer.jsonl` is treated as dataset **`mmlu_7000samples`**, not `mmlu`. When referencing custom-dumped files:
+
+- Use the full stem-minus-bias as the dataset name in `--datasets`, both for `generate_hash_file` and `run_tinker_evals`
+- Custom-named files do not collide/group with the canonical ones (e.g. `mmlu_7000samples` is a separate dataset from `mmlu`)
+- The visualizer will show the custom name verbatim; register it in `visualize_results.py` display configs if you want a nicer label
+
 **Important**: When running all 8 biases, include `hindsight_neglect` in `--datasets`:
 ```bash
 --datasets hellaswag,logiqa,hindsight_neglect

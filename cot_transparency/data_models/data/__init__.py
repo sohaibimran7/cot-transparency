@@ -80,6 +80,7 @@ TASK_LIST = {
     "cot_training": COT_TRAINING_TASKS,
     "cot_testing": COT_TESTING_TASKS,
     "hle": ["hle"],
+    "mmlu_test": ["mmlu_test"],
     "testing_plus_aqua": COT_TESTING_TASKS + ["aqua_train"],
     "aqua_big": ["aqua_train"],
     "train_and_test": COT_TRAINING_TASKS + COT_TESTING_TASKS,

@@ -173,6 +173,14 @@ python -m sycophancy_eval_inspect.generate_hash_file \
     --limit 200 --output sycophancy_eval_inspect/logs/EVAL_DIR/common_hashes.json
 ```
 
+### Custom dataset filenames (gotcha)
+
+The eval pipeline derives the "original dataset name" by stripping the bias suffix from the filename stem (see `get_original_dataset_name` in `sycophancy_eval_inspect/eval_common.py`). So a file like `dataset_dumps/test/suggested_answer/mmlu_7000samples_suggested_answer.jsonl` is treated as dataset **`mmlu_7000samples`**, not `mmlu`. When your config references a custom-dumped file:
+
+- Use the full stem-minus-bias in `evaluation.args.datasets` (e.g. `mmlu_7000samples`, not `mmlu`)
+- Custom-named files do not collide/group with the canonical ones
+- The hash file precompute step will use whatever name you pass; reuse the same name consistently across runs
+
 ## State and resumption
 
 Pipeline state is saved to `experiments/{name}/state.json`. If a stage fails:

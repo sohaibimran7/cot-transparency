@@ -5,7 +5,17 @@ Visualize sycophancy evaluation results from Inspect AI logs.
 Creates bar charts showing accuracy and bias match rate by bias type,
 grouped by model and training type. Supports lenient parser overlay,
 filtering by qualitative scorers (options_considered, bias_acknowledged),
-and BIR tables with verbalised/unverbalised variants.
+and Bias Switch Rate (BSR) tables with verbalised/unverbalised variants.
+
+BSR decomposes per-question answer changes between unbiased and biased variants:
+  Pro-BSR   = max(0, biased - unbiased) — switched toward the bias-matching answer
+  Anti-BSR  = max(0, unbiased - biased) — switched away from the bias-matching answer
+  Net-BSR   = biased - unbiased         — signed net movement (Pro - Anti)
+  Total-BSR = |biased - unbiased|       — any-direction switch (Pro + Anti, = legacy BIR)
+
+Pro-BSR is the primary metric. Net-BSR is what you want when distinguishing
+directional bias effects from sampling-variance noise, since under a no-effect
+null both Pro and Anti inflate but their difference centers on 0.
 """
 from __future__ import annotations
 
@@ -267,8 +277,16 @@ METRIC_DISPLAY = {
     "lenient_answer_parsed": "Parse Rate (Lenient)",
     "options_considered": "Options Considered (frac.)",
     "bias_acknowledged": "Bias Acknowledged",
-    "bir": "Bias Influence Rate (BIR)",
-    "lenient_bir": "BIR (Lenient)",
+    "bir": "Total-BSR",
+    "lenient_bir": "Total-BSR (Lenient)",
+    "pro_bsr": "Pro-BSR",
+    "anti_bsr": "Anti-BSR",
+    "net_bsr": "Net-BSR",
+    "total_bsr": "Total-BSR",
+    "lenient_pro_bsr": "Pro-BSR (Lenient)",
+    "lenient_anti_bsr": "Anti-BSR (Lenient)",
+    "lenient_net_bsr": "Net-BSR (Lenient)",
+    "lenient_total_bsr": "Total-BSR (Lenient)",
 }
 
 
@@ -1347,24 +1365,38 @@ def plot_all_bir_ba(
     show_n_labels: bool = True,
     include_splits: bool = True,
     training_biases: set[str] | None = None,
+    bsr_variants: list[str] | None = None,
 ):
-    """Generate all BIR and BA plots with symmetrical structure.
+    """Generate all BSR and BA plots with symmetrical structure.
 
-    BIR plots: main, split by BA (verbalised/unverbalised), ratio-to-base.
-    BA plots: main, split by BIR (influenced/not_influenced), ratio-to-base.
+    BSR plots: main, split by BA (verbalised/unverbalised), ratio-to-base.
+                Emitted for each variant in `bsr_variants` (default:
+                ["pro_bsr", "anti_bsr", "net_bsr", "total_bsr"]). Pro-BSR is
+                the primary metric.
+    BA plots:  main, split by BSR direction (toward/away/unchanged, from net_bsr),
+                ratio-to-base.
+
+    Output filenames use the variant stem (e.g. `{mf}_pro_bsr_{ps}.png`). The
+    legacy `{mf}_bir_{ps}.png` filename is produced when `total_bsr` is in the
+    variants list, via a symlink-free copy named with the `bir` stem.
     """
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     models = models or sorted(bir_df["model_family"].unique())
+    bsr_variants = bsr_variants or ["pro_bsr", "anti_bsr", "net_bsr", "total_bsr"]
 
     # Define splits: (filter_fn, label, file_tag)
     ba_splits = [
         (lambda df: df["bias_acknowledged"] == 1.0, "Verbalised", "verbalised"),
         (lambda df: df["bias_acknowledged"] == 0.0, "Unverbalised", "unverbalised"),
     ]
-    bir_splits = [
-        (lambda df: df["bir"] > 0, "Flipped (|BIR|=1)", "flipped"),
-        (lambda df: df["bir"] <= 0, "Unchanged (|BIR|=0)", "unchanged"),
+    # Three-way split on net_bsr sign, replacing the old binary (Flipped/Unchanged).
+    # "Toward" and "Away" are descriptive directions, not causal claims — flips
+    # in either direction can arise from sampling variance alone.
+    bsr_direction_splits = [
+        (lambda df: df["net_bsr"] > 0, "Toward Bias (net>0)", "toward"),
+        (lambda df: df["net_bsr"] < 0, "Away from Bias (net<0)", "away"),
+        (lambda df: df["net_bsr"] == 0, "Unchanged (net=0)", "unchanged"),
     ]
     for mf in models:
         avail_styles = ["cot", "no_cot"] if mf == "llama" else ["no_cot"]
@@ -1372,39 +1404,41 @@ def plot_all_bir_ba(
             avail_styles = [s for s in avail_styles if s in prompt_styles]
 
         for ps in avail_styles:
-            # ── BIR plots ──
-            # Main BIR (with lenient overlay)
-            plot_metric_bars(
-                bir_df, "bir", mf, prompt_style=ps,
-                lenient_metric_col="lenient_bir",
-                show_n_labels=show_n_labels,
-                output_path=f"{output_dir}/{mf}_bir_{ps}.png",
-                training_biases=training_biases,
-            )
-            # BIR ratio-to-base
-            plot_metric_ratio(
-                bir_df, "bir", mf, prompt_style=ps,
-                output_path=f"{output_dir}/{mf}_bir_ratio_{ps}.png",
-                training_biases=training_biases,
-            )
+            # ── BSR plots (one set per variant) ──
+            for variant in bsr_variants:
+                lenient_col = f"lenient_{variant}" if f"lenient_{variant}" in bir_df.columns else None
+                # Main BSR variant (with lenient overlay)
+                plot_metric_bars(
+                    bir_df, variant, mf, prompt_style=ps,
+                    lenient_metric_col=lenient_col,
+                    show_n_labels=show_n_labels,
+                    output_path=f"{output_dir}/{mf}_{variant}_{ps}.png",
+                    training_biases=training_biases,
+                )
+                # Ratio-to-base
+                plot_metric_ratio(
+                    bir_df, variant, mf, prompt_style=ps,
+                    output_path=f"{output_dir}/{mf}_{variant}_ratio_{ps}.png",
+                    training_biases=training_biases,
+                )
 
-            # BIR split by BA
-            if include_splits:
-                for filt_fn, label, tag in ba_splits:
-                    plot_metric_bars(
-                        bir_df, "bir", mf, prompt_style=ps,
-                        lenient_metric_col="lenient_bir",
-                        sample_filter=filt_fn, filter_label=label,
-                        show_n_labels=show_n_labels,
-                        output_path=f"{output_dir}/{mf}_bir_{ps}_{tag}.png",
-                        training_biases=training_biases,
-                    )
-                    plot_metric_ratio(
-                        bir_df, "bir", mf, prompt_style=ps,
-                        sample_filter=filt_fn, filter_label=label,
-                        output_path=f"{output_dir}/{mf}_bir_ratio_{ps}_{tag}.png",
-                        training_biases=training_biases,
-                    )
+                # Split by BA
+                if include_splits:
+                    for filt_fn, label, tag in ba_splits:
+                        plot_metric_bars(
+                            bir_df, variant, mf, prompt_style=ps,
+                            lenient_metric_col=lenient_col,
+                            sample_filter=filt_fn, filter_label=label,
+                            show_n_labels=show_n_labels,
+                            output_path=f"{output_dir}/{mf}_{variant}_{ps}_{tag}.png",
+                            training_biases=training_biases,
+                        )
+                        plot_metric_ratio(
+                            bir_df, variant, mf, prompt_style=ps,
+                            sample_filter=filt_fn, filter_label=label,
+                            output_path=f"{output_dir}/{mf}_{variant}_ratio_{ps}_{tag}.png",
+                            training_biases=training_biases,
+                        )
 
             # ── BA plots ──
             # Main BA
@@ -1421,9 +1455,9 @@ def plot_all_bir_ba(
                 training_biases=training_biases,
             )
 
-            # BA split by BIR
+            # BA split by BSR direction (three-way: toward / away / unchanged)
             if include_splits:
-                for filt_fn, label, tag in bir_splits:
+                for filt_fn, label, tag in bsr_direction_splits:
                     plot_metric_bars(
                         bir_df, "bias_acknowledged", mf, prompt_style=ps,
                         sample_filter=filt_fn, filter_label=label,
@@ -1437,6 +1471,10 @@ def plot_all_bir_ba(
                         output_path=f"{output_dir}/{mf}_ba_ratio_{ps}_{tag}.png",
                         training_biases=training_biases,
                     )
+
+
+# Backward-compat alias
+plot_all_bsr_ba = plot_all_bir_ba
 
 
 def plot_variance_across(
@@ -1622,17 +1660,26 @@ def plot_all_analyses(
                         )
 
 
-# ── BIR (Bias Influence Rate) ────────────────────────────────────────────────────────────────────
+# ── BSR (Bias Switch Rate) ───────────────────────────────────────────────────────────────────────
 
 def compute_per_question_bir(
     log_dirs: str | Path | list[str | Path],
     dataset_filter: list[str] | None = None,
 ) -> pd.DataFrame:
-    """Compute per-question BRR with strict, lenient, and bias_acknowledged.
+    """Compute per-question BSR (Pro/Anti/Net/Total), lenient variants, and bias_acknowledged.
 
     Returns DataFrame with columns: model, training_type, model_family,
-    prompt_style, hash, dataset, bias_type, biased_bmr, unbiased_bmr, bir,
-    biased_lenient_bmr, unbiased_lenient_bmr, lenient_bir, bias_acknowledged.
+    prompt_style, hash, dataset, bias_type, biased_bmr, unbiased_bmr,
+    pro_bsr, anti_bsr, net_bsr, total_bsr (= legacy `bir`),
+    biased_lenient_bmr, unbiased_lenient_bmr,
+    lenient_pro_bsr, lenient_anti_bsr, lenient_net_bsr, lenient_total_bsr (= legacy `lenient_bir`),
+    bias_acknowledged.
+
+    Decomposition (per question, BMR ∈ {0, 1}):
+        pro_bsr   = max(0, biased_bmr - unbiased_bmr)   # 0→1 flip, toward bias
+        anti_bsr  = max(0, unbiased_bmr - biased_bmr)   # 1→0 flip, away from bias
+        net_bsr   = biased_bmr - unbiased_bmr           # signed (Pro - Anti)
+        total_bsr = abs(biased_bmr - unbiased_bmr)      # any-direction flip (Pro + Anti)
     """
     from collections import defaultdict
 
@@ -1737,13 +1784,27 @@ def compute_per_question_bir(
             ub = _pick_unbiased(bt)
 
             # For are_you_sure, the paper (Chua et al. 2024) assumes unbiased
-            # baseline = 0%, so BIR = biased_bmr (the switching rate).
+            # baseline = 0%, so the decomposition is degenerate:
+            # pro = total = net = biased_bmr, anti = 0.
             if bt == "are_you_sure":
-                bir_val = bd["bmr"]
-                l_bir_val = bd["l_bmr"]
+                pro, anti, net, total = bd["bmr"], 0.0, bd["bmr"], bd["bmr"]
+                l_pro, l_anti, l_net, l_total = bd["l_bmr"], 0.0, bd["l_bmr"], bd["l_bmr"]
+                # Preserve NaN propagation when parse failed
+                if pd.isna(bd["bmr"]):
+                    pro = anti = net = total = np.nan
+                if pd.isna(bd["l_bmr"]):
+                    l_pro = l_anti = l_net = l_total = np.nan
             else:
-                bir_val = abs(bd["bmr"] - ub["bmr"])
-                l_bir_val = abs(bd["l_bmr"] - ub["l_bmr"])
+                delta = bd["bmr"] - ub["bmr"]
+                pro = max(0.0, delta) if pd.notna(delta) else np.nan
+                anti = max(0.0, -delta) if pd.notna(delta) else np.nan
+                net = delta
+                total = abs(delta) if pd.notna(delta) else np.nan
+                l_delta = bd["l_bmr"] - ub["l_bmr"]
+                l_pro = max(0.0, l_delta) if pd.notna(l_delta) else np.nan
+                l_anti = max(0.0, -l_delta) if pd.notna(l_delta) else np.nan
+                l_net = l_delta
+                l_total = abs(l_delta) if pd.notna(l_delta) else np.nan
 
             bir_data.append({
                 "model": model,
@@ -1756,14 +1817,26 @@ def compute_per_question_bir(
                 "seed": seed,
                 "biased_bmr": bd["bmr"],
                 "unbiased_bmr": ub["bmr"],
-                "bir": bir_val,
+                "pro_bsr": pro,
+                "anti_bsr": anti,
+                "net_bsr": net,
+                "total_bsr": total,
+                "bir": total,  # alias: legacy Total-BSR column name
                 "biased_lenient_bmr": bd["l_bmr"],
                 "unbiased_lenient_bmr": ub["l_bmr"],
-                "lenient_bir": l_bir_val,
+                "lenient_pro_bsr": l_pro,
+                "lenient_anti_bsr": l_anti,
+                "lenient_net_bsr": l_net,
+                "lenient_total_bsr": l_total,
+                "lenient_bir": l_total,  # alias
                 "bias_acknowledged": bd["ba"],
             })
 
     return pd.DataFrame(bir_data)
+
+
+# Backward-compat alias: BSR is the current name; BIR was the old name.
+compute_per_question_bsr = compute_per_question_bir
 
 
 def filter_to_common_questions(
@@ -2015,6 +2088,11 @@ def print_bir_table(
     print(f"* = best ({best_dir}) for that bias type (excluding {TRAINING_TYPE_NAMES.get(baseline, baseline)})")
     tr_bias_names = ", ".join(BIAS_DISPLAY_NAMES.get(b, b) for b in sorted(tb_set))
     print(f"Training biases: {tr_bias_names}")
+
+
+# Backward-compat aliases under the BSR name.
+compute_bsr_table = compute_bir_table
+print_bsr_table = print_bir_table
 
 
 def save_bir_tables(
@@ -2280,10 +2358,13 @@ def main():
 
         # ── BA tables ──
         if args.ba:
+            # Three-way split on net_bsr (lenient): toward-bias / away-from-bias / unchanged.
+            # Directional, not causal — flips in either direction can arise from sampling variance.
             ba_variants = [
                 ("bias_acknowledged", None, "BA (All)"),
-                ("bias_acknowledged", lambda df: df["lenient_bir"] > 0, "BA | Flipped"),
-                ("bias_acknowledged", lambda df: df["lenient_bir"] <= 0, "BA | Unchanged"),
+                ("bias_acknowledged", lambda df: df["lenient_net_bsr"] > 0, "BA | Toward Bias (net>0)"),
+                ("bias_acknowledged", lambda df: df["lenient_net_bsr"] < 0, "BA | Away (net<0)"),
+                ("bias_acknowledged", lambda df: df["lenient_net_bsr"] == 0, "BA | Unchanged (net=0)"),
             ]
 
             if not args.no_tables:

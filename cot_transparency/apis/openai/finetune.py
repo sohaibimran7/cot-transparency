@@ -13,7 +13,11 @@ import openai
 import pandas as pd
 from slist import Slist
 import wandb
-from openai.error import APIConnectionError, RateLimitError
+try:
+    from openai.error import APIConnectionError, RateLimitError  # type: ignore
+except ImportError:
+    # openai>=1.0 layout — top-level error classes.
+    from openai import APIConnectionError, RateLimitError
 from pydantic import BaseModel
 from retry import retry
 from wandb.sdk.wandb_run import Run

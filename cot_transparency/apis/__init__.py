@@ -16,6 +16,7 @@ _LAZY_IMPORTS = {
     "OpenAICompletionCaller": "cot_transparency.apis.openai",
     "AnthropicCaller": "cot_transparency.apis.anthropic",
     "TogetherAICaller": "cot_transparency.apis.together.inference",
+    "OpenRouterCaller": "cot_transparency.apis.openrouter",
 }
 
 def __getattr__(name: str):
@@ -29,7 +30,12 @@ CALLER_STORE: dict[str, ModelCaller] = {}
 
 
 def get_caller_class(model_name: str) -> Type[ModelCaller]:
-    if "davinci" in model_name:
+    # OpenRouter prefix check must come first: openrouter model IDs contain
+    # substrings like "gpt", "claude", "mistral" that would mis-route below.
+    if model_name.startswith("openrouter/"):
+        from cot_transparency.apis.openrouter import OpenRouterCaller
+        return OpenRouterCaller
+    elif "davinci" in model_name:
         from cot_transparency.apis.openai import OpenAICompletionCaller
         return OpenAICompletionCaller
     elif "claude" in model_name:

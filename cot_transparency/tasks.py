@@ -159,11 +159,15 @@ def call_model_and_raise_if_not_suitable(
     tries: int = 20,
     raise_on: Literal["all"] | Literal["any"] = "any",
     should_log_failures: bool = True,
+    start_try_number: int = 1,
 ) -> list[ModelOutput]:
     # Pass the try number explicitly to the caller
-    # So that a cached caller can use it to decide whether to call the model or not
-    try_number = 1
-    while try_number <= tries:
+    # So that a cached caller can use it to decide whether to call the model or not.
+    # start_try_number lets an outer retry loop (e.g. adaptive resampling) force
+    # a cache miss on reruns by offsetting the try_number the caller sees.
+    try_number = start_try_number
+    end_try_number = start_try_number + tries - 1
+    while try_number <= end_try_number:
         try:
             responses = __call_or_raise(
                 task=task,
@@ -176,7 +180,7 @@ def call_model_and_raise_if_not_suitable(
             )
             return responses
         except AtLeastOneFailed as e:
-            if try_number == tries:
+            if try_number == end_try_number:
                 raise e
             else:
                 try_number += 1
@@ -191,6 +195,7 @@ def call_model_and_catch(
     tries: int = 20,
     raise_on: Literal["all"] | Literal["any"] = "any",
     should_log_failures: bool = True,
+    start_try_number: int = 1,
 ) -> list[ModelOutput]:
     try:
         return call_model_and_raise_if_not_suitable(
@@ -201,6 +206,7 @@ def call_model_and_catch(
             raise_on=raise_on,
             caller=caller,
             should_log_failures=should_log_failures,
+            start_try_number=start_try_number,
         )
     except AtLeastOneFailed as e:
         return e.model_outputs
@@ -215,6 +221,7 @@ def task_function(
     raise_on: Union[Literal["all"], Literal["any"]] = "any",
     num_tries: int = 10,
     should_log_failures: bool = True,
+    start_try_number: int = 1,
 ) -> Sequence[TaskOutput]:
     ...
 
@@ -227,6 +234,7 @@ def task_function(
     raise_on: Union[Literal["all"], Literal["any"]] = "any",
     num_tries: int = 10,
     should_log_failures: bool = True,
+    start_try_number: int = 1,
 ) -> Sequence[StageTwoTaskOutput]:
     ...
 
@@ -239,6 +247,7 @@ def task_function(
     raise_on: Literal["all"] | Literal["any"] = "any",
     num_tries: int = 10,
     should_log_failures: bool = True,
+    start_try_number: int = 1,
 ) -> Sequence[TaskOutput] | Sequence[StageTwoTaskOutput]:
     ...
 
@@ -250,6 +259,7 @@ def task_function(
     raise_on: Literal["all"] | Literal["any"] = "any",
     num_tries: int = 10,
     should_log_failures: bool = True,
+    start_try_number: int = 1,
 ) -> Sequence[TaskOutput] | Sequence[StageTwoTaskOutput]:
     formatter = name_to_formatter(task.formatter_name)
     if num_tries < 1:
@@ -264,6 +274,7 @@ def task_function(
             raise_on=raise_on,
             caller=caller,
             should_log_failures=should_log_failures,
+            start_try_number=start_try_number,
         )
         if raise_after_retries
         else call_model_and_catch(
@@ -274,6 +285,7 @@ def task_function(
             raise_on=raise_on,
             caller=caller,
             should_log_failures=should_log_failures,
+            start_try_number=start_try_number,
         )
     )
 

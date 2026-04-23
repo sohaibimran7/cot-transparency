@@ -36,6 +36,7 @@ def stage_one_stream(
     add_tqdm: bool = True,
     should_log_parsing_failures: bool = True,
     filter_tasks: Callable[[TaskSpec], bool] | None = None,
+    start_try_number: int = 1,
 ) -> Observable[TaskOutput]:
     """A version of stage_one.py, but streaming
     Note that this doesn't manage any cache for you,
@@ -72,6 +73,7 @@ def stage_one_stream(
                 caller=caller,
                 num_tries=num_tries,
                 should_log_failures=should_log_parsing_failures,
+                start_try_number=start_try_number,
             ),
             max_par=batch,
         )

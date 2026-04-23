@@ -7,12 +7,24 @@ import numpy as np
 import openai
 from dotenv import load_dotenv
 from openai import APIError
-from openai.error import (
-    APIConnectionError,
-    RateLimitError,
-    ServiceUnavailableError,
-    Timeout,
-)
+
+try:
+    # openai<1.0 error layout
+    from openai.error import (  # type: ignore
+        APIConnectionError,
+        RateLimitError,
+        ServiceUnavailableError,
+        Timeout,
+    )
+except ImportError:
+    # openai>=1.0 moved error classes to top level and dropped ServiceUnavailableError.
+    # Runtime OpenAI calls via openai.ChatCompletion.create still won't work on >=1.0,
+    # but import-time must succeed so alternative callers (e.g. OpenRouter) can run.
+    from openai import APIConnectionError, RateLimitError
+    from openai import APITimeoutError as Timeout
+
+    class ServiceUnavailableError(Exception):
+        pass
 from pydantic import BaseModel
 from retry import retry
 from slist import Slist

@@ -5,7 +5,11 @@ from typing import Optional, Sequence
 import anthropic
 
 from grugstream import Observable
-from openai import InvalidRequestError
+try:
+    from openai import InvalidRequestError  # type: ignore
+except ImportError:
+    # openai>=1.0 renamed to BadRequestError.
+    from openai import BadRequestError as InvalidRequestError
 from pydantic import BaseModel
 from slist import Slist
 from tqdm import tqdm

@@ -244,24 +244,13 @@ def _make_mcq_bias_score_fn(parser, prefix: str = ""):
     }
 )
 def mcq_bias_scorer() -> Scorer:
-    """Score MCQ responses using the lenient fallback answer parser."""
-    return _make_mcq_bias_score_fn(fallback_answer_parser)
+    """Score MCQ responses.
 
-
-@scorer(
-    metrics={
-        "lenient_correct": [nanmean(), nanstderr()],
-        "lenient_matches_bias": [nanmean(), nanstderr()],
-        "lenient_answer_parsed": [mean(), stderr()],
-    }
-)
-def mcq_bias_scorer_fallback() -> Scorer:
-    """Score MCQ responses using the lenient fallback parser.
-
-    Strips markdown bold and latex boxing before parsing.
-    Useful for models that don't follow the expected format strictly.
+    Uses `fallback_answer_parser`, which strips markdown bold (`**X**`) and
+    latex boxing (`\\boxed{X}` variants) before searching for "answer is X"
+    patterns — so answers wrapped in formatting still parse.
     """
-    return _make_mcq_bias_score_fn(fallback_answer_parser, prefix="lenient_")
+    return _make_mcq_bias_score_fn(fallback_answer_parser)
 
 
 # ── options_considered_scorer ───────────────────────────────────────────────

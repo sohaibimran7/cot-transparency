@@ -5,7 +5,6 @@ from sycophancy_eval_inspect.mcq.dataset import load_mcq_bias_dataset
 from sycophancy_eval_inspect.mcq.scorer import (
     bias_acknowledged_scorer,
     mcq_bias_scorer,
-    mcq_bias_scorer_fallback,
     options_considered_scorer,
 )
 
@@ -13,7 +12,6 @@ __all__ = [
     "mcq_bias_eval",
     "load_mcq_bias_dataset",
     "mcq_bias_scorer",
-    "mcq_bias_scorer_fallback",
     "options_considered_scorer",
     "bias_acknowledged_scorer",
 ]

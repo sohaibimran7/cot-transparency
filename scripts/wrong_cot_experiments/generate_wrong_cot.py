@@ -51,11 +51,19 @@ async def _run_one_pass(
     stage_one_caller: ModelCaller,
     answer_parsing_caller: Optional[CachedPerModelCaller],
     skip_task_hashes: set[str],
+    include_task_hashes: Optional[set[str]],
     start_try_number: int,
 ) -> Slist[TaskOutput]:
-    filter_fn: Optional[Callable[[TaskSpec], bool]] = None
-    if skip_task_hashes:
-        filter_fn = lambda ts: ts.task_hash not in skip_task_hashes  # noqa: E731
+    def _filter(ts: TaskSpec) -> bool:
+        if include_task_hashes is not None and ts.task_hash not in include_task_hashes:
+            return False
+        if ts.task_hash in skip_task_hashes:
+            return False
+        return True
+
+    filter_fn: Optional[Callable[[TaskSpec], bool]] = (
+        _filter if (skip_task_hashes or include_task_hashes) else None
+    )
 
     stage_one_obs = stage_one_stream(
         tasks=list(tasks) if tasks else [],
@@ -99,6 +107,7 @@ async def generate(
     answer_parsing_model: str = "gpt-4",
     cache_path: str = "experiments/wrong_cot_cache.jsonl",
     model_specific_cache_dir: str = "experiments/wrong_cot_cache",
+    include_task_hashes: Optional[set[str]] = None,
 ):
     # Generate wrong-CoT data for distractor_argument bias.
     # Run `export PYTHONPATH=.; python scripts/wrong_cot_experiments/generate_wrong_cot.py`
@@ -127,11 +136,34 @@ async def generate(
             cache_dir=pathlib.Path(model_specific_cache_dir), write_every_n=500
         )
 
+    # Snapshot existing records up-front so each per-pass write can merge
+    # (existing wins on task_hash conflict). Kept in memory; the file on disk
+    # is overwritten atomically after every pass.
     if delete_existing and WRONG_COT_TESTING_PATH.exists():
         WRONG_COT_TESTING_PATH.unlink()
+        baseline: Slist[TaskOutput] = Slist()
+    elif WRONG_COT_TESTING_PATH.exists():
+        baseline = Slist(read_jsonl_file_into_basemodel(WRONG_COT_TESTING_PATH, TaskOutput))
+        print(f"Loaded {len(baseline)} existing records from {WRONG_COT_TESTING_PATH}")
+    else:
+        baseline = Slist()
+    baseline_hashes = {t.task_spec.task_hash for t in baseline}
 
     all_hits: Slist[TaskOutput] = Slist()
     hit_hashes: set[str] = set()
+
+    def _flush(label: str) -> None:
+        # Write baseline + all_hits-not-already-in-baseline. Atomic via tmp+rename
+        # so a crash mid-write leaves the previous snapshot intact.
+        new_only = all_hits.filter(lambda t: t.task_spec.task_hash not in baseline_hashes)
+        merged = baseline + new_only
+        tmp_path = WRONG_COT_TESTING_PATH.with_suffix(WRONG_COT_TESTING_PATH.suffix + ".tmp")
+        write_jsonl_file_from_basemodel(path=tmp_path, basemodels=merged)
+        tmp_path.replace(WRONG_COT_TESTING_PATH)
+        print(
+            f"[{label}] wrote {len(merged)} records "
+            f"({len(baseline)} baseline + {len(new_only)} new) to {WRONG_COT_TESTING_PATH}"
+        )
 
     for pass_num in range(1, max_passes + 1):
         print(
@@ -152,6 +184,7 @@ async def generate(
             stage_one_caller=stage_one_caller,
             answer_parsing_caller=answer_parsing_caller,
             skip_task_hashes=hit_hashes,
+            include_task_hashes=include_task_hashes,
             start_try_number=pass_num,
         )
         pass_hits = _filter_hits(done_tasks)
@@ -163,6 +196,7 @@ async def generate(
             f"pass {pass_num}: ran {len(done_tasks)} samples, "
             f"{len(new_hits)} new hits, total hits so far: {len(all_hits)}"
         )
+        _flush(f"pass {pass_num}")
         if pass_num > 1 and len(new_hits) == 0:
             print("no new hits this pass — stopping early")
             break
@@ -172,24 +206,6 @@ async def generate(
     )
     print(grouped_by_task_name)
     print(f"got {len(all_hits)} new biased tasks across {max_passes} passes")
-
-    if not delete_existing and WRONG_COT_TESTING_PATH.exists():
-        existing: Slist[TaskOutput] = Slist(
-            read_jsonl_file_into_basemodel(WRONG_COT_TESTING_PATH, TaskOutput)
-        )
-        print(f"Loaded {len(existing)} existing records from {WRONG_COT_TESTING_PATH}")
-        existing_hashes = {t.task_spec.task_hash for t in existing}
-        new_only = all_hits.filter(lambda t: t.task_spec.task_hash not in existing_hashes)
-        print(f"Appending {len(new_only)} new records (skipped {len(all_hits) - len(new_only)} dup hashes)")
-        merged = existing + new_only
-    else:
-        merged = all_hits
-
-    print(f"Writing {len(merged)} total records to {WRONG_COT_TESTING_PATH}")
-    write_jsonl_file_from_basemodel(
-        path=WRONG_COT_TESTING_PATH,
-        basemodels=merged,
-    )
 
 
 def main(
@@ -207,6 +223,7 @@ def main(
     answer_parsing_model: str = "gpt-4",
     cache_path: str = "experiments/wrong_cot_cache.jsonl",
     model_specific_cache_dir: str = "experiments/wrong_cot_cache",
+    hash_filter_file: Optional[str] = None,
 ):
     """Generate wrong-CoT training data for the distractor_argument bias.
 
@@ -230,6 +247,16 @@ def main(
             --max_passes=5 \\
             --use_answer_parsing=False
     """
+    include_task_hashes: Optional[set[str]] = None
+    if hash_filter_file:
+        import json as _json
+        with open(hash_filter_file) as _f:
+            _data = _json.load(_f)
+        include_task_hashes = set()
+        for _hashes in _data.values():
+            include_task_hashes.update(_hashes)
+        print(f"Loaded {len(include_task_hashes)} hashes from {hash_filter_file}")
+
     asyncio.run(
         generate(
             model=model,
@@ -246,6 +273,7 @@ def main(
             answer_parsing_model=answer_parsing_model,
             cache_path=cache_path,
             model_specific_cache_dir=model_specific_cache_dir,
+            include_task_hashes=include_task_hashes,
         )
     )
 

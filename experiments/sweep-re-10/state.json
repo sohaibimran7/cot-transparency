@@ -1,0 +1,42 @@
+{
+  "experiment": "sweep-re-10",
+  "config_hash": "128c08033ac9",
+  "stages": {
+    "training": {
+      "status": "completed",
+      "completed_at": "2026-04-16T17:25:18.849527+00:00",
+      "outputs": {
+        "main_checkpoint": "tinker://c35a2e86-4a15-508e-a86b-f835a55b0a86:train:0/sampler_weights/sweep-refresh-every_llama-rlct-re10",
+        "checkpoint": "tinker://c35a2e86-4a15-508e-a86b-f835a55b0a86:train:0/sampler_weights/sweep-refresh-every_llama-rlct-re10"
+      }
+    },
+    "evaluation": {
+      "status": "completed",
+      "completed_at": "2026-04-16T17:25:18.849547+00:00",
+      "outputs": {}
+    },
+    "analysis": {
+      "status": "completed",
+      "completed_at": "2026-04-17T03:27:18.773628+00:00"
+    }
+  },
+  "tasks": {
+    "train:main": {
+      "status": "completed",
+      "stage": "training",
+      "label": "main",
+      "started_at": "2026-04-16T16:28:22.810760+00:00",
+      "completed_at": "2026-04-16T16:59:23.836398+00:00",
+      "outputs": {
+        "checkpoint": "tinker://c35a2e86-4a15-508e-a86b-f835a55b0a86:train:0/sampler_weights/sweep-refresh-every_llama-rlct-re10"
+      }
+    },
+    "eval:main": {
+      "status": "completed",
+      "stage": "evaluation",
+      "label": "main",
+      "started_at": "2026-04-16T16:59:23.840228+00:00",
+      "completed_at": "2026-04-16T17:25:18.844827+00:00"
+    }
+  }
+}

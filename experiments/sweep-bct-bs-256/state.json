@@ -1,0 +1,42 @@
+{
+  "experiment": "sweep-bct-bs-256",
+  "config_hash": "a2828bd03082",
+  "stages": {
+    "training": {
+      "status": "completed",
+      "completed_at": "2026-04-21T02:40:27.593466+00:00",
+      "outputs": {
+        "main_checkpoint": "tinker://ee827cd9-6fc4-5511-a1a5-355b34e6e02c:train:0/sampler_weights/sweep-bct-batch-size_llama-bct-bs256",
+        "checkpoint": "tinker://ee827cd9-6fc4-5511-a1a5-355b34e6e02c:train:0/sampler_weights/sweep-bct-batch-size_llama-bct-bs256"
+      }
+    },
+    "evaluation": {
+      "status": "completed",
+      "completed_at": "2026-04-21T02:40:27.593488+00:00",
+      "outputs": {}
+    },
+    "analysis": {
+      "status": "completed",
+      "completed_at": "2026-04-21T02:43:56.223511+00:00"
+    }
+  },
+  "tasks": {
+    "train:main": {
+      "status": "completed",
+      "stage": "training",
+      "label": "main",
+      "started_at": "2026-04-21T02:10:31.702145+00:00",
+      "completed_at": "2026-04-21T02:12:46.092375+00:00",
+      "outputs": {
+        "checkpoint": "tinker://ee827cd9-6fc4-5511-a1a5-355b34e6e02c:train:0/sampler_weights/sweep-bct-batch-size_llama-bct-bs256"
+      }
+    },
+    "eval:main": {
+      "status": "completed",
+      "stage": "evaluation",
+      "label": "main",
+      "started_at": "2026-04-21T02:12:46.096106+00:00",
+      "completed_at": "2026-04-21T02:40:27.586918+00:00"
+    }
+  }
+}

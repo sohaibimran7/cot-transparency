@@ -1,0 +1,10 @@
+# Unbiased-eval accuracy for sweep: bct-batch-size
+# variant=unbiased only, mcq_bias_scorer.correct
+
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-bct-bs128                  198      0.576
+  llama-bct-bs256                  199      0.603
+  llama-bct-bs32                   200      0.575
+  llama-bct-bs64                   198      0.621

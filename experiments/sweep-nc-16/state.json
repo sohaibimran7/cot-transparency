@@ -1,0 +1,60 @@
+{
+  "experiment": "sweep-nc-16",
+  "config_hash": "5642e020ade4",
+  "stages": {
+    "training": {
+      "status": "completed",
+      "completed_at": "2026-04-16T17:26:46.787714+00:00",
+      "outputs": {
+        "main_checkpoint": "tinker://5aace54d-e14c-5936-a4a9-2619891a143a:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc16",
+        "checkpoint": "tinker://5aace54d-e14c-5936-a4a9-2619891a143a:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc16",
+        "control_checkpoint": "tinker://c474dbe3-293f-5943-941f-1a7f5f65c707:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc16-ctrl"
+      }
+    },
+    "evaluation": {
+      "status": "completed",
+      "completed_at": "2026-04-16T17:26:46.787728+00:00",
+      "outputs": {}
+    },
+    "analysis": {
+      "status": "completed",
+      "completed_at": "2026-04-17T03:29:46.662584+00:00"
+    }
+  },
+  "tasks": {
+    "train:main": {
+      "status": "completed",
+      "stage": "training",
+      "label": "main",
+      "started_at": "2026-04-16T02:57:13.586303+00:00",
+      "completed_at": "2026-04-16T17:26:46.774803+00:00",
+      "outputs": {
+        "checkpoint": "tinker://5aace54d-e14c-5936-a4a9-2619891a143a:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc16"
+      }
+    },
+    "train:control": {
+      "status": "completed",
+      "stage": "training",
+      "label": "control",
+      "started_at": "2026-04-16T02:57:13.589867+00:00",
+      "completed_at": "2026-04-16T17:26:46.778004+00:00",
+      "outputs": {
+        "checkpoint": "tinker://c474dbe3-293f-5943-941f-1a7f5f65c707:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc16-ctrl"
+      }
+    },
+    "eval:control": {
+      "status": "completed",
+      "stage": "evaluation",
+      "label": "control",
+      "started_at": "2026-04-16T04:31:51.975778+00:00",
+      "completed_at": "2026-04-16T17:26:46.784378+00:00"
+    },
+    "eval:main": {
+      "status": "completed",
+      "stage": "evaluation",
+      "label": "main",
+      "started_at": "2026-04-16T05:32:14.038326+00:00",
+      "completed_at": "2026-04-16T17:26:46.781177+00:00"
+    }
+  }
+}

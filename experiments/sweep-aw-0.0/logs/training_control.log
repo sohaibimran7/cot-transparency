@@ -1,0 +1,89 @@
+Your Tinker SDK version is outdated. Please upgrade to the latest version.
+
+Loading datapoints: 100 total across 1 combos (100 per combo)
+  Loaded 100 from mmlu_suggested_answer.jsonl
+
+============================================================
+RL Training Configuration
+============================================================
+  Model:              meta-llama/Llama-3.1-8B-Instruct
+  Experiment:         sweep-anchor-weight/llama-rlct-aw0.0-ctrl
+  Bias types:         ['suggested_answer']
+  Datasets:           ['mmlu']
+  Total datapoints:   100
+  Perturbations:      unbiased (ref) + unbiased (train) [CONTROL]
+  LR:                 None (constant)
+  LoRA rank:          8
+  Batch size:         1
+  Grad accum steps:   1
+  N epochs:           1
+  Estimated steps:    100
+  Checkpoint every:   25 steps
+  n_ref_rollouts:     128
+  n_train_rollouts:   128
+  n_consistency_rollouts: 128
+  n_anchor_rollouts:  None
+  KL coef:            0.05
+  Anchor weight:      0.0
+  Anchor model:       base
+  Loss fn:            ppo
+============================================================
+WARNING: WANDB_API_KEY environment variable not set. Skipping W&B logging. 
+root:654 [[92mINFO[0m] Command line invocation: scripts/tinker_training/train_rl.py --model meta-llama/Llama-3.1-8B-Instruct --experiment-name sweep-anchor-weight --run-name llama-rlct-aw0.0-ctrl --bias-types suggested_answer --datasets mmlu --n-datapoints 100 --lora-rank 8 --kl-coef 0.05 --anchor-weight 0.0 --loss-fn ppo --n-ref-rollouts 128 --n-train-rollouts 128 --refresh-every 1 --checkpoint-every 25 --control -y
+tinker_cookbook.utils.ml_log:592 [[92mINFO[0m] Logging to: logs/sweep-anchor-weight/llama-rlct-aw0.0-ctrl
+
+============================================================
+WARNING: Git working tree is DIRTY (33 file(s) changed)
+Commit: 805c2833db224d35988f5e2311dd9512bd71fdca
+Branch: reasoning-history-last-fix
+Changed files:
+M cot_transparency/apis/tinker/rl_training.py
+ M sycophancy_eval_inspect/model_registry.json
+?? midterm_report.md
+?? progress.md
+?? scripts/test_gpt_oss_channel_stripping.py
+?? scripts/tinker_training/clear_stale_state.sh
+?? scripts/tinker_training/combined_analysis.sh
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.0.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.25.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.5.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.75.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_1.0.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.01.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.05.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.1.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.5.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_datapoints_128.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_datapoints_256.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_datapoints_64.yaml
+?? scripts/tinker_training/experiment_configs/sweep_refresh_every_1.yaml
+?? scripts/tinker_training/experiment_configs/sweep_refresh_every_10.yaml
+?? scripts/tinker_training/experiment_configs/sweep_refresh_every_5.yaml
+?? scripts/tinker_training/experiment_configs/sweep_rollouts_128.yaml
+?? scripts/tinker_training/experiment_configs/sweep_rollouts_32.yaml
+?? scripts/tinker_training/experiment_configs/sweep_rollouts_64.yaml
+?? scripts/tinker_training/sweep_anchor_weight.sh
+?? scripts/tinker_training/sweep_kl_coef.sh
+?? scripts/tinker_training/sweep_lr.py
+?? scripts/tinker_training/sweep_lr.sh
+?? scripts/tinker_training/sweep_n_datapoints.sh
+?? scripts/tinker_training/sweep_ngrad.sh
+?? scripts/tinker_training/sweep_refresh_every.sh
+?? scripts/tinker_training/sweep_rollouts.sh
+The diff is logged to WandB for reproducibility.
+============================================================
+
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+Configuration:
+  git: {'git_sha': '805c2833db224d35988f5e2311dd9512bd71fdca', 'git_branch': 'reasoning-history-last-fix', 'git_dirty': True, 
+'git_dirt ...     "hatch": "//",\n+      "edgecolor": "black",\n+      "training_biases": []\n     }\n   }\n }\n\\ No newline at end 
+of file'}
+RL Training: 100 datapoints, 100 steps/epoch, 100 total steps, lr=2.86e-04
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+Configuration:
+  n_datapoints: 100
+  total_steps: 100
+  n_perturbations: 2
+  base_lr: 0.0002856415043086949
+
+Epoch 1:   0%|          | 0/100 [00:00<?, ?it/s]

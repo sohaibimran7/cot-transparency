@@ -1,0 +1,11 @@
+# Unbiased-eval accuracy for sweep: n-consistency
+# variant=unbiased only, mcq_bias_scorer.correct
+
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-rlct-nc16                  182      0.484
+  llama-rlct-nc16-ctrl              94      0.457
+  llama-rlct-nc32                  391      0.527
+  llama-rlct-nc32-ctrl             185      0.611
+  llama-rlct-nc64                  194      0.670

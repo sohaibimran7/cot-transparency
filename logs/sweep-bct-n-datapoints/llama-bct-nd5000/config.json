@@ -1,0 +1,29 @@
+{
+  "experiment_name": "sweep-bct-n-datapoints",
+  "run_name": "llama-bct-nd5000",
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "lora": {
+    "rank": 8,
+    "train_mlp": true,
+    "train_attn": true,
+    "train_unembed": true,
+    "seed": null
+  },
+  "optimizer": {
+    "learning_rate": null,
+    "lr_schedule": "linear",
+    "beta1": 0.9,
+    "beta2": 0.95,
+    "eps": 1e-08,
+    "weight_decay": 0.0,
+    "grad_clip_norm": 1.0
+  },
+  "n_epochs": 1,
+  "batch_size": 128,
+  "checkpoint": {
+    "save_every_n_steps": 9999,
+    "save_state": false,
+    "skip_near_final_steps": 0
+  },
+  "log_base_dir": "logs"
+}

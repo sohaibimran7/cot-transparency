@@ -1,0 +1,3026 @@
+root:654 [INFO] Command line invocation: scripts/tinker_training/train_rl.py --model meta-llama/Llama-3.1-8B-Instruct --experiment-name sweep-n-consistency --run-name llama-rlct-nc16 --bias-types suggested_answer --datasets mmlu --n-datapoints 128 --lora-rank 8 --kl-coef 0.05 --anchor-weight 0.0 --loss-fn ppo --n-ref-rollouts 64 --n-train-rollouts 64 --n-consistency-rollouts 16 --batch-size 1 --refresh-every 1 --checkpoint-every 64 -y
+tinker_cookbook.utils.ml_log:592 [INFO] Logging to: logs/sweep-n-consistency/llama-rlct-nc16
+tinker_cookbook.utils.ml_log:265 [INFO] 
+Configuration:
+  git: {'git_sha': '96370379d5ccd054f534da1e2989f8229d8fef58', 'git_branch': 
+'reasoning-history-last-fix', 'git_dirty': True, 'git_dirt ...     "hatch": 
+"//",\n+      "edgecolor": "black",\n+      "training_biases": []\n     }\n   
+}\n }\n\\ No newline at end of file'}
+tinker_cookbook.utils.ml_log:265 [INFO] 
+Configuration:
+  n_datapoints: 128
+  total_steps: 128
+  n_perturbations: 2
+  base_lr: 0.0002856415043086949
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                          Step 1                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.985098       │
+│ optim/kl_sample_train_v1              │ 0.000911       │
+│ optim/kl_sample_train_v2              │ 0.000645       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 464.250000     │
+│ train/consistency_gap_1               │ 0.737705       │
+│ train/consistency_reward_mean         │ -0.006803      │
+│ train/consistency_reward_std          │ 0.287935       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.000490       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 61             │
+│ train/n_training_parsed               │ 61             │
+│ train/p_hat_1                         │ 0.803279       │
+│ train/p_ref                           │ 0.065574       │
+│ train/parse_rate                      │ 0.953125       │
+│ train/rate_var                        │ 0.136052       │
+│ train/reward_pert1_trait0_count       │ 3              │
+│ train/reward_pert1_trait0_mean        │ 0.592583       │
+│ train/reward_pert1_trait1_count       │ 13             │
+│ train/reward_pert1_trait1_mean        │ -0.145122      │
+│ train/train/clock_cycle:unique        │ 7240596.000000 │
+│ train/train/loss:sum                  │ -301.514099    │
+│ train/train/ppo_clipped_fraction:mean │ 0.196346       │
+│ train/train/ppo_kl_div:mean           │ 0.698923       │
+│ train/train/ppo_mean_ratio:mean       │ 0.839006       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                          Step 2                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.651640       │
+│ optim/kl_sample_train_v1              │ 0.000677       │
+│ optim/kl_sample_train_v2              │ 0.000653       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 382.875000     │
+│ train/consistency_gap_1               │ 0.015873       │
+│ train/consistency_reward_mean         │ -0.000740      │
+│ train/consistency_reward_std          │ 0.003842       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.002659       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 63             │
+│ train/n_training_parsed               │ 63             │
+│ train/p_hat_1                         │ 0.015873       │
+│ train/p_ref                           │ 0.000000       │
+│ train/parse_rate                      │ 0.984375       │
+│ train/rate_var                        │ 0.000063       │
+│ train/reward_pert1_trait0_count       │ 15             │
+│ train/reward_pert1_trait0_mean        │ 0.000252       │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ -0.015621      │
+│ train/train/clock_cycle:unique        │ 7240600.000000 │
+│ train/train/loss:sum                  │ 303.984558     │
+│ train/train/ppo_clipped_fraction:mean │ 0.383678       │
+│ train/train/ppo_kl_div:mean           │ 1.286704       │
+│ train/train/ppo_mean_ratio:mean       │ 0.683447       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                          Step 3                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.531634       │
+│ optim/kl_sample_train_v1              │ 0.000265       │
+│ optim/kl_sample_train_v2              │ 0.000483       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 281.312500     │
+│ train/consistency_gap_1               │ 0.078125       │
+│ train/consistency_reward_mean         │ -0.008545      │
+│ train/consistency_reward_std          │ 0.030493       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.020997       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 64             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.078125       │
+│ train/p_ref                           │ 0.000000       │
+│ train/parse_rate                      │ 1.000000       │
+│ train/rate_var                        │ 0.001526       │
+│ train/reward_pert1_trait0_count       │ 13             │
+│ train/reward_pert1_trait0_mean        │ 0.006104       │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ -0.072021      │
+│ train/train/clock_cycle:unique        │ 7240604.000000 │
+│ train/train/loss:sum                  │ -191.674957    │
+│ train/train/ppo_clipped_fraction:mean │ 0.251344       │
+│ train/train/ppo_kl_div:mean           │ 0.961525       │
+│ train/train/ppo_mean_ratio:mean       │ 0.793998       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                          Step 4                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 4.147498       │
+│ optim/kl_sample_train_v1              │ 0.000885       │
+│ optim/kl_sample_train_v2              │ 0.000830       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 783.062500     │
+│ train/consistency_gap_1               │ 0.406780       │
+│ train/consistency_reward_mean         │ -0.029302      │
+│ train/consistency_reward_std          │ 0.176141       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.008217       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 59             │
+│ train/n_training_parsed               │ 59             │
+│ train/p_hat_1                         │ 0.677966       │
+│ train/p_ref                           │ 0.271186       │
+│ train/parse_rate                      │ 0.921875       │
+│ train/rate_var                        │ 0.041367       │
+│ train/reward_pert1_trait0_count       │ 4              │
+│ train/reward_pert1_trait0_mean        │ 0.275783       │
+│ train/reward_pert1_trait1_count       │ 12             │
+│ train/reward_pert1_trait1_mean        │ -0.130997      │
+│ train/train/clock_cycle:unique        │ 7240639.000000 │
+│ train/train/loss:sum                  │ -1538.870975   │
+│ train/train/ppo_clipped_fraction:mean │ 0.270921       │
+│ train/train/ppo_kl_div:mean           │ 0.785762       │
+│ train/train/ppo_mean_ratio:mean       │ 0.794083       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                          Step 5                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 3.850267       │
+│ optim/kl_sample_train_v1              │ 0.000980       │
+│ optim/kl_sample_train_v2              │ 0.000992       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 957.750000     │
+│ train/consistency_gap_1               │ 0.081633       │
+│ train/consistency_reward_mean         │ -0.003540      │
+│ train/consistency_reward_std          │ 0.026997       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.011016       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 57             │
+│ train/n_training_parsed               │ 49             │
+│ train/p_hat_1                         │ 0.081633       │
+│ train/p_ref                           │ 0.000000       │
+│ train/parse_rate                      │ 0.828125       │
+│ train/rate_var                        │ 0.001666       │
+│ train/reward_pert1_trait0_count       │ 14             │
+│ train/reward_pert1_trait0_mean        │ 0.006664       │
+│ train/reward_pert1_trait1_count       │ 2              │
+│ train/reward_pert1_trait1_mean        │ -0.074969      │
+│ train/train/clock_cycle:unique        │ 7240671.000000 │
+│ train/train/loss:sum                  │ 17802.401245   │
+│ train/train/ppo_clipped_fraction:mean │ 0.127562       │
+│ train/train/ppo_kl_div:mean           │ 0.434633       │
+│ train/train/ppo_mean_ratio:mean       │ 0.899003       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                          Step 6                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.852473       │
+│ optim/kl_sample_train_v1              │ 0.000152       │
+│ optim/kl_sample_train_v2              │ 0.000509       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 287.437500     │
+│ train/consistency_gap_1               │ 0.135301       │
+│ train/consistency_reward_mean         │ -0.004730      │
+│ train/consistency_reward_std          │ 0.052810       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.057220       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 58             │
+│ train/n_training_parsed               │ 59             │
+│ train/p_hat_1                         │ 0.152542       │
+│ train/p_ref                           │ 0.017241       │
+│ train/parse_rate                      │ 0.914062       │
+│ train/rate_var                        │ 0.004577       │
+│ train/reward_pert1_trait0_count       │ 13             │
+│ train/reward_pert1_trait0_mean        │ 0.020639       │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ -0.114662      │
+│ train/train/clock_cycle:unique        │ 7240684.000000 │
+│ train/train/loss:sum                  │ 1272.202805    │
+│ train/train/ppo_clipped_fraction:mean │ 0.231407       │
+│ train/train/ppo_kl_div:mean           │ 0.872853       │
+│ train/train/ppo_mean_ratio:mean       │ 0.806606       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                          Step 7                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.627155       │
+│ optim/kl_sample_train_v1              │ 0.001156       │
+│ optim/kl_sample_train_v2              │ 0.000560       │
+│ train/advantage_abs_mean              │ 0.927025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 349.187500     │
+│ train/consistency_gap_1               │ 0.161290       │
+│ train/consistency_reward_mean         │ -0.021787      │
+│ train/consistency_reward_std          │ 0.074760       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.047775       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 62             │
+│ train/n_training_parsed               │ 62             │
+│ train/p_hat_1                         │ 0.177419       │
+│ train/p_ref                           │ 0.016129       │
+│ train/parse_rate                      │ 0.968750       │
+│ train/rate_var                        │ 0.006504       │
+│ train/reward_pert1_trait0_count       │ 11             │
+│ train/reward_pert1_trait0_mean        │ 0.028616       │
+│ train/reward_pert1_trait1_count       │ 5              │
+│ train/reward_pert1_trait1_mean        │ -0.132674      │
+│ train/train/clock_cycle:unique        │ 7240695.000000 │
+│ train/train/loss:sum                  │ -174.844864    │
+│ train/train/ppo_clipped_fraction:mean │ 0.175994       │
+│ train/train/ppo_kl_div:mean           │ 0.736285       │
+│ train/train/ppo_mean_ratio:mean       │ 0.849909       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                          Step 8                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.544722       │
+│ optim/kl_sample_train_v1              │ 0.000861       │
+│ optim/kl_sample_train_v2              │ 0.000481       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 308.437500     │
+│ train/consistency_gap_1               │ 0.147449       │
+│ train/consistency_reward_mean         │ 0.018090       │
+│ train/consistency_reward_std          │ 0.035692       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.032623       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 53             │
+│ train/n_training_parsed               │ 54             │
+│ train/p_hat_1                         │ 0.185185       │
+│ train/p_ref                           │ 0.037736       │
+│ train/parse_rate                      │ 0.835938       │
+│ train/rate_var                        │ 0.005435       │
+│ train/reward_pert1_trait0_count       │ 15             │
+│ train/reward_pert1_trait0_mean        │ 0.027305       │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ -0.120144      │
+│ train/train/clock_cycle:unique        │ 7240714.000000 │
+│ train/train/loss:sum                  │ -101.304222    │
+│ train/train/ppo_clipped_fraction:mean │ 0.198479       │
+│ train/train/ppo_kl_div:mean           │ 0.884296       │
+│ train/train/ppo_mean_ratio:mean       │ 0.825384       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 9                
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 10                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.531293       │
+│ optim/kl_sample_train_v1              │ 0.000869       │
+│ optim/kl_sample_train_v2              │ 0.000492       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 304.875000     │
+│ train/consistency_gap_1               │ 0.175304       │
+│ train/consistency_reward_mean         │ -0.001078      │
+│ train/consistency_reward_std          │ 0.057976       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.069524       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 62             │
+│ train/n_training_parsed               │ 61             │
+│ train/p_hat_1                         │ 0.868852       │
+│ train/p_ref                           │ 0.693548       │
+│ train/parse_rate                      │ 0.960938       │
+│ train/rate_var                        │ 0.007683       │
+│ train/reward_pert1_trait0_count       │ 2              │
+│ train/reward_pert1_trait0_mean        │ 0.152313       │
+│ train/reward_pert1_trait1_count       │ 14             │
+│ train/reward_pert1_trait1_mean        │ -0.022991      │
+│ train/train/clock_cycle:unique        │ 7240736.000000 │
+│ train/train/loss:sum                  │ 82.375954      │
+│ train/train/ppo_clipped_fraction:mean │ 0.259582       │
+│ train/train/ppo_kl_div:mean           │ 1.110870       │
+│ train/train/ppo_mean_ratio:mean       │ 0.779986       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 11                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.775742       │
+│ optim/kl_sample_train_v1              │ 0.000342       │
+│ optim/kl_sample_train_v2              │ 0.000287       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 464.687500     │
+│ train/consistency_gap_1               │ 0.007123       │
+│ train/consistency_reward_mean         │ -0.000411      │
+│ train/consistency_reward_std          │ 0.003084       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.024948       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 54             │
+│ train/n_training_parsed               │ 52             │
+│ train/p_hat_1                         │ 0.192308       │
+│ train/p_ref                           │ 0.185185       │
+│ train/parse_rate                      │ 0.828125       │
+│ train/rate_var                        │ 0.000013       │
+│ train/reward_pert1_trait0_count       │ 12             │
+│ train/reward_pert1_trait0_mean        │ 0.001370       │
+│ train/reward_pert1_trait1_count       │ 4              │
+│ train/reward_pert1_trait1_mean        │ -0.005753      │
+│ train/train/clock_cycle:unique        │ 7240760.000000 │
+│ train/train/loss:sum                  │ 519.041138     │
+│ train/train/ppo_clipped_fraction:mean │ 0.154249       │
+│ train/train/ppo_kl_div:mean           │ 0.550442       │
+│ train/train/ppo_mean_ratio:mean       │ 0.872053       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 12                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.667400       │
+│ optim/kl_sample_train_v1              │ 0.000363       │
+│ optim/kl_sample_train_v2              │ 0.000449       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 319.875000     │
+│ train/consistency_gap_1               │ 0.214176       │
+│ train/consistency_reward_mean         │ 0.007301       │
+│ train/consistency_reward_std          │ 0.070832       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.024465       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 59             │
+│ train/n_training_parsed               │ 55             │
+│ train/p_hat_1                         │ 0.909091       │
+│ train/p_ref                           │ 0.694915       │
+│ train/parse_rate                      │ 0.890625       │
+│ train/rate_var                        │ 0.011468       │
+│ train/reward_pert1_trait0_count       │ 2              │
+│ train/reward_pert1_trait0_mean        │ 0.194705       │
+│ train/reward_pert1_trait1_count       │ 14             │
+│ train/reward_pert1_trait1_mean        │ -0.019471      │
+│ train/train/clock_cycle:unique        │ 7240764.000000 │
+│ train/train/loss:sum                  │ -954.968079    │
+│ train/train/ppo_clipped_fraction:mean │ 0.188371       │
+│ train/train/ppo_kl_div:mean           │ 0.644239       │
+│ train/train/ppo_mean_ratio:mean       │ 0.850131       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 13                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 7.909096       │
+│ optim/kl_sample_train_v1              │ 0.000265       │
+│ optim/kl_sample_train_v2              │ 0.000415       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 2431.125000    │
+│ train/consistency_gap_1               │ 0.122829       │
+│ train/consistency_reward_mean         │ -0.010896      │
+│ train/consistency_reward_std          │ 0.053186       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.011945       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 26             │
+│ train/n_training_parsed               │ 31             │
+│ train/p_hat_1                         │ 0.161290       │
+│ train/p_ref                           │ 0.038462       │
+│ train/parse_rate                      │ 0.445312       │
+│ train/rate_var                        │ 0.003772       │
+│ train/reward_pert1_trait0_count       │ 12             │
+│ train/reward_pert1_trait0_mean        │ 0.019811       │
+│ train/reward_pert1_trait1_count       │ 4              │
+│ train/reward_pert1_trait1_mean        │ -0.103018      │
+│ train/train/clock_cycle:unique        │ 7240794.000000 │
+│ train/train/loss:sum                  │ 2717.840782    │
+│ train/train/ppo_clipped_fraction:mean │ 0.063710       │
+│ train/train/ppo_kl_div:mean           │ 0.225862       │
+│ train/train/ppo_mean_ratio:mean       │ 0.947847       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 14                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.685784       │
+│ optim/kl_sample_train_v1              │ 0.000969       │
+│ optim/kl_sample_train_v2              │ 0.000558       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 352.687500     │
+│ train/consistency_gap_1               │ 0.054545       │
+│ train/consistency_reward_mean         │ -0.000434      │
+│ train/consistency_reward_std          │ 0.013203       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.062482       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 62             │
+│ train/n_training_parsed               │ 55             │
+│ train/p_hat_1                         │ 0.054545       │
+│ train/p_ref                           │ 0.000000       │
+│ train/parse_rate                      │ 0.914062       │
+│ train/rate_var                        │ 0.000744       │
+│ train/reward_pert1_trait0_count       │ 15             │
+│ train/reward_pert1_trait0_mean        │ 0.002975       │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ -0.051570      │
+│ train/train/clock_cycle:unique        │ 7240809.000000 │
+│ train/train/loss:sum                  │ 392.075676     │
+│ train/train/ppo_clipped_fraction:mean │ 0.234856       │
+│ train/train/ppo_kl_div:mean           │ 0.956447       │
+│ train/train/ppo_mean_ratio:mean       │ 0.801664       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 15               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 16               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 17                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 6.742700       │
+│ optim/kl_sample_train_v1              │ 0.000413       │
+│ optim/kl_sample_train_v2              │ 0.000461       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 1552.875000    │
+│ train/consistency_gap_1               │ -0.058587      │
+│ train/consistency_reward_mean         │ 0.003943       │
+│ train/consistency_reward_std          │ 0.019376       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.018241       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 43             │
+│ train/n_training_parsed               │ 52             │
+│ train/p_hat_1                         │ 0.057692       │
+│ train/p_ref                           │ 0.116279       │
+│ train/parse_rate                      │ 0.742188       │
+│ train/rate_var                        │ 0.000858       │
+│ train/reward_pert1_trait0_count       │ 14             │
+│ train/reward_pert1_trait0_mean        │ -0.003380      │
+│ train/reward_pert1_trait1_count       │ 2              │
+│ train/reward_pert1_trait1_mean        │ 0.055207       │
+│ train/train/clock_cycle:unique        │ 7240857.000000 │
+│ train/train/loss:sum                  │ 6557.730591    │
+│ train/train/ppo_clipped_fraction:mean │ 0.063411       │
+│ train/train/ppo_kl_div:mean           │ 0.237372       │
+│ train/train/ppo_mean_ratio:mean       │ 0.948532       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 18               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 19               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 20                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.131964       │
+│ optim/kl_sample_train_v1              │ 0.000842       │
+│ optim/kl_sample_train_v2              │ 0.000622       │
+│ train/advantage_abs_mean              │ 0.992157       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 609.312500     │
+│ train/consistency_gap_1               │ 0.115984       │
+│ train/consistency_reward_mean         │ 0.016406       │
+│ train/consistency_reward_std          │ 0.057537       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.047360       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 54             │
+│ train/n_training_parsed               │ 57             │
+│ train/p_hat_1                         │ 0.578947       │
+│ train/p_ref                           │ 0.462963       │
+│ train/parse_rate                      │ 0.867188       │
+│ train/rate_var                        │ 0.003363       │
+│ train/reward_pert1_trait0_count       │ 9              │
+│ train/reward_pert1_trait0_mean        │ 0.067149       │
+│ train/reward_pert1_trait1_count       │ 7              │
+│ train/reward_pert1_trait1_mean        │ -0.048836      │
+│ train/train/clock_cycle:unique        │ 7240889.000000 │
+│ train/train/loss:sum                  │ -1401.088379   │
+│ train/train/ppo_clipped_fraction:mean │ 0.295265       │
+│ train/train/ppo_kl_div:mean           │ 0.894110       │
+│ train/train/ppo_mean_ratio:mean       │ 0.767523       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 21                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.719539       │
+│ optim/kl_sample_train_v1              │ 0.000865       │
+│ optim/kl_sample_train_v2              │ 0.000605       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 256.437500     │
+│ train/consistency_gap_1               │ -0.167489      │
+│ train/consistency_reward_mean         │ -0.000735      │
+│ train/consistency_reward_std          │ 0.072525       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.075317       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 64             │
+│ train/n_training_parsed               │ 57             │
+│ train/p_hat_1                         │ 0.754386       │
+│ train/p_ref                           │ 0.921875       │
+│ train/parse_rate                      │ 0.945312       │
+│ train/rate_var                        │ 0.007013       │
+│ train/reward_pert1_trait0_count       │ 4              │
+│ train/reward_pert1_trait0_mean        │ -0.126351      │
+│ train/reward_pert1_trait1_count       │ 12             │
+│ train/reward_pert1_trait1_mean        │ 0.041138       │
+│ train/train/clock_cycle:unique        │ 7240894.000000 │
+│ train/train/loss:sum                  │ -309.611298    │
+│ train/train/ppo_clipped_fraction:mean │ 0.228236       │
+│ train/train/ppo_kl_div:mean           │ 1.090547       │
+│ train/train/ppo_mean_ratio:mean       │ 0.800821       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 22                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.573382       │
+│ optim/kl_sample_train_v1              │ 0.001463       │
+│ optim/kl_sample_train_v2              │ 0.000571       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 360.500000     │
+│ train/consistency_gap_1               │ 0.017534       │
+│ train/consistency_reward_mean         │ -0.000491      │
+│ train/consistency_reward_std          │ 0.004244       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.092646       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 59             │
+│ train/n_training_parsed               │ 58             │
+│ train/p_hat_1                         │ 0.034483       │
+│ train/p_ref                           │ 0.016949       │
+│ train/parse_rate                      │ 0.914062       │
+│ train/rate_var                        │ 0.000077       │
+│ train/reward_pert1_trait0_count       │ 15             │
+│ train/reward_pert1_trait0_mean        │ 0.000605       │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ -0.016929      │
+│ train/train/clock_cycle:unique        │ 7240908.000000 │
+│ train/train/loss:sum                  │ 357.685806     │
+│ train/train/ppo_clipped_fraction:mean │ 0.342518       │
+│ train/train/ppo_kl_div:mean           │ 1.395874       │
+│ train/train/ppo_mean_ratio:mean       │ 0.707453       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 23                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 3.860544       │
+│ optim/kl_sample_train_v1              │ 0.000495       │
+│ optim/kl_sample_train_v2              │ 0.000681       │
+│ train/advantage_abs_mean              │ 0.992157       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 733.000000     │
+│ train/consistency_gap_1               │ 0.186314       │
+│ train/consistency_reward_mean         │ 0.013627       │
+│ train/consistency_reward_std          │ 0.092426       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.052200       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 37             │
+│ train/n_training_parsed               │ 47             │
+│ train/p_hat_1                         │ 0.510638       │
+│ train/p_ref                           │ 0.324324       │
+│ train/parse_rate                      │ 0.656250       │
+│ train/rate_var                        │ 0.008678       │
+│ train/reward_pert1_trait0_count       │ 9              │
+│ train/reward_pert1_trait0_mean        │ 0.095139       │
+│ train/reward_pert1_trait1_count       │ 7              │
+│ train/reward_pert1_trait1_mean        │ -0.091175      │
+│ train/train/clock_cycle:unique        │ 7240929.000000 │
+│ train/train/loss:sum                  │ -5016.510391   │
+│ train/train/ppo_clipped_fraction:mean │ 0.115454       │
+│ train/train/ppo_kl_div:mean           │ 0.511022       │
+│ train/train/ppo_mean_ratio:mean       │ 0.903632       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 24               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 25               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 26               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 27               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 28                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.004157       │
+│ optim/kl_sample_train_v1              │ 0.000704       │
+│ optim/kl_sample_train_v2              │ 0.000782       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 421.562500     │
+│ train/consistency_gap_1               │ 0.125205       │
+│ train/consistency_reward_mean         │ 0.000531       │
+│ train/consistency_reward_std          │ 0.054215       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.074998       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 62             │
+│ train/n_training_parsed               │ 59             │
+│ train/p_hat_1                         │ 0.254237       │
+│ train/p_ref                           │ 0.129032       │
+│ train/parse_rate                      │ 0.945312       │
+│ train/rate_var                        │ 0.003919       │
+│ train/reward_pert1_trait0_count       │ 12             │
+│ train/reward_pert1_trait0_mean        │ 0.031832       │
+│ train/reward_pert1_trait1_count       │ 4              │
+│ train/reward_pert1_trait1_mean        │ -0.093373      │
+│ train/train/clock_cycle:unique        │ 7240963.000000 │
+│ train/train/loss:sum                  │ 1605.455200    │
+│ train/train/ppo_clipped_fraction:mean │ 0.204664       │
+│ train/train/ppo_kl_div:mean           │ 0.726465       │
+│ train/train/ppo_mean_ratio:mean       │ 0.839955       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 29                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.585397       │
+│ optim/kl_sample_train_v1              │ 0.000385       │
+│ optim/kl_sample_train_v2              │ 0.000673       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 413.875000     │
+│ train/consistency_gap_1               │ 0.050847       │
+│ train/consistency_reward_mean         │ -0.002047      │
+│ train/consistency_reward_std          │ 0.016816       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.069563       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 59             │
+│ train/n_training_parsed               │ 59             │
+│ train/p_hat_1                         │ 0.084746       │
+│ train/p_ref                           │ 0.033898       │
+│ train/parse_rate                      │ 0.921875       │
+│ train/rate_var                        │ 0.000646       │
+│ train/reward_pert1_trait0_count       │ 14             │
+│ train/reward_pert1_trait0_mean        │ 0.004309       │
+│ train/reward_pert1_trait1_count       │ 2              │
+│ train/reward_pert1_trait1_mean        │ -0.046538      │
+│ train/train/clock_cycle:unique        │ 7240980.000000 │
+│ train/train/loss:sum                  │ 258.677513     │
+│ train/train/ppo_clipped_fraction:mean │ 0.243051       │
+│ train/train/ppo_kl_div:mean           │ 0.913505       │
+│ train/train/ppo_mean_ratio:mean       │ 0.802418       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 30               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 31                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.675895       │
+│ optim/kl_sample_train_v1              │ 0.001358       │
+│ optim/kl_sample_train_v2              │ 0.000765       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 348.812500     │
+│ train/consistency_gap_1               │ 0.130704       │
+│ train/consistency_reward_mean         │ 0.015041       │
+│ train/consistency_reward_std          │ 0.056597       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.069315       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 64             │
+│ train/n_training_parsed               │ 63             │
+│ train/p_hat_1                         │ 0.365079       │
+│ train/p_ref                           │ 0.234375       │
+│ train/parse_rate                      │ 0.992188       │
+│ train/rate_var                        │ 0.004271       │
+│ train/reward_pert1_trait0_count       │ 12             │
+│ train/reward_pert1_trait0_mean        │ 0.047717       │
+│ train/reward_pert1_trait1_count       │ 4              │
+│ train/reward_pert1_trait1_mean        │ -0.082987      │
+│ train/train/clock_cycle:unique        │ 7241008.000000 │
+│ train/train/loss:sum                  │ -394.880493    │
+│ train/train/ppo_clipped_fraction:mean │ 0.336870       │
+│ train/train/ppo_kl_div:mean           │ 1.157698       │
+│ train/train/ppo_mean_ratio:mean       │ 0.733725       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 32               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 33                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.460897       │
+│ optim/kl_sample_train_v1              │ 0.000451       │
+│ optim/kl_sample_train_v2              │ 0.000475       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 474.000000     │
+│ train/consistency_gap_1               │ -0.031746      │
+│ train/consistency_reward_mean         │ -0.001102      │
+│ train/consistency_reward_std          │ 0.012391       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.069317       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 63             │
+│ train/n_training_parsed               │ 63             │
+│ train/p_hat_1                         │ 0.222222       │
+│ train/p_ref                           │ 0.253968       │
+│ train/parse_rate                      │ 0.984375       │
+│ train/rate_var                        │ 0.000252       │
+│ train/reward_pert1_trait0_count       │ 13             │
+│ train/reward_pert1_trait0_mean        │ -0.007055      │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ 0.024691       │
+│ train/train/clock_cycle:unique        │ 7241051.000000 │
+│ train/train/loss:sum                  │ 1.401337       │
+│ train/train/ppo_clipped_fraction:mean │ 0.182363       │
+│ train/train/ppo_kl_div:mean           │ 0.788527       │
+│ train/train/ppo_mean_ratio:mean       │ 0.843425       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 34                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.545534       │
+│ optim/kl_sample_train_v1              │ 0.000627       │
+│ optim/kl_sample_train_v2              │ 0.000494       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 296.687500     │
+│ train/consistency_gap_1               │ -0.051203      │
+│ train/consistency_reward_mean         │ 0.000660       │
+│ train/consistency_reward_std          │ 0.019985       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.074470       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 62             │
+│ train/n_training_parsed               │ 63             │
+│ train/p_hat_1                         │ 0.174603       │
+│ train/p_ref                           │ 0.225806       │
+│ train/parse_rate                      │ 0.976562       │
+│ train/rate_var                        │ 0.000655       │
+│ train/reward_pert1_trait0_count       │ 13             │
+│ train/reward_pert1_trait0_mean        │ -0.008940      │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ 0.042263       │
+│ train/train/clock_cycle:unique        │ 7241063.000000 │
+│ train/train/loss:sum                  │ -565.243324    │
+│ train/train/ppo_clipped_fraction:mean │ 0.220949       │
+│ train/train/ppo_kl_div:mean           │ 0.967620       │
+│ train/train/ppo_mean_ratio:mean       │ 0.815800       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 35                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.508091       │
+│ optim/kl_sample_train_v1              │ 0.001149       │
+│ optim/kl_sample_train_v2              │ 0.000531       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 391.250000     │
+│ train/consistency_gap_1               │ 0.046875       │
+│ train/consistency_reward_mean         │ -0.000732      │
+│ train/consistency_reward_std          │ 0.011347       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.075303       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 63             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.046875       │
+│ train/p_ref                           │ 0.000000       │
+│ train/parse_rate                      │ 0.992188       │
+│ train/rate_var                        │ 0.000549       │
+│ train/reward_pert1_trait0_count       │ 15             │
+│ train/reward_pert1_trait0_mean        │ 0.002197       │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ -0.044678      │
+│ train/train/clock_cycle:unique        │ 7241099.000000 │
+│ train/train/loss:sum                  │ -77.500343     │
+│ train/train/ppo_clipped_fraction:mean │ 0.168021       │
+│ train/train/ppo_kl_div:mean           │ 0.902396       │
+│ train/train/ppo_mean_ratio:mean       │ 0.853256       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 36                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.216867       │
+│ optim/kl_sample_train_v1              │ 0.000204       │
+│ optim/kl_sample_train_v2              │ 0.000305       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 196.500000     │
+│ train/consistency_gap_1               │ -0.046339      │
+│ train/consistency_reward_mean         │ -0.000841      │
+│ train/consistency_reward_std          │ 0.011217       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.063364       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 63             │
+│ train/n_training_parsed               │ 62             │
+│ train/p_hat_1                         │ 0.080645       │
+│ train/p_ref                           │ 0.126984       │
+│ train/parse_rate                      │ 0.976562       │
+│ train/rate_var                        │ 0.000537       │
+│ train/reward_pert1_trait0_count       │ 15             │
+│ train/reward_pert1_trait0_mean        │ -0.003737      │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ 0.042602       │
+│ train/train/clock_cycle:unique        │ 7241126.000000 │
+│ train/train/loss:sum                  │ 22.746513      │
+│ train/train/ppo_clipped_fraction:mean │ 0.234328       │
+│ train/train/ppo_kl_div:mean           │ 1.178970       │
+│ train/train/ppo_mean_ratio:mean       │ 0.796836       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 37                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.492881       │
+│ optim/kl_sample_train_v1              │ 0.000573       │
+│ optim/kl_sample_train_v2              │ 0.000501       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 309.875000     │
+│ train/consistency_gap_1               │ -0.203125      │
+│ train/consistency_reward_mean         │ -0.006348      │
+│ train/consistency_reward_std          │ 0.049169       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.101898       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 64             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.093750       │
+│ train/p_ref                           │ 0.296875       │
+│ train/parse_rate                      │ 1.000000       │
+│ train/rate_var                        │ 0.010315       │
+│ train/reward_pert1_trait0_count       │ 15             │
+│ train/reward_pert1_trait0_mean        │ -0.019043      │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ 0.184082       │
+│ train/train/clock_cycle:unique        │ 7241135.000000 │
+│ train/train/loss:sum                  │ 117.085670     │
+│ train/train/ppo_clipped_fraction:mean │ 0.196215       │
+│ train/train/ppo_kl_div:mean           │ 1.052389       │
+│ train/train/ppo_mean_ratio:mean       │ 0.833290       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 38               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 39                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.615113       │
+│ optim/kl_sample_train_v1              │ 0.001609       │
+│ optim/kl_sample_train_v2              │ 0.000644       │
+│ train/advantage_abs_mean              │ 0.992157       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 509.875000     │
+│ train/consistency_gap_1               │ 0.192870       │
+│ train/consistency_reward_mean         │ -0.011223      │
+│ train/consistency_reward_std          │ 0.095678       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.098960       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 59             │
+│ train/n_training_parsed               │ 58             │
+│ train/p_hat_1                         │ 0.379310       │
+│ train/p_ref                           │ 0.186441       │
+│ train/parse_rate                      │ 0.914062       │
+│ train/rate_var                        │ 0.009300       │
+│ train/reward_pert1_trait0_count       │ 9              │
+│ train/reward_pert1_trait0_mean        │ 0.073157       │
+│ train/reward_pert1_trait1_count       │ 7              │
+│ train/reward_pert1_trait1_mean        │ -0.119712      │
+│ train/train/clock_cycle:unique        │ 7241180.000000 │
+│ train/train/loss:sum                  │ 2879.228119    │
+│ train/train/ppo_clipped_fraction:mean │ 0.160433       │
+│ train/train/ppo_kl_div:mean           │ 0.799664       │
+│ train/train/ppo_mean_ratio:mean       │ 0.858124       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 40               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 41               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 42               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 43               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 44                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.644319       │
+│ optim/kl_sample_train_v1              │ 0.000714       │
+│ optim/kl_sample_train_v2              │ 0.000641       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 404.125000     │
+│ train/consistency_gap_1               │ 0.107639       │
+│ train/consistency_reward_mean         │ 0.010091       │
+│ train/consistency_reward_std          │ 0.035598       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.104744       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 63             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.218750       │
+│ train/p_ref                           │ 0.111111       │
+│ train/parse_rate                      │ 0.992188       │
+│ train/rate_var                        │ 0.002897       │
+│ train/reward_pert1_trait0_count       │ 14             │
+│ train/reward_pert1_trait0_mean        │ 0.023546       │
+│ train/reward_pert1_trait1_count       │ 2              │
+│ train/reward_pert1_trait1_mean        │ -0.084093      │
+│ train/train/clock_cycle:unique        │ 7241226.000000 │
+│ train/train/loss:sum                  │ -200.009277    │
+│ train/train/ppo_clipped_fraction:mean │ 0.209005       │
+│ train/train/ppo_kl_div:mean           │ 0.908898       │
+│ train/train/ppo_mean_ratio:mean       │ 0.825930       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 45                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.460273       │
+│ optim/kl_sample_train_v1              │ 0.000273       │
+│ optim/kl_sample_train_v2              │ 0.000444       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 314.312500     │
+│ train/consistency_gap_1               │ 0.318391       │
+│ train/consistency_reward_mean         │ 0.014925       │
+│ train/consistency_reward_std          │ 0.124272       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.093091       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 61             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.859375       │
+│ train/p_ref                           │ 0.540984       │
+│ train/parse_rate                      │ 0.976562       │
+│ train/rate_var                        │ 0.025343       │
+│ train/reward_pert1_trait0_count       │ 3              │
+│ train/reward_pert1_trait0_mean        │ 0.273618       │
+│ train/reward_pert1_trait1_count       │ 13             │
+│ train/reward_pert1_trait1_mean        │ -0.044774      │
+│ train/train/clock_cycle:unique        │ 7241237.000000 │
+│ train/train/loss:sum                  │ 54.299812      │
+│ train/train/ppo_clipped_fraction:mean │ 0.205347       │
+│ train/train/ppo_kl_div:mean           │ 0.994124       │
+│ train/train/ppo_mean_ratio:mean       │ 0.827305       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 46               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 47                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.546686       │
+│ optim/kl_sample_train_v1              │ 0.000063       │
+│ optim/kl_sample_train_v2              │ 0.000623       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 292.375000     │
+│ train/consistency_gap_1               │ 0.031250       │
+│ train/consistency_reward_mean         │ -0.000488      │
+│ train/consistency_reward_std          │ 0.007564       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.083381       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 64             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.046875       │
+│ train/p_ref                           │ 0.015625       │
+│ train/parse_rate                      │ 1.000000       │
+│ train/rate_var                        │ 0.000244       │
+│ train/reward_pert1_trait0_count       │ 15             │
+│ train/reward_pert1_trait0_mean        │ 0.001465       │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ -0.029785      │
+│ train/train/clock_cycle:unique        │ 7241246.000000 │
+│ train/train/loss:sum                  │ 139.842300     │
+│ train/train/ppo_clipped_fraction:mean │ 0.253815       │
+│ train/train/ppo_kl_div:mean           │ 1.037759       │
+│ train/train/ppo_mean_ratio:mean       │ 0.800013       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 48               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 49                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.492347       │
+│ optim/kl_sample_train_v1              │ 0.001144       │
+│ optim/kl_sample_train_v2              │ 0.000521       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 369.500000     │
+│ train/consistency_gap_1               │ 0.593286       │
+│ train/consistency_reward_mean         │ -0.036473      │
+│ train/consistency_reward_std          │ 0.256901       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.065068       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 63             │
+│ train/n_training_parsed               │ 61             │
+│ train/p_hat_1                         │ 0.688525       │
+│ train/p_ref                           │ 0.095238       │
+│ train/parse_rate                      │ 0.968750       │
+│ train/rate_var                        │ 0.087997       │
+│ train/reward_pert1_trait0_count       │ 4              │
+│ train/reward_pert1_trait0_mean        │ 0.408492       │
+│ train/reward_pert1_trait1_count       │ 12             │
+│ train/reward_pert1_trait1_mean        │ -0.184794      │
+│ train/train/clock_cycle:unique        │ 7241290.000000 │
+│ train/train/loss:sum                  │ -446.436584    │
+│ train/train/ppo_clipped_fraction:mean │ 0.182972       │
+│ train/train/ppo_kl_div:mean           │ 0.853021       │
+│ train/train/ppo_mean_ratio:mean       │ 0.840856       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 50               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 51               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 52                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.533616       │
+│ optim/kl_sample_train_v1              │ 0.000084       │
+│ optim/kl_sample_train_v2              │ 0.000467       │
+│ train/advantage_abs_mean              │ 0.992157       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 226.687500     │
+│ train/consistency_gap_1               │ 0.081967       │
+│ train/consistency_reward_mean         │ -0.002268      │
+│ train/consistency_reward_std          │ 0.040662       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.089350       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 61             │
+│ train/n_training_parsed               │ 61             │
+│ train/p_hat_1                         │ 0.409836       │
+│ train/p_ref                           │ 0.327869       │
+│ train/parse_rate                      │ 0.953125       │
+│ train/rate_var                        │ 0.001680       │
+│ train/reward_pert1_trait0_count       │ 9              │
+│ train/reward_pert1_trait0_mean        │ 0.033593       │
+│ train/reward_pert1_trait1_count       │ 7              │
+│ train/reward_pert1_trait1_mean        │ -0.048374      │
+│ train/train/clock_cycle:unique        │ 7241299.000000 │
+│ train/train/loss:sum                  │ 262.193008     │
+│ train/train/ppo_clipped_fraction:mean │ 0.220811       │
+│ train/train/ppo_kl_div:mean           │ 1.051899       │
+│ train/train/ppo_mean_ratio:mean       │ 0.810943       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 53               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 54                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.658748       │
+│ optim/kl_sample_train_v1              │ 0.000699       │
+│ optim/kl_sample_train_v2              │ 0.000571       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 259.812500     │
+│ train/consistency_gap_1               │ 0.015873       │
+│ train/consistency_reward_mean         │ -0.000709      │
+│ train/consistency_reward_std          │ 0.006195       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.127573       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 63             │
+│ train/n_training_parsed               │ 63             │
+│ train/p_hat_1                         │ 0.142857       │
+│ train/p_ref                           │ 0.126984       │
+│ train/parse_rate                      │ 0.984375       │
+│ train/rate_var                        │ 0.000063       │
+│ train/reward_pert1_trait0_count       │ 13             │
+│ train/reward_pert1_trait0_mean        │ 0.002268       │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ -0.013605      │
+│ train/train/clock_cycle:unique        │ 7241308.000000 │
+│ train/train/loss:sum                  │ -167.631203    │
+│ train/train/ppo_clipped_fraction:mean │ 0.180857       │
+│ train/train/ppo_kl_div:mean           │ 1.028292       │
+│ train/train/ppo_mean_ratio:mean       │ 0.842473       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 55               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 56               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 57                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.542392       │
+│ optim/kl_sample_train_v1              │ 0.000201       │
+│ optim/kl_sample_train_v2              │ 0.000492       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 233.875000     │
+│ train/consistency_gap_1               │ -0.033538      │
+│ train/consistency_reward_mean         │ 0.001690       │
+│ train/consistency_reward_std          │ 0.008118       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.102941       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 63             │
+│ train/n_training_parsed               │ 62             │
+│ train/p_hat_1                         │ 0.887097       │
+│ train/p_ref                           │ 0.920635       │
+│ train/parse_rate                      │ 0.976562       │
+│ train/rate_var                        │ 0.000281       │
+│ train/reward_pert1_trait0_count       │ 1              │
+│ train/reward_pert1_trait0_mean        │ -0.029752      │
+│ train/reward_pert1_trait1_count       │ 15             │
+│ train/reward_pert1_trait1_mean        │ 0.003787       │
+│ train/train/clock_cycle:unique        │ 7241342.000000 │
+│ train/train/loss:sum                  │ 155.223690     │
+│ train/train/ppo_clipped_fraction:mean │ 0.207435       │
+│ train/train/ppo_kl_div:mean           │ 1.154535       │
+│ train/train/ppo_mean_ratio:mean       │ 0.818914       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 58                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.474940       │
+│ optim/kl_sample_train_v1              │ 0.001229       │
+│ optim/kl_sample_train_v2              │ 0.000617       │
+│ train/advantage_abs_mean              │ 0.992157       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 403.125000     │
+│ train/consistency_gap_1               │ -0.037077      │
+│ train/consistency_reward_mean         │ -0.001954      │
+│ train/consistency_reward_std          │ 0.018393       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.106175       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 55             │
+│ train/n_training_parsed               │ 51             │
+│ train/p_hat_1                         │ 0.490196       │
+│ train/p_ref                           │ 0.527273       │
+│ train/parse_rate                      │ 0.828125       │
+│ train/rate_var                        │ 0.000344       │
+│ train/reward_pert1_trait0_count       │ 9              │
+│ train/reward_pert1_trait0_mean        │ -0.018175      │
+│ train/reward_pert1_trait1_count       │ 7              │
+│ train/reward_pert1_trait1_mean        │ 0.018902       │
+│ train/train/clock_cycle:unique        │ 7241346.000000 │
+│ train/train/loss:sum                  │ 425.941566     │
+│ train/train/ppo_clipped_fraction:mean │ 0.186148       │
+│ train/train/ppo_kl_div:mean           │ 0.802286       │
+│ train/train/ppo_mean_ratio:mean       │ 0.844199       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 59               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 60                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.862488       │
+│ optim/kl_sample_train_v1              │ 0.000343       │
+│ optim/kl_sample_train_v2              │ 0.000543       │
+│ train/advantage_abs_mean              │ 0.968246       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 339.125000     │
+│ train/consistency_gap_1               │ -0.202429      │
+│ train/consistency_reward_mean         │ -0.013625      │
+│ train/consistency_reward_std          │ 0.098001       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.099298       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 57             │
+│ train/n_training_parsed               │ 52             │
+│ train/p_hat_1                         │ 0.692308       │
+│ train/p_ref                           │ 0.894737       │
+│ train/parse_rate                      │ 0.851562       │
+│ train/rate_var                        │ 0.010244       │
+│ train/reward_pert1_trait0_count       │ 6              │
+│ train/reward_pert1_trait0_mean        │ -0.140143      │
+│ train/reward_pert1_trait1_count       │ 10             │
+│ train/reward_pert1_trait1_mean        │ 0.062286       │
+│ train/train/clock_cycle:unique        │ 7241360.000000 │
+│ train/train/loss:sum                  │ 268.898758     │
+│ train/train/ppo_clipped_fraction:mean │ 0.198288       │
+│ train/train/ppo_kl_div:mean           │ 0.886035       │
+│ train/train/ppo_mean_ratio:mean       │ 0.838338       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 61                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.463305       │
+│ optim/kl_sample_train_v1              │ 0.000264       │
+│ optim/kl_sample_train_v2              │ 0.000543       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 496.937500     │
+│ train/consistency_gap_1               │ 0.009266       │
+│ train/consistency_reward_mean         │ -0.000149      │
+│ train/consistency_reward_std          │ 0.003617       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.066990       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 37             │
+│ train/n_training_parsed               │ 35             │
+│ train/p_hat_1                         │ 0.171429       │
+│ train/p_ref                           │ 0.162162       │
+│ train/parse_rate                      │ 0.562500       │
+│ train/rate_var                        │ 0.000021       │
+│ train/reward_pert1_trait0_count       │ 13             │
+│ train/reward_pert1_trait0_mean        │ 0.001589       │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ -0.007678      │
+│ train/train/clock_cycle:unique        │ 7241369.000000 │
+│ train/train/loss:sum                  │ -1535.187416   │
+│ train/train/ppo_clipped_fraction:mean │ 0.170052       │
+│ train/train/ppo_kl_div:mean           │ 0.791338       │
+│ train/train/ppo_mean_ratio:mean       │ 0.851503       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 62               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 63               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 64                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.291857       │
+│ optim/kl_sample_train_v1              │ 0.000537       │
+│ optim/kl_sample_train_v2              │ 0.000299       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 114.312500     │
+│ train/consistency_gap_1               │ -0.077621      │
+│ train/consistency_reward_mean         │ -0.007277      │
+│ train/consistency_reward_std          │ 0.030296       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.090888       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 62             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.906250       │
+│ train/p_ref                           │ 0.983871       │
+│ train/parse_rate                      │ 0.984375       │
+│ train/rate_var                        │ 0.001506       │
+│ train/reward_pert1_trait0_count       │ 3              │
+│ train/reward_pert1_trait0_mean        │ -0.070344      │
+│ train/reward_pert1_trait1_count       │ 13             │
+│ train/reward_pert1_trait1_mean        │ 0.007277       │
+│ train/train/clock_cycle:unique        │ 7241403.000000 │
+│ train/train/loss:sum                  │ -192.223272    │
+│ train/train/ppo_clipped_fraction:mean │ 0.338248       │
+│ train/train/ppo_kl_div:mean           │ 1.378302       │
+│ train/train/ppo_mean_ratio:mean       │ 0.724393       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.checkpoint_utils:461 [INFO] Saved checkpoints: {'sampler_path': 'tinker://5aace54d-e14c-5936-a4a9-2619891a143a:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc16_step64'}
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                                    Step 64                                     
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Metric               ┃ Value                                                 ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ checkpoint           │ tinker://5aace54d-e14c-5936-a4a9-2619891a143a:train:… │
+└──────────────────────┴───────────────────────────────────────────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 65                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.040638       │
+│ optim/kl_sample_train_v1              │ 0.000615       │
+│ optim/kl_sample_train_v2              │ 0.000693       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 339.875000     │
+│ train/consistency_gap_1               │ 0.487179       │
+│ train/consistency_reward_mean         │ 0.034352       │
+│ train/consistency_reward_std          │ 0.210955       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.100700       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 30             │
+│ train/n_training_parsed               │ 39             │
+│ train/p_hat_1                         │ 0.820513       │
+│ train/p_ref                           │ 0.333333       │
+│ train/parse_rate                      │ 0.539062       │
+│ train/rate_var                        │ 0.059336       │
+│ train/reward_pert1_trait0_count       │ 4              │
+│ train/reward_pert1_trait0_mean        │ 0.399737       │
+│ train/reward_pert1_trait1_count       │ 12             │
+│ train/reward_pert1_trait1_mean        │ -0.087442      │
+│ train/train/clock_cycle:unique        │ 7241410.000000 │
+│ train/train/loss:sum                  │ -754.564423    │
+│ train/train/ppo_clipped_fraction:mean │ 0.208374       │
+│ train/train/ppo_kl_div:mean           │ 0.921243       │
+│ train/train/ppo_mean_ratio:mean       │ 0.827390       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 66               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 67               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 68                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 3.282262       │
+│ optim/kl_sample_train_v1              │ 0.000621       │
+│ optim/kl_sample_train_v2              │ 0.000516       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 575.187500     │
+│ train/consistency_gap_1               │ -0.062121      │
+│ train/consistency_reward_mean         │ -0.001553      │
+│ train/consistency_reward_std          │ 0.020545       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.079824       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 33             │
+│ train/n_training_parsed               │ 40             │
+│ train/p_hat_1                         │ 0.150000       │
+│ train/p_ref                           │ 0.212121       │
+│ train/parse_rate                      │ 0.570312       │
+│ train/rate_var                        │ 0.000965       │
+│ train/reward_pert1_trait0_count       │ 14             │
+│ train/reward_pert1_trait0_mean        │ -0.009318      │
+│ train/reward_pert1_trait1_count       │ 2              │
+│ train/reward_pert1_trait1_mean        │ 0.052803       │
+│ train/train/clock_cycle:unique        │ 7241449.000000 │
+│ train/train/loss:sum                  │ 777.239502     │
+│ train/train/ppo_clipped_fraction:mean │ 0.162994       │
+│ train/train/ppo_kl_div:mean           │ 0.630664       │
+│ train/train/ppo_mean_ratio:mean       │ 0.863277       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 69               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 70               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 71                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.737235       │
+│ optim/kl_sample_train_v1              │ 0.000526       │
+│ optim/kl_sample_train_v2              │ 0.000426       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 548.312500     │
+│ train/consistency_gap_1               │ 0.036250       │
+│ train/consistency_reward_mean         │ -0.003398      │
+│ train/consistency_reward_std          │ 0.015697       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.076438       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 25             │
+│ train/n_training_parsed               │ 32             │
+│ train/p_hat_1                         │ 0.156250       │
+│ train/p_ref                           │ 0.120000       │
+│ train/parse_rate                      │ 0.445312       │
+│ train/rate_var                        │ 0.000329       │
+│ train/reward_pert1_trait0_count       │ 12             │
+│ train/reward_pert1_trait0_mean        │ 0.005664       │
+│ train/reward_pert1_trait1_count       │ 4              │
+│ train/reward_pert1_trait1_mean        │ -0.030586      │
+│ train/train/clock_cycle:unique        │ 7241459.000000 │
+│ train/train/loss:sum                  │ 4605.336166    │
+│ train/train/ppo_clipped_fraction:mean │ 0.143758       │
+│ train/train/ppo_kl_div:mean           │ 0.524754       │
+│ train/train/ppo_mean_ratio:mean       │ 0.883797       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 72                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.603074       │
+│ optim/kl_sample_train_v1              │ 0.000548       │
+│ optim/kl_sample_train_v2              │ 0.000444       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 366.312500     │
+│ train/consistency_gap_1               │ 0.010104       │
+│ train/consistency_reward_mean         │ 0.000049       │
+│ train/consistency_reward_std          │ 0.002446       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.084141       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 59             │
+│ train/n_training_parsed               │ 52             │
+│ train/p_hat_1                         │ 0.942308       │
+│ train/p_ref                           │ 0.932203       │
+│ train/parse_rate                      │ 0.867188       │
+│ train/rate_var                        │ 0.000026       │
+│ train/reward_pert1_trait0_count       │ 1              │
+│ train/reward_pert1_trait0_mean        │ 0.009521       │
+│ train/reward_pert1_trait1_count       │ 15             │
+│ train/reward_pert1_trait1_mean        │ -0.000583      │
+│ train/train/clock_cycle:unique        │ 7241471.000000 │
+│ train/train/loss:sum                  │ -175.091198    │
+│ train/train/ppo_clipped_fraction:mean │ 0.161671       │
+│ train/train/ppo_kl_div:mean           │ 0.699850       │
+│ train/train/ppo_mean_ratio:mean       │ 0.863777       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 73                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.316819       │
+│ optim/kl_sample_train_v1              │ 0.001020       │
+│ optim/kl_sample_train_v2              │ 0.000559       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 557.250000     │
+│ train/consistency_gap_1               │ -0.045833      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.017889       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.048631       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 30             │
+│ train/n_training_parsed               │ 32             │
+│ train/p_hat_1                         │ 0.187500       │
+│ train/p_ref                           │ 0.233333       │
+│ train/parse_rate                      │ 0.484375       │
+│ train/rate_var                        │ 0.000525       │
+│ train/reward_pert1_trait0_count       │ 13             │
+│ train/reward_pert1_trait0_mean        │ -0.008594      │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ 0.037240       │
+│ train/train/clock_cycle:unique        │ 7241500.000000 │
+│ train/train/loss:sum                  │ -3398.577118   │
+│ train/train/ppo_clipped_fraction:mean │ 0.136306       │
+│ train/train/ppo_kl_div:mean           │ 0.527120       │
+│ train/train/ppo_mean_ratio:mean       │ 0.887755       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 74               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 75               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 76                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.068383       │
+│ optim/kl_sample_train_v1              │ 0.000899       │
+│ optim/kl_sample_train_v2              │ 0.000544       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 481.375000     │
+│ train/consistency_gap_1               │ 0.194638       │
+│ train/consistency_reward_mean         │ -0.007574      │
+│ train/consistency_reward_std          │ 0.075969       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.063351       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 57             │
+│ train/n_training_parsed               │ 53             │
+│ train/p_hat_1                         │ 0.773585       │
+│ train/p_ref                           │ 0.578947       │
+│ train/parse_rate                      │ 0.859375       │
+│ train/rate_var                        │ 0.009471       │
+│ train/reward_pert1_trait0_count       │ 3              │
+│ train/reward_pert1_trait0_mean        │ 0.150569       │
+│ train/reward_pert1_trait1_count       │ 13             │
+│ train/reward_pert1_trait1_mean        │ -0.044069      │
+│ train/train/clock_cycle:unique        │ 7241515.000000 │
+│ train/train/loss:sum                  │ -1105.924606   │
+│ train/train/ppo_clipped_fraction:mean │ 0.124902       │
+│ train/train/ppo_kl_div:mean           │ 0.506423       │
+│ train/train/ppo_mean_ratio:mean       │ 0.896792       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 77                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.805207       │
+│ optim/kl_sample_train_v1              │ 0.000917       │
+│ optim/kl_sample_train_v2              │ 0.000530       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 689.937500     │
+│ train/consistency_gap_1               │ 0.061189       │
+│ train/consistency_reward_mean         │ 0.005215       │
+│ train/consistency_reward_std          │ 0.023883       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.074572       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 52             │
+│ train/n_training_parsed               │ 55             │
+│ train/p_hat_1                         │ 0.272727       │
+│ train/p_ref                           │ 0.211538       │
+│ train/parse_rate                      │ 0.835938       │
+│ train/rate_var                        │ 0.000936       │
+│ train/reward_pert1_trait0_count       │ 13             │
+│ train/reward_pert1_trait0_mean        │ 0.016688       │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ -0.044501      │
+│ train/train/clock_cycle:unique        │ 7241544.000000 │
+│ train/train/loss:sum                  │ -1688.340302   │
+│ train/train/ppo_clipped_fraction:mean │ 0.160056       │
+│ train/train/ppo_kl_div:mean           │ 0.643583       │
+│ train/train/ppo_mean_ratio:mean       │ 0.861629       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 78               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 79                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.894387       │
+│ optim/kl_sample_train_v1              │ 0.001700       │
+│ optim/kl_sample_train_v2              │ 0.000781       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 491.250000     │
+│ train/consistency_gap_1               │ -0.001847      │
+│ train/consistency_reward_mean         │ 0.000020       │
+│ train/consistency_reward_std          │ 0.000447       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.112431       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 56             │
+│ train/n_training_parsed               │ 58             │
+│ train/p_hat_1                         │ 0.051724       │
+│ train/p_ref                           │ 0.053571       │
+│ train/parse_rate                      │ 0.890625       │
+│ train/rate_var                        │ 0.000001       │
+│ train/reward_pert1_trait0_count       │ 15             │
+│ train/reward_pert1_trait0_mean        │ -0.000096      │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ 0.001752       │
+│ train/train/clock_cycle:unique        │ 7241553.000000 │
+│ train/train/loss:sum                  │ -552.207085    │
+│ train/train/ppo_clipped_fraction:mean │ 0.277162       │
+│ train/train/ppo_kl_div:mean           │ 0.891233       │
+│ train/train/ppo_mean_ratio:mean       │ 0.777520       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 80                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.634847       │
+│ optim/kl_sample_train_v1              │ 0.001041       │
+│ optim/kl_sample_train_v2              │ 0.000651       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 554.625000     │
+│ train/consistency_gap_1               │ -0.059822      │
+│ train/consistency_reward_mean         │ 0.002230       │
+│ train/consistency_reward_std          │ 0.019784       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.106021       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 61             │
+│ train/n_training_parsed               │ 57             │
+│ train/p_hat_1                         │ 0.087719       │
+│ train/p_ref                           │ 0.147541       │
+│ train/parse_rate                      │ 0.921875       │
+│ train/rate_var                        │ 0.000895       │
+│ train/reward_pert1_trait0_count       │ 14             │
+│ train/reward_pert1_trait0_mean        │ -0.005248      │
+│ train/reward_pert1_trait1_count       │ 2              │
+│ train/reward_pert1_trait1_mean        │ 0.054574       │
+│ train/train/clock_cycle:unique        │ 7241559.000000 │
+│ train/train/loss:sum                  │ 167.377777     │
+│ train/train/ppo_clipped_fraction:mean │ 0.218631       │
+│ train/train/ppo_kl_div:mean           │ 0.725704       │
+│ train/train/ppo_mean_ratio:mean       │ 0.822487       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 81                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.516710       │
+│ optim/kl_sample_train_v1              │ 0.000855       │
+│ optim/kl_sample_train_v2              │ 0.000467       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 412.062500     │
+│ train/consistency_gap_1               │ 0.059980       │
+│ train/consistency_reward_mean         │ 0.000937       │
+│ train/consistency_reward_std          │ 0.019836       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.090037       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 62             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.140625       │
+│ train/p_ref                           │ 0.080645       │
+│ train/parse_rate                      │ 0.984375       │
+│ train/rate_var                        │ 0.000899       │
+│ train/reward_pert1_trait0_count       │ 14             │
+│ train/reward_pert1_trait0_mean        │ 0.008435       │
+│ train/reward_pert1_trait1_count       │ 2              │
+│ train/reward_pert1_trait1_mean        │ -0.051545      │
+│ train/train/clock_cycle:unique        │ 7241582.000000 │
+│ train/train/loss:sum                  │ -42.345161     │
+│ train/train/ppo_clipped_fraction:mean │ 0.163502       │
+│ train/train/ppo_kl_div:mean           │ 0.633137       │
+│ train/train/ppo_mean_ratio:mean       │ 0.866895       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 82                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.676405       │
+│ optim/kl_sample_train_v1              │ 0.000159       │
+│ optim/kl_sample_train_v2              │ 0.000601       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 496.250000     │
+│ train/consistency_gap_1               │ 0.013889       │
+│ train/consistency_reward_mean         │ -0.000055      │
+│ train/consistency_reward_std          │ 0.006014       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.108848       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 56             │
+│ train/n_training_parsed               │ 63             │
+│ train/p_hat_1                         │ 0.746032       │
+│ train/p_ref                           │ 0.732143       │
+│ train/parse_rate                      │ 0.929688       │
+│ train/rate_var                        │ 0.000048       │
+│ train/reward_pert1_trait0_count       │ 4              │
+│ train/reward_pert1_trait0_mean        │ 0.010362       │
+│ train/reward_pert1_trait1_count       │ 12             │
+│ train/reward_pert1_trait1_mean        │ -0.003527      │
+│ train/train/clock_cycle:unique        │ 7241588.000000 │
+│ train/train/loss:sum                  │ -133.126541    │
+│ train/train/ppo_clipped_fraction:mean │ 0.212366       │
+│ train/train/ppo_kl_div:mean           │ 0.841057       │
+│ train/train/ppo_mean_ratio:mean       │ 0.823925       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 83               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 84               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 85               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 86                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.652491       │
+│ optim/kl_sample_train_v1              │ 0.000291       │
+│ optim/kl_sample_train_v2              │ 0.000569       │
+│ train/advantage_abs_mean              │ 0.992157       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 425.375000     │
+│ train/consistency_gap_1               │ 0.101798       │
+│ train/consistency_reward_mean         │ -0.012829      │
+│ train/consistency_reward_std          │ 0.050500       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.116394       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 62             │
+│ train/n_training_parsed               │ 61             │
+│ train/p_hat_1                         │ 0.311475       │
+│ train/p_ref                           │ 0.209677       │
+│ train/parse_rate                      │ 0.960938       │
+│ train/rate_var                        │ 0.002591       │
+│ train/reward_pert1_trait0_count       │ 9              │
+│ train/reward_pert1_trait0_mean        │ 0.031708       │
+│ train/reward_pert1_trait1_count       │ 7              │
+│ train/reward_pert1_trait1_mean        │ -0.070090      │
+│ train/train/clock_cycle:unique        │ 7241597.000000 │
+│ train/train/loss:sum                  │ 233.048309     │
+│ train/train/ppo_clipped_fraction:mean │ 0.151785       │
+│ train/train/ppo_kl_div:mean           │ 0.615913       │
+│ train/train/ppo_mean_ratio:mean       │ 0.873618       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 87                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.602397       │
+│ optim/kl_sample_train_v1              │ 0.000596       │
+│ optim/kl_sample_train_v2              │ 0.000546       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 391.375000     │
+│ train/consistency_gap_1               │ 0.015625       │
+│ train/consistency_reward_mean         │ -0.000732      │
+│ train/consistency_reward_std          │ 0.003782       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.097505       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 64             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.015625       │
+│ train/p_ref                           │ 0.000000       │
+│ train/parse_rate                      │ 1.000000       │
+│ train/rate_var                        │ 0.000061       │
+│ train/reward_pert1_trait0_count       │ 15             │
+│ train/reward_pert1_trait0_mean        │ 0.000244       │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ -0.015381      │
+│ train/train/clock_cycle:unique        │ 7241604.000000 │
+│ train/train/loss:sum                  │ -5.727753      │
+│ train/train/ppo_clipped_fraction:mean │ 0.182058       │
+│ train/train/ppo_kl_div:mean           │ 0.721942       │
+│ train/train/ppo_mean_ratio:mean       │ 0.844729       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 88               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 89                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.654418       │
+│ optim/kl_sample_train_v1              │ 0.000397       │
+│ optim/kl_sample_train_v2              │ 0.000572       │
+│ train/advantage_abs_mean              │ 0.927025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 478.562500     │
+│ train/consistency_gap_1               │ 0.189891       │
+│ train/consistency_reward_mean         │ -0.015370      │
+│ train/consistency_reward_std          │ 0.088017       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.088459       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 60             │
+│ train/n_training_parsed               │ 61             │
+│ train/p_hat_1                         │ 0.606557       │
+│ train/p_ref                           │ 0.416667       │
+│ train/parse_rate                      │ 0.945312       │
+│ train/rate_var                        │ 0.009015       │
+│ train/reward_pert1_trait0_count       │ 5              │
+│ train/reward_pert1_trait0_mean        │ 0.115180       │
+│ train/reward_pert1_trait1_count       │ 11             │
+│ train/reward_pert1_trait1_mean        │ -0.074711      │
+│ train/train/clock_cycle:unique        │ 7241628.000000 │
+│ train/train/loss:sum                  │ 449.247528     │
+│ train/train/ppo_clipped_fraction:mean │ 0.130587       │
+│ train/train/ppo_kl_div:mean           │ 0.531288       │
+│ train/train/ppo_mean_ratio:mean       │ 0.893073       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 90                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.661087       │
+│ optim/kl_sample_train_v1              │ 0.000792       │
+│ optim/kl_sample_train_v2              │ 0.000489       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 667.375000     │
+│ train/consistency_gap_1               │ 0.055231       │
+│ train/consistency_reward_mean         │ 0.000476       │
+│ train/consistency_reward_std          │ 0.023916       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.061038       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 59             │
+│ train/n_training_parsed               │ 58             │
+│ train/p_hat_1                         │ 0.258621       │
+│ train/p_ref                           │ 0.203390       │
+│ train/parse_rate                      │ 0.914062       │
+│ train/rate_var                        │ 0.000763       │
+│ train/reward_pert1_trait0_count       │ 12             │
+│ train/reward_pert1_trait0_mean        │ 0.014284       │
+│ train/reward_pert1_trait1_count       │ 4              │
+│ train/reward_pert1_trait1_mean        │ -0.040947      │
+│ train/train/clock_cycle:unique        │ 7241639.000000 │
+│ train/train/loss:sum                  │ -1735.221954   │
+│ train/train/ppo_clipped_fraction:mean │ 0.120609       │
+│ train/train/ppo_kl_div:mean           │ 0.450714       │
+│ train/train/ppo_mean_ratio:mean       │ 0.902666       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 91               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 92                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.769162       │
+│ optim/kl_sample_train_v1              │ 0.001039       │
+│ optim/kl_sample_train_v2              │ 0.000637       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 370.937500     │
+│ train/consistency_gap_1               │ -0.032258      │
+│ train/consistency_reward_mean         │ 0.000845       │
+│ train/consistency_reward_std          │ 0.012591       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.079300       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 62             │
+│ train/n_training_parsed               │ 62             │
+│ train/p_hat_1                         │ 0.161290       │
+│ train/p_ref                           │ 0.193548       │
+│ train/parse_rate                      │ 0.968750       │
+│ train/rate_var                        │ 0.000260       │
+│ train/reward_pert1_trait0_count       │ 13             │
+│ train/reward_pert1_trait0_mean        │ -0.005203      │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ 0.027055       │
+│ train/train/clock_cycle:unique        │ 7241665.000000 │
+│ train/train/loss:sum                  │ 125.267509     │
+│ train/train/ppo_clipped_fraction:mean │ 0.341465       │
+│ train/train/ppo_kl_div:mean           │ 0.943198       │
+│ train/train/ppo_mean_ratio:mean       │ 0.737220       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 93                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.532537       │
+│ optim/kl_sample_train_v1              │ 0.000377       │
+│ optim/kl_sample_train_v2              │ 0.000579       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 311.875000     │
+│ train/consistency_gap_1               │ 0.015873       │
+│ train/consistency_reward_mean         │ -0.000976      │
+│ train/consistency_reward_std          │ 0.005250       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.083737       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 63             │
+│ train/n_training_parsed               │ 63             │
+│ train/p_hat_1                         │ 0.063492       │
+│ train/p_ref                           │ 0.047619       │
+│ train/parse_rate                      │ 0.984375       │
+│ train/rate_var                        │ 0.000063       │
+│ train/reward_pert1_trait0_count       │ 14             │
+│ train/reward_pert1_trait0_mean        │ 0.001008       │
+│ train/reward_pert1_trait1_count       │ 2              │
+│ train/reward_pert1_trait1_mean        │ -0.014865      │
+│ train/train/clock_cycle:unique        │ 7241671.000000 │
+│ train/train/loss:sum                  │ -100.031708    │
+│ train/train/ppo_clipped_fraction:mean │ 0.485903       │
+│ train/train/ppo_kl_div:mean           │ 1.781951       │
+│ train/train/ppo_mean_ratio:mean       │ 0.592998       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 94                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.624237       │
+│ optim/kl_sample_train_v1              │ 0.000874       │
+│ optim/kl_sample_train_v2              │ 0.000649       │
+│ train/advantage_abs_mean              │ 1.000000       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 370.125000     │
+│ train/consistency_gap_1               │ -0.139344      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.069672       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.118905       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 61             │
+│ train/n_training_parsed               │ 58             │
+│ train/p_hat_1                         │ 0.500000       │
+│ train/p_ref                           │ 0.639344       │
+│ train/parse_rate                      │ 0.929688       │
+│ train/rate_var                        │ 0.004854       │
+│ train/reward_pert1_trait0_count       │ 8              │
+│ train/reward_pert1_trait0_mean        │ -0.069672      │
+│ train/reward_pert1_trait1_count       │ 8              │
+│ train/reward_pert1_trait1_mean        │ 0.069672       │
+│ train/train/clock_cycle:unique        │ 7241682.000000 │
+│ train/train/loss:sum                  │ -1316.065487   │
+│ train/train/ppo_clipped_fraction:mean │ 0.288443       │
+│ train/train/ppo_kl_div:mean           │ 0.949472       │
+│ train/train/ppo_mean_ratio:mean       │ 0.780205       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 95               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 96                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 5.582618       │
+│ optim/kl_sample_train_v1              │ 0.000499       │
+│ optim/kl_sample_train_v2              │ 0.000657       │
+│ train/advantage_abs_mean              │ 0.968246       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 738.562500     │
+│ train/consistency_gap_1               │ -0.035714      │
+│ train/consistency_reward_mean         │ 0.004464       │
+│ train/consistency_reward_std          │ 0.017290       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.092715       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 56             │
+│ train/n_training_parsed               │ 60             │
+│ train/p_hat_1                         │ 0.500000       │
+│ train/p_ref                           │ 0.535714       │
+│ train/parse_rate                      │ 0.906250       │
+│ train/rate_var                        │ 0.000319       │
+│ train/reward_pert1_trait0_count       │ 6              │
+│ train/reward_pert1_trait0_mean        │ -0.017857      │
+│ train/reward_pert1_trait1_count       │ 10             │
+│ train/reward_pert1_trait1_mean        │ 0.017857       │
+│ train/train/clock_cycle:unique        │ 7241708.000000 │
+│ train/train/loss:sum                  │ 2498.593895    │
+│ train/train/ppo_clipped_fraction:mean │ 0.262590       │
+│ train/train/ppo_kl_div:mean           │ 0.792585       │
+│ train/train/ppo_mean_ratio:mean       │ 0.791690       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 97                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 4.767426       │
+│ optim/kl_sample_train_v1              │ 0.000776       │
+│ optim/kl_sample_train_v2              │ 0.000337       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 473.937500     │
+│ train/consistency_gap_1               │ -0.051411      │
+│ train/consistency_reward_mean         │ -0.002177      │
+│ train/consistency_reward_std          │ 0.020066       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.079865       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 64             │
+│ train/n_training_parsed               │ 62             │
+│ train/p_hat_1                         │ 0.854839       │
+│ train/p_ref                           │ 0.906250       │
+│ train/parse_rate                      │ 0.984375       │
+│ train/rate_var                        │ 0.000661       │
+│ train/reward_pert1_trait0_count       │ 3              │
+│ train/reward_pert1_trait0_mean        │ -0.043948      │
+│ train/reward_pert1_trait1_count       │ 13             │
+│ train/reward_pert1_trait1_mean        │ 0.007463       │
+│ train/train/clock_cycle:unique        │ 7241740.000000 │
+│ train/train/loss:sum                  │ -1605.247498   │
+│ train/train/ppo_clipped_fraction:mean │ 0.136018       │
+│ train/train/ppo_kl_div:mean           │ 0.535286       │
+│ train/train/ppo_mean_ratio:mean       │ 0.888126       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+               Step 98               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 99                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.928093       │
+│ optim/kl_sample_train_v1              │ -0.000070      │
+│ optim/kl_sample_train_v2              │ 0.000749       │
+│ train/advantage_abs_mean              │ 0.484123       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 198.937500     │
+│ train/consistency_gap_1               │ 0.031746       │
+│ train/consistency_reward_mean         │ -0.000976      │
+│ train/consistency_reward_std          │ 0.007684       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.170184       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 63             │
+│ train/n_training_parsed               │ 63             │
+│ train/p_hat_1                         │ 0.031746       │
+│ train/p_ref                           │ 0.000000       │
+│ train/parse_rate                      │ 0.984375       │
+│ train/rate_var                        │ 0.000252       │
+│ train/reward_pert1_trait0_count       │ 15             │
+│ train/reward_pert1_trait0_mean        │ 0.001008       │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ -0.030738      │
+│ train/train/clock_cycle:unique        │ 7241757.000000 │
+│ train/train/loss:sum                  │ 286.174061     │
+│ train/train/ppo_clipped_fraction:mean │ 0.528882       │
+│ train/train/ppo_kl_div:mean           │ 1.617764       │
+│ train/train/ppo_mean_ratio:mean       │ 0.575799       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 100                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 5.978348       │
+│ optim/kl_sample_train_v1              │ 0.000715       │
+│ optim/kl_sample_train_v2              │ 0.000577       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 1295.000000    │
+│ train/consistency_gap_1               │ -0.145376      │
+│ train/consistency_reward_mean         │ -0.003724      │
+│ train/consistency_reward_std          │ 0.056742       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.075818       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 53             │
+│ train/n_training_parsed               │ 61             │
+│ train/p_hat_1                         │ 0.213115       │
+│ train/p_ref                           │ 0.358491       │
+│ train/parse_rate                      │ 0.890625       │
+│ train/rate_var                        │ 0.005284       │
+│ train/reward_pert1_trait0_count       │ 13             │
+│ train/reward_pert1_trait0_mean        │ -0.030982      │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ 0.114394       │
+│ train/train/clock_cycle:unique        │ 7241793.000000 │
+│ train/train/loss:sum                  │ 3502.136917    │
+│ train/train/ppo_clipped_fraction:mean │ 0.111229       │
+│ train/train/ppo_kl_div:mean           │ 0.377212       │
+│ train/train/ppo_mean_ratio:mean       │ 0.910770       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 101                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 5.200092       │
+│ optim/kl_sample_train_v1              │ 0.000284       │
+│ optim/kl_sample_train_v2              │ 0.000344       │
+│ train/advantage_abs_mean              │ 0.927025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 755.187500     │
+│ train/consistency_gap_1               │ 0.097019       │
+│ train/consistency_reward_mean         │ 0.003555       │
+│ train/consistency_reward_std          │ 0.044970       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.066706       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 59             │
+│ train/n_training_parsed               │ 58             │
+│ train/p_hat_1                         │ 0.724138       │
+│ train/p_ref                           │ 0.627119       │
+│ train/parse_rate                      │ 0.914062       │
+│ train/rate_var                        │ 0.002353       │
+│ train/reward_pert1_trait0_count       │ 5              │
+│ train/reward_pert1_trait0_mean        │ 0.070255       │
+│ train/reward_pert1_trait1_count       │ 11             │
+│ train/reward_pert1_trait1_mean        │ -0.026764      │
+│ train/train/clock_cycle:unique        │ 7241823.000000 │
+│ train/train/loss:sum                  │ 3771.262085    │
+│ train/train/ppo_clipped_fraction:mean │ 0.111011       │
+│ train/train/ppo_kl_div:mean           │ 0.414355       │
+│ train/train/ppo_mean_ratio:mean       │ 0.909461       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 102               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 103               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 104                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 4.929103       │
+│ optim/kl_sample_train_v1              │ 0.000467       │
+│ optim/kl_sample_train_v2              │ 0.000424       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 503.250000     │
+│ train/consistency_gap_1               │ 0.131336       │
+│ train/consistency_reward_mean         │ -0.002345      │
+│ train/consistency_reward_std          │ 0.043435       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.104335       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 62             │
+│ train/n_training_parsed               │ 63             │
+│ train/p_hat_1                         │ 0.857143       │
+│ train/p_ref                           │ 0.725806       │
+│ train/parse_rate                      │ 0.976562       │
+│ train/rate_var                        │ 0.004312       │
+│ train/reward_pert1_trait0_count       │ 2              │
+│ train/reward_pert1_trait0_mean        │ 0.112574       │
+│ train/reward_pert1_trait1_count       │ 14             │
+│ train/reward_pert1_trait1_mean        │ -0.018762      │
+│ train/train/clock_cycle:unique        │ 7241865.000000 │
+│ train/train/loss:sum                  │ 1556.173573    │
+│ train/train/ppo_clipped_fraction:mean │ 0.154523       │
+│ train/train/ppo_kl_div:mean           │ 0.645487       │
+│ train/train/ppo_mean_ratio:mean       │ 0.868605       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 105               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 106               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 107                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.228749       │
+│ optim/kl_sample_train_v1              │ 0.001530       │
+│ optim/kl_sample_train_v2              │ 0.000675       │
+│ train/advantage_abs_mean              │ 0.780625       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 231.937500     │
+│ train/consistency_gap_1               │ -0.017113      │
+│ train/consistency_reward_mean         │ 0.001872       │
+│ train/consistency_reward_std          │ 0.006679       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.148172       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 63             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.078125       │
+│ train/p_ref                           │ 0.095238       │
+│ train/parse_rate                      │ 0.992188       │
+│ train/rate_var                        │ 0.000073       │
+│ train/reward_pert1_trait0_count       │ 13             │
+│ train/reward_pert1_trait0_mean        │ -0.001337      │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ 0.015776       │
+│ train/train/clock_cycle:unique        │ 7241905.000000 │
+│ train/train/loss:sum                  │ -87.143509     │
+│ train/train/ppo_clipped_fraction:mean │ 0.244289       │
+│ train/train/ppo_kl_div:mean           │ 0.878449       │
+│ train/train/ppo_mean_ratio:mean       │ 0.797158       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 108               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 109               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 110               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 111               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 112               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 113               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 114               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 115                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 4.589979       │
+│ optim/kl_sample_train_v1              │ 0.000326       │
+│ optim/kl_sample_train_v2              │ 0.000549       │
+│ train/advantage_abs_mean              │ 0.968246       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 846.875000     │
+│ train/consistency_gap_1               │ 0.101695       │
+│ train/consistency_reward_mean         │ -0.001939      │
+│ train/consistency_reward_std          │ 0.049233       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.058372       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 59             │
+│ train/n_training_parsed               │ 59             │
+│ train/p_hat_1                         │ 0.355932       │
+│ train/p_ref                           │ 0.254237       │
+│ train/parse_rate                      │ 0.921875       │
+│ train/rate_var                        │ 0.002585       │
+│ train/reward_pert1_trait0_count       │ 10             │
+│ train/reward_pert1_trait0_mean        │ 0.036196       │
+│ train/reward_pert1_trait1_count       │ 6              │
+│ train/reward_pert1_trait1_mean        │ -0.065498      │
+│ train/train/clock_cycle:unique        │ 7242002.000000 │
+│ train/train/loss:sum                  │ -5406.426605   │
+│ train/train/ppo_clipped_fraction:mean │ 0.119430       │
+│ train/train/ppo_kl_div:mean           │ 0.421925       │
+│ train/train/ppo_mean_ratio:mean       │ 0.902850       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 116               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 117                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 4.652858       │
+│ optim/kl_sample_train_v1              │ 0.000857       │
+│ optim/kl_sample_train_v2              │ 0.000405       │
+│ train/advantage_abs_mean              │ 0.927025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 402.062500     │
+│ train/consistency_gap_1               │ 0.012568       │
+│ train/consistency_reward_mean         │ 0.000995       │
+│ train/consistency_reward_std          │ 0.005826       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.097440       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 61             │
+│ train/n_training_parsed               │ 60             │
+│ train/p_hat_1                         │ 0.766667       │
+│ train/p_ref                           │ 0.754098       │
+│ train/parse_rate                      │ 0.945312       │
+│ train/rate_var                        │ 0.000039       │
+│ train/reward_pert1_trait0_count       │ 5              │
+│ train/reward_pert1_trait0_mean        │ 0.009636       │
+│ train/reward_pert1_trait1_count       │ 11             │
+│ train/reward_pert1_trait1_mean        │ -0.002933      │
+│ train/train/clock_cycle:unique        │ 7242038.000000 │
+│ train/train/loss:sum                  │ -4115.945526   │
+│ train/train/ppo_clipped_fraction:mean │ 0.137222       │
+│ train/train/ppo_kl_div:mean           │ 0.647546       │
+│ train/train/ppo_mean_ratio:mean       │ 0.881643       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 118                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 3.054250       │
+│ optim/kl_sample_train_v1              │ 0.000830       │
+│ optim/kl_sample_train_v2              │ 0.000340       │
+│ train/advantage_abs_mean              │ 0.992157       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 422.750000     │
+│ train/consistency_gap_1               │ -0.093750      │
+│ train/consistency_reward_mean         │ -0.001465      │
+│ train/consistency_reward_std          │ 0.046507       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.094411       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 64             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.578125       │
+│ train/p_ref                           │ 0.671875       │
+│ train/parse_rate                      │ 1.000000       │
+│ train/rate_var                        │ 0.002197       │
+│ train/reward_pert1_trait0_count       │ 7              │
+│ train/reward_pert1_trait0_mean        │ -0.054199      │
+│ train/reward_pert1_trait1_count       │ 9              │
+│ train/reward_pert1_trait1_mean        │ 0.039551       │
+│ train/train/clock_cycle:unique        │ 7242047.000000 │
+│ train/train/loss:sum                  │ -1485.564667   │
+│ train/train/ppo_clipped_fraction:mean │ 0.174446       │
+│ train/train/ppo_kl_div:mean           │ 0.660988       │
+│ train/train/ppo_mean_ratio:mean       │ 0.852351       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 119                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 6.328014       │
+│ optim/kl_sample_train_v1              │ 0.000664       │
+│ optim/kl_sample_train_v2              │ 0.000400       │
+│ train/advantage_abs_mean              │ 0.661438       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 706.625000     │
+│ train/consistency_gap_1               │ 0.039977       │
+│ train/consistency_reward_mean         │ -0.000614      │
+│ train/consistency_reward_std          │ 0.013221       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.070433       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 61             │
+│ train/n_training_parsed               │ 57             │
+│ train/p_hat_1                         │ 0.859649       │
+│ train/p_ref                           │ 0.819672       │
+│ train/parse_rate                      │ 0.921875       │
+│ train/rate_var                        │ 0.000400       │
+│ train/reward_pert1_trait0_count       │ 2              │
+│ train/reward_pert1_trait0_mean        │ 0.034366       │
+│ train/reward_pert1_trait1_count       │ 14             │
+│ train/reward_pert1_trait1_mean        │ -0.005611      │
+│ train/train/clock_cycle:unique        │ 7242078.000000 │
+│ train/train/loss:sum                  │ -5135.524597   │
+│ train/train/ppo_clipped_fraction:mean │ 0.269273       │
+│ train/train/ppo_kl_div:mean           │ 0.920028       │
+│ train/train/ppo_mean_ratio:mean       │ 0.771997       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 120               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 121                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 3.621696       │
+│ optim/kl_sample_train_v1              │ 0.000004       │
+│ optim/kl_sample_train_v2              │ 0.000419       │
+│ train/advantage_abs_mean              │ 1.000000       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 434.062500     │
+│ train/consistency_gap_1               │ 0.112366       │
+│ train/consistency_reward_mean         │ 0.014499       │
+│ train/consistency_reward_std          │ 0.056183       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.091129       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 60             │
+│ train/n_training_parsed               │ 62             │
+│ train/p_hat_1                         │ 0.629032       │
+│ train/p_ref                           │ 0.516667       │
+│ train/parse_rate                      │ 0.953125       │
+│ train/rate_var                        │ 0.003157       │
+│ train/reward_pert1_trait0_count       │ 8              │
+│ train/reward_pert1_trait0_mean        │ 0.070682       │
+│ train/reward_pert1_trait1_count       │ 8              │
+│ train/reward_pert1_trait1_mean        │ -0.041684      │
+│ train/train/clock_cycle:unique        │ 7242105.000000 │
+│ train/train/loss:sum                  │ 2446.649841    │
+│ train/train/ppo_clipped_fraction:mean │ 0.337784       │
+│ train/train/ppo_kl_div:mean           │ 1.272170       │
+│ train/train/ppo_mean_ratio:mean       │ 0.712590       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 122               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 123                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 4.923468       │
+│ optim/kl_sample_train_v1              │ 0.000345       │
+│ optim/kl_sample_train_v2              │ 0.000296       │
+│ train/advantage_abs_mean              │ 0.992157       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 654.500000     │
+│ train/consistency_gap_1               │ -0.040215      │
+│ train/consistency_reward_mean         │ 0.003142       │
+│ train/consistency_reward_std          │ 0.019950       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.067441       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 61             │
+│ train/n_training_parsed               │ 64             │
+│ train/p_hat_1                         │ 0.484375       │
+│ train/p_ref                           │ 0.524590       │
+│ train/parse_rate                      │ 0.976562       │
+│ train/rate_var                        │ 0.000404       │
+│ train/reward_pert1_trait0_count       │ 7              │
+│ train/reward_pert1_trait0_mean        │ -0.019479      │
+│ train/reward_pert1_trait1_count       │ 9              │
+│ train/reward_pert1_trait1_mean        │ 0.020736       │
+│ train/train/clock_cycle:unique        │ 7242127.000000 │
+│ train/train/loss:sum                  │ -1733.661133   │
+│ train/train/ppo_clipped_fraction:mean │ 0.139340       │
+│ train/train/ppo_kl_div:mean           │ 0.557144       │
+│ train/train/ppo_mean_ratio:mean       │ 0.882463       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 124               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 125               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 126               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                         Step 127                         
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 8.959832       │
+│ optim/kl_sample_train_v1              │ 0.000202       │
+│ optim/kl_sample_train_v2              │ 0.000271       │
+│ train/advantage_abs_mean              │ 0.866025       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 2150.250000    │
+│ train/consistency_gap_1               │ 0.221323       │
+│ train/consistency_reward_mean         │ 0.010678       │
+│ train/consistency_reward_std          │ 0.095835       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.045664       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 16             │
+│ train/n_ref_parsed                    │ 52             │
+│ train/n_training_parsed               │ 57             │
+│ train/p_hat_1                         │ 0.298246       │
+│ train/p_ref                           │ 0.076923       │
+│ train/parse_rate                      │ 0.851562       │
+│ train/rate_var                        │ 0.012246       │
+│ train/reward_pert1_trait0_count       │ 12             │
+│ train/reward_pert1_trait0_mean        │ 0.066008       │
+│ train/reward_pert1_trait1_count       │ 4              │
+│ train/reward_pert1_trait1_mean        │ -0.155314      │
+│ train/train/clock_cycle:unique        │ 7242190.000000 │
+│ train/train/loss:sum                  │ -7383.486084   │
+│ train/train/ppo_clipped_fraction:mean │ 0.060715       │
+│ train/train/ppo_kl_div:mean           │ 0.212054       │
+│ train/train/ppo_mean_ratio:mean       │ 0.950695       │
+└───────────────────────────────────────┴────────────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 128               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+tinker_cookbook.checkpoint_utils:461 [INFO] Saved checkpoints: {'sampler_path': 'tinker://5aace54d-e14c-5936-a4a9-2619891a143a:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc16'}
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-n-consistency/llama-rlct-nc16/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                                    Step 128                                    
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Metric               ┃ Value                                                 ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ final_checkpoint     │ tinker://5aace54d-e14c-5936-a4a9-2619891a143a:train:… │
+└──────────────────────┴───────────────────────────────────────────────────────┘
+tinker_cookbook.utils.ml_log:265 [INFO] 
+Configuration:
+  final_checkpoint: 
+'tinker://5aace54d-e14c-5936-a4a9-2619891a143a:train:0/sampler_weights/sweep-n-c
+onsistency_llama-rlct-nc16'
+  all_checkpoints: 
+['tinker://5aace54d-e14c-5936-a4a9-2619891a143a:train:0/sampler_weights/sweep-n-
+consistency_llama-rlct-nc16_step64', 
+'tinker://5aace54d-e14c-5936-a4a9-2619891a143a:train:0/sampler_weights/sweep-n-c
+onsistency_llama-rlct-nc16']

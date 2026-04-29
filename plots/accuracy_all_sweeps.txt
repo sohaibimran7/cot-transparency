@@ -1,0 +1,75 @@
+# Unbiased-eval accuracy by sweep
+# Per Sohaib (Apr 21): check for accuracy degradation vs base
+
+### rollouts ###
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-rlct-nr128                 193      0.482
+  llama-rlct-nr32                  191      0.623
+  llama-rlct-nr64                  199      0.462
+
+### n-consistency ###
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-rlct-nc16                  182      0.484
+  llama-rlct-nc16-ctrl              94      0.457
+  llama-rlct-nc32                  391      0.527
+  llama-rlct-nc32-ctrl             185      0.611
+  llama-rlct-nc64                  194      0.670
+
+### kl-coef ###
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-rlct-kl0.01                200      0.370
+  llama-rlct-kl0.01-ctrl            18      0.389
+  llama-rlct-kl0.05                189      0.402
+  llama-rlct-kl0.05-ctrl           192      0.474
+  llama-rlct-kl0.1                 171      0.497
+  llama-rlct-kl0.1-ctrl            369      0.618
+  llama-rlct-kl0.5                 184      0.592
+
+### refresh-every ###
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-rlct-re1                   172      0.512
+  llama-rlct-re1-ctrl              173      0.405
+  llama-rlct-re10                  191      0.508
+  llama-rlct-re5                   186      0.629
+  llama-rlct-re5-ctrl              173      0.555
+
+### n-datapoints ###
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-rlct-nd128                 175      0.554
+  llama-rlct-nd256                 199      0.543
+  llama-rlct-nd64                  193      0.617
+
+### bct-instruct ###
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-bct-inst                   199      0.598
+  llama-bct-noinst                 197      0.640
+
+### bct-batch-size ###
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-bct-bs128                  198      0.576
+  llama-bct-bs256                  199      0.603
+  llama-bct-bs32                   200      0.575
+  llama-bct-bs64                   198      0.621
+
+### bct-n-datapoints ###
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-bct-nd1000                 199      0.603
+  llama-bct-nd2000                 200      0.625
+  llama-bct-nd500                  199      0.573
+  llama-bct-nd5000                 200      0.555

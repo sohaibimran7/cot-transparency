@@ -1,0 +1,11 @@
+# Unbiased-eval accuracy for sweep: refresh-every
+# variant=unbiased only, mcq_bias_scorer.correct
+
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-rlct-re1                   172      0.512
+  llama-rlct-re1-ctrl              173      0.405
+  llama-rlct-re10                  191      0.508
+  llama-rlct-re5                   186      0.629
+  llama-rlct-re5-ctrl              173      0.555

@@ -1,0 +1,9 @@
+# Unbiased-eval accuracy for sweep: n-datapoints
+# variant=unbiased only, mcq_bias_scorer.correct
+
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-rlct-nd128                 175      0.554
+  llama-rlct-nd256                 199      0.543
+  llama-rlct-nd64                  193      0.617

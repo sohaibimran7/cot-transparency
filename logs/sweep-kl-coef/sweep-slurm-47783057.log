@@ -1,0 +1,140 @@
+=== KL Coef Sweep: 4 configs ===
+Started: Tue Apr 14 04:08:55 EDT 2026
+
+========================================
+[1/4] kl_coef=0.01
+Config: scripts/tinker_training/experiment_configs/sweep_kl_coef_0.01.yaml
+Time: Tue Apr 14 04:08:55 EDT 2026
+========================================
+Experiment: sweep-kl-0.01
+Model: meta-llama/Llama-3.1-8B-Instruct
+
+Stages to run: training, evaluation
+
+
+[train:main] ============================================================
+[train:main]   Stage: training_main
+[train:main] ============================================================
+[train:main] Command:
+[train:main]   /home/prakharg/miniconda3/envs/cot/bin/python \
+[train:main]     scripts/tinker_training/train_rl.py \
+[train:main]     --model \
+[train:main]     meta-llama/Llama-3.1-8B-Instruct \
+[train:main]     --experiment-name \
+[train:main]     sweep-kl-coef \
+[train:main]     --run-name \
+[train:main]     llama-rlct-kl0.01 \
+[train:main]     --bias-types \
+[train:main]     suggested_answer \
+[train:main]     --datasets \
+[train:main]     mmlu \
+[train:main]     --n-datapoints \
+[train:main]     128 \
+[train:main]     --lora-rank \
+[train:main]     8 \
+[train:main]     --kl-coef \
+[train:main]     0.01 \
+[train:main]     --anchor-weight \
+[train:main]     0.5 \
+[train:main]     --loss-fn \
+[train:main]     ppo \
+[train:main]     --n-ref-rollouts \
+[train:main]     64 \
+[train:main]     --n-train-rollouts \
+[train:main]     64 \
+[train:main]     --n-consistency-rollouts \
+[train:main]     16 \
+[train:main]     --batch-size \
+[train:main]     1 \
+[train:main]     --refresh-every \
+[train:main]     1 \
+[train:main]     --checkpoint-every \
+[train:main]     64 \
+[train:main]     -y
+
+
+[train:control] ============================================================
+[train:control]   Stage: training_control
+[train:control] ============================================================
+[train:control] Command:
+[train:control]   /home/prakharg/miniconda3/envs/cot/bin/python \
+[train:control]     scripts/tinker_training/train_rl.py \
+[train:control]     --model \
+[train:control]     meta-llama/Llama-3.1-8B-Instruct \
+[train:control]     --experiment-name \
+[train:control]     sweep-kl-coef \
+[train:control]     --run-name \
+[train:control]     llama-rlct-kl0.01-ctrl \
+[train:control]     --bias-types \
+[train:control]     suggested_answer \
+[train:control]     --datasets \
+[train:control]     mmlu \
+[train:control]     --n-datapoints \
+[train:control]     128 \
+[train:control]     --lora-rank \
+[train:control]     8 \
+[train:control]     --kl-coef \
+[train:control]     0.01 \
+[train:control]     --anchor-weight \
+[train:control]     0.5 \
+[train:control]     --loss-fn \
+[train:control]     ppo \
+[train:control]     --n-ref-rollouts \
+[train:control]     64 \
+[train:control]     --n-train-rollouts \
+[train:control]     64 \
+[train:control]     --n-consistency-rollouts \
+[train:control]     16 \
+[train:control]     --batch-size \
+[train:control]     1 \
+[train:control]     --refresh-every \
+[train:control]     1 \
+[train:control]     --checkpoint-every \
+[train:control]     64 \
+[train:control]     --control \
+[train:control]     -y
+
+
+[eval:base] ============================================================
+[eval:base]   Stage: evaluation_base
+[eval:base] ============================================================
+[eval:base] Command:
+[eval:base]   /home/prakharg/miniconda3/envs/cot/bin/python \
+[eval:base]     -m \
+[eval:base]     sycophancy_eval_inspect.run_tinker_evals \
+[eval:base]     --base-model \
+[eval:base]     meta-llama/Llama-3.1-8B-Instruct \
+[eval:base]     --name \
+[eval:base]     llama-base \
+[eval:base]     --prompt-styles \
+[eval:base]     cot \
+[eval:base]     --bias-types \
+[eval:base]     suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares \
+[eval:base]     --datasets \
+[eval:base]     truthfulqa \
+[eval:base]     --log-dir \
+[eval:base]     sycophancy_eval_inspect/logs/tinker_evals \
+[eval:base]     --limit \
+[eval:base]     200
+
+[eval:base] 2026-04-14 04:09:05,335 - sycophancy_eval_inspect.eval_common - INFO - Computing common hashes across bias types...
+[eval:base] 2026-04-14 04:09:06,035 - sycophancy_eval_inspect.hash_utils - WARNING - hellaswag: Using 827/1526 questions (45.8% reduction) - common subset across 5 bias types
+[eval:base] 2026-04-14 04:09:06,104 - sycophancy_eval_inspect.hash_utils - WARNING - logiqa: Using 386/498 questions (22.5% reduction) - common subset across 5 bias types
+[eval:base] 2026-04-14 04:09:06,259 - sycophancy_eval_inspect.hash_utils - WARNING - mmlu: Using 652/1501 questions (56.6% reduction) - common subset across 5 bias types
+[eval:base] 2026-04-14 04:09:06,319 - sycophancy_eval_inspect.hash_utils - WARNING - truthfulqa: Using 514/654 questions (21.4% reduction) - common subset across 5 bias types
+[eval:base] 2026-04-14 04:09:06,319 - sycophancy_eval_inspect.eval_common - INFO -   hellaswag: 200 common samples
+[eval:base] 2026-04-14 04:09:06,319 - sycophancy_eval_inspect.eval_common - INFO -   logiqa: 200 common samples
+[eval:base] 2026-04-14 04:09:06,319 - sycophancy_eval_inspect.eval_common - INFO -   mmlu: 200 common samples
+[eval:base] 2026-04-14 04:09:06,319 - sycophancy_eval_inspect.eval_common - INFO -   truthfulqa: 200 common samples
+[eval:base] 2026-04-14 04:09:06,325 - sycophancy_eval_inspect.hash_utils - INFO - Saved common hashes to sycophancy_eval_inspect/logs/tinker_evals/common_hashes.json
+[eval:base] 2026-04-14 04:09:06,325 - sycophancy_eval_inspect.eval_common - INFO - Datasets found: 20
+[eval:base] 2026-04-14 04:09:06,325 - sycophancy_eval_inspect.eval_common - INFO - Evaluations: 20 biased + 4 unbiased = 24 total
+[eval:base] 2026-04-14 04:09:06,325 - sycophancy_eval_inspect.eval_common - INFO - Hash filtering: computed
+[eval:base] 2026-04-14 04:09:06,325 - __main__ - INFO - Filtered to 6 dataset configs for: {'truthfulqa'}
+[eval:base] 2026-04-14 04:09:06,577 - tinker.lib.internal_client_holder - WARNING - Your Tinker SDK version is outdated. Please upgrade to the latest version.
+[eval:base] 2026-04-14 04:09:06,577 - tinker.lib.public_interfaces.service_client - INFO - ServiceClient initialized for session 327d3bc4-178a-5545-bdbe-f49460f6f9e2
+[eval:base] 2026-04-14 04:09:06,577 - __main__ - INFO - Creating model: llama-base
+[eval:base] 2026-04-14 04:09:06,577 - __main__ - INFO -   Base model: meta-llama/Llama-3.1-8B-Instruct
+[eval:base] 2026-04-14 04:09:06,577 - __main__ - INFO -   Checkpoint: None
+[eval:base] 2026-04-14 04:09:06,577 - __main__ - INFO -   Renderer: llama3
+[2026-04-14T04:09:18.790] error: *** JOB 47783057 ON gl3043 CANCELLED AT 2026-04-14T04:09:18 DUE to SIGNAL Terminated ***

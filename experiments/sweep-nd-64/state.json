@@ -1,0 +1,42 @@
+{
+  "experiment": "sweep-nd-64",
+  "config_hash": "a910c0ab2ec4",
+  "stages": {
+    "training": {
+      "status": "completed",
+      "completed_at": "2026-04-16T23:48:16.608983+00:00",
+      "outputs": {
+        "main_checkpoint": "tinker://d92deb8c-3cd0-5870-be77-0ec3388922f0:train:0/sampler_weights/sweep-n-datapoints_llama-rlct-nd64",
+        "checkpoint": "tinker://d92deb8c-3cd0-5870-be77-0ec3388922f0:train:0/sampler_weights/sweep-n-datapoints_llama-rlct-nd64"
+      }
+    },
+    "evaluation": {
+      "status": "completed",
+      "completed_at": "2026-04-16T23:48:16.608996+00:00",
+      "outputs": {}
+    },
+    "analysis": {
+      "status": "completed",
+      "completed_at": "2026-04-17T15:13:03.125120+00:00"
+    }
+  },
+  "tasks": {
+    "train:main": {
+      "status": "completed",
+      "stage": "training",
+      "label": "main",
+      "started_at": "2026-04-16T15:35:52.836486+00:00",
+      "completed_at": "2026-04-16T23:48:16.602861+00:00",
+      "outputs": {
+        "checkpoint": "tinker://d92deb8c-3cd0-5870-be77-0ec3388922f0:train:0/sampler_weights/sweep-n-datapoints_llama-rlct-nd64"
+      }
+    },
+    "eval:main": {
+      "status": "completed",
+      "stage": "evaluation",
+      "label": "main",
+      "started_at": "2026-04-16T17:03:05.859344+00:00",
+      "completed_at": "2026-04-16T23:48:16.605978+00:00"
+    }
+  }
+}

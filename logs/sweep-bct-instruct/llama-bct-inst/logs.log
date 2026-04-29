@@ -1,0 +1,543 @@
+root:654 [INFO] Command line invocation: scripts/tinker_training/train_sft.py --model meta-llama/Llama-3.1-8B-Instruct --data dataset_dumps/train_seed_42/llama-3-1-8b-instruct/sa-mmlu-hp/bct_cot.jsonl dataset_dumps/train_seed_42/llama-3-1-8b-instruct/sa-mmlu-hp/instruct.jsonl:5000 --experiment-name sweep-bct-instruct --run-name llama-bct-inst --batch-size 128 --epochs 1 --lora-rank 8 --save-every 9999 -y
+tinker_cookbook.utils.ml_log:592 [INFO] Logging to: logs/sweep-bct-instruct/llama-bct-inst
+tinker_cookbook.utils.ml_log:265 [INFO] 
+Configuration:
+  git: {'git_sha': 'a3276f0d7774c54dc046e1eb2011f0d280021f92', 'git_branch': 
+'reasoning-history-last-fix', 'git_dirty': True, 'git_dirt ... : "black",\n+    
+"training_biases": [\n+        "suggested_answer"\n+      ]\n     }\n   }\n 
+}\n\\ No newline at end of file'}
+tinker_cookbook.utils.ml_log:265 [INFO] 
+Configuration:
+  n_samples: 7000
+  total_steps: 54
+  file: '/tmp/tmpdds0vqpl.jsonl'
+  base_lr: 0.0002856415043086949
+tinker.lib.internal_client_holder:289 [WARNING] Your Tinker SDK version is outdated. Please upgrade to the latest version.
+tinker.lib.public_interfaces.service_client:67 [INFO] ServiceClient initialized for session 0de38f2b-9be1-52e6-81a6-234cbb8df742
+tinker.lib.sync_only:70 [WARNING] Synchronous method 'ServiceClient.create_lora_training_client()' called from async context. Use 'ServiceClient.create_lora_training_client_async()' instead.
+Calling sync methods from async code can cause deadlocks and performance issues.
+tinker.lib.sync_only:71 [WARNING] ===== Stack for calling sync from async ===== 
+['  File "/home/prakharg/cot-transparency/scripts/tinker_training/train_sft.py", line 237, in <module>\n    main()\n', '  File "/home/prakharg/cot-transparency/scripts/tinker_training/train_sft.py", line 232, in main\n    final_checkpoint = asyncio.run(train_sft(data_path, config, resume_from=args.resume_from))\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/runners.py", line 195, in run\n    return runner.run(main)\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/runners.py", line 118, in run\n    return self._loop.run_until_complete(task)\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/base_events.py", line 678, in run_until_complete\n    self.run_forever()\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/base_events.py", line 645, in run_forever\n    self._run_once()\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/base_events.py", line 1999, in _run_once\n    handle._run()\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/events.py", line 88, in _run\n    self._context.run(self._callback, *self._args)\n', '  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/finetune.py", line 138, in train_sft\n    training_client = service_client.create_lora_training_client(\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 72, in wrapper\n    f"===== Stack for calling sync from async ===== \\n{traceback.format_stack()}\\n ==========="\n']
+ ===========
+tinker.lib.public_interfaces.service_client:151 [INFO] TrainingClient initialized for model 0de38f2b-9be1-52e6-81a6-234cbb8df742:train:0
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 1               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000286 │
+│ train/nll            │ 0.215550 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 2               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000280 │
+│ train/nll            │ 0.174426 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 3               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000275 │
+│ train/nll            │ 0.169437 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 4               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000270 │
+│ train/nll            │ 0.161253 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 5               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000264 │
+│ train/nll            │ 0.134330 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 6               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000259 │
+│ train/nll            │ 0.143666 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 7               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000254 │
+│ train/nll            │ 0.133804 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 8               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000249 │
+│ train/nll            │ 0.134335 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 9               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000243 │
+│ train/nll            │ 0.121653 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 10              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000238 │
+│ train/nll            │ 0.127355 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 11              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000233 │
+│ train/nll            │ 0.131474 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 12              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000227 │
+│ train/nll            │ 0.130356 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 13              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000222 │
+│ train/nll            │ 0.118888 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 14              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000217 │
+│ train/nll            │ 0.121855 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 15              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000212 │
+│ train/nll            │ 0.134910 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 16              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000206 │
+│ train/nll            │ 0.121535 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 17              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000201 │
+│ train/nll            │ 0.127577 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 18              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000196 │
+│ train/nll            │ 0.131778 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 19              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000190 │
+│ train/nll            │ 0.121559 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 20              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000185 │
+│ train/nll            │ 0.123454 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 21              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000180 │
+│ train/nll            │ 0.121841 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 22              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000175 │
+│ train/nll            │ 0.125148 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 23              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000169 │
+│ train/nll            │ 0.125979 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 24              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000164 │
+│ train/nll            │ 0.126281 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 25              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000159 │
+│ train/nll            │ 0.121364 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 26              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000153 │
+│ train/nll            │ 0.116765 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 27              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000148 │
+│ train/nll            │ 0.117238 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 28              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000143 │
+│ train/nll            │ 0.122947 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 29              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000138 │
+│ train/nll            │ 0.123563 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 30              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000132 │
+│ train/nll            │ 0.117410 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 31              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000127 │
+│ train/nll            │ 0.118848 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 32              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000122 │
+│ train/nll            │ 0.124846 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 33              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000116 │
+│ train/nll            │ 0.117757 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 34              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000111 │
+│ train/nll            │ 0.117982 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 35              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000106 │
+│ train/nll            │ 0.124175 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 36              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000101 │
+│ train/nll            │ 0.122711 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 37              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000095 │
+│ train/nll            │ 0.116438 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 38              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000090 │
+│ train/nll            │ 0.120439 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 39              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000085 │
+│ train/nll            │ 0.114074 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 40              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000079 │
+│ train/nll            │ 0.112843 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 41              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000074 │
+│ train/nll            │ 0.115805 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 42              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000069 │
+│ train/nll            │ 0.117700 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 43              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000063 │
+│ train/nll            │ 0.116456 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 44              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000058 │
+│ train/nll            │ 0.120347 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 45              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000053 │
+│ train/nll            │ 0.117411 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 46              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000048 │
+│ train/nll            │ 0.116732 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 47              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000042 │
+│ train/nll            │ 0.119277 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 48              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000037 │
+│ train/nll            │ 0.116541 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 49              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000032 │
+│ train/nll            │ 0.117603 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 50              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000026 │
+│ train/nll            │ 0.117078 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 51              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000021 │
+│ train/nll            │ 0.109850 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 52              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000016 │
+│ train/nll            │ 0.119930 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 53              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000011 │
+│ train/nll            │ 0.120796 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 54              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000005 │
+│ train/nll            │ 0.119770 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 55              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000000 │
+│ train/nll            │ 0.114847 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 55              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/epoch          │ 1        │
+│ train/epoch_nll      │ 0.126327 │
+└──────────────────────┴──────────┘
+tinker_cookbook.checkpoint_utils:461 [INFO] Saved checkpoints: {'sampler_path': 'tinker://0de38f2b-9be1-52e6-81a6-234cbb8df742:train:0/sampler_weights/sweep-bct-instruct_llama-bct-inst'}
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-instruct/llama-bct-inst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                                    Step 55                                     
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Metric               ┃ Value                                                 ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ final_checkpoint     │ tinker://0de38f2b-9be1-52e6-81a6-234cbb8df742:train:… │
+└──────────────────────┴───────────────────────────────────────────────────────┘
+tinker_cookbook.utils.ml_log:265 [INFO] 
+Configuration:
+  final_checkpoint: 
+'tinker://0de38f2b-9be1-52e6-81a6-234cbb8df742:train:0/sampler_weights/sweep-bct
+-instruct_llama-bct-inst'
+  all_checkpoints: 
+['tinker://0de38f2b-9be1-52e6-81a6-234cbb8df742:train:0/sampler_weights/sweep-bc
+t-instruct_llama-bct-inst']

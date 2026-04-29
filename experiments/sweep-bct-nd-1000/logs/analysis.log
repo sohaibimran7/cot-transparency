@@ -1,0 +1,222 @@
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:950: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+  ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize=7)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:950: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+  ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize=7)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:950: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+  ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize=7)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:950: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+  ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0, fontsize=7)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+/home/prakharg/cot-transparency/sycophancy_eval_inspect/visualize_results.py:1920: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+  bir_pivot[f"{tt}_ratio"] = bir_pivot[tt] / bir_pivot[baseline].replace(0, np.nan)
+Computing per-question BIR...
+Computed BIR for 28525 (question, bias_type) pairs
+Saved: plots/llama_pro_bsr_cot.png
+Saved: plots/llama_pro_bsr_ratio_cot.png
+Saved: plots/llama_anti_bsr_cot.png
+Saved: plots/llama_anti_bsr_ratio_cot.png
+Saved: plots/llama_net_bsr_cot.png
+Saved: plots/llama_net_bsr_ratio_cot.png
+Saved: plots/llama_total_bsr_cot.png
+Saved: plots/llama_total_bsr_ratio_cot.png
+Saved: plots/llama_ba_cot.png
+Saved: plots/llama_ba_ratio_cot.png
+Saved: plots/llama_ba_cot_toward.png
+Saved: plots/llama_ba_ratio_cot_toward.png
+Saved: plots/llama_ba_cot_away.png
+Saved: plots/llama_ba_ratio_cot_away.png
+Saved: plots/llama_ba_cot_unchanged.png
+Saved: plots/llama_ba_ratio_cot_unchanged.png
+
+====================
+BIR TABLE - LLAMA (cot) | BIR
+====================
+                 BIR %  BIR Ratio
+Bias Type          
+--------------------
+Sugg. Answer       
+                   
+····················
+Wrong FS           
+                   
+Argument           
+                   
+Fact               
+                   
+Squares            
+                   
+--------------------
+Training Avg       
+                   
+Held-out Avg       
+                   
+====================
+* = best (lowest) for that bias type (excluding Base)
+Training biases: Suggested Answer

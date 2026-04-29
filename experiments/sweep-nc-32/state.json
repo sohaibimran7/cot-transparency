@@ -1,0 +1,61 @@
+{
+  "experiment": "sweep-nc-32",
+  "config_hash": "54f29395b4af",
+  "stages": {
+    "training": {
+      "status": "completed",
+      "completed_at": "2026-04-16T17:53:53.530664+00:00",
+      "outputs": {
+        "main_checkpoint": "tinker://d800acd4-a3c5-5f13-b9c2-d6fb40ff2a56:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc32",
+        "checkpoint": "tinker://d800acd4-a3c5-5f13-b9c2-d6fb40ff2a56:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc32",
+        "control_checkpoint": "tinker://06142342-25c6-585d-b09b-2bca8da3bf6a:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc32-ctrl"
+      }
+    },
+    "evaluation": {
+      "status": "completed",
+      "completed_at": "2026-04-16T17:53:53.530681+00:00",
+      "outputs": {}
+    },
+    "analysis": {
+      "status": "completed",
+      "completed_at": "2026-04-17T03:29:46.669699+00:00"
+    }
+  },
+  "tasks": {
+    "train:main": {
+      "status": "completed",
+      "stage": "training",
+      "label": "main",
+      "started_at": "2026-04-16T07:22:25.368719+00:00",
+      "completed_at": "2026-04-16T17:28:13.594225+00:00",
+      "outputs": {
+        "checkpoint": "tinker://d800acd4-a3c5-5f13-b9c2-d6fb40ff2a56:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc32"
+      }
+    },
+    "train:control": {
+      "status": "completed",
+      "stage": "training",
+      "label": "control",
+      "started_at": "2026-04-16T07:22:25.371715+00:00",
+      "completed_at": "2026-04-16T17:28:13.597587+00:00",
+      "outputs": {
+        "checkpoint": "tinker://06142342-25c6-585d-b09b-2bca8da3bf6a:train:0/sampler_weights/sweep-n-consistency_llama-rlct-nc32-ctrl"
+      }
+    },
+    "eval:control": {
+      "status": "completed",
+      "stage": "evaluation",
+      "label": "control",
+      "started_at": "2026-04-16T10:11:08.398575+00:00",
+      "completed_at": "2026-04-16T17:28:13.600547+00:00"
+    },
+    "eval:main": {
+      "status": "completed",
+      "stage": "evaluation",
+      "label": "main",
+      "started_at": "2026-04-16T17:28:13.603690+00:00",
+      "error": "Marked failed: was stuck 'running' from killed SLURM job",
+      "completed_at": "2026-04-16T17:53:53.525193+00:00"
+    }
+  }
+}

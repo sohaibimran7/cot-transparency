@@ -1,0 +1,984 @@
+=== KL Coef Sweep: 4 configs ===
+Started: Tue Apr 14 12:07:10 EDT 2026
+
+========================================
+[1/4] kl_coef=0.01
+Config: scripts/tinker_training/experiment_configs/sweep_kl_coef_0.01.yaml
+Time: Tue Apr 14 12:07:10 EDT 2026
+========================================
+Experiment: sweep-kl-0.01
+Model: meta-llama/Llama-3.1-8B-Instruct
+
+Stages to run: training, evaluation
+
+  Skipping eval:base for llama-base: all 5 (bias × dataset) combos already present under sycophancy_eval_inspect/logs/tinker_evals/llama-base (use --force to re-run)
+
+[train:main] ============================================================
+[train:main]   Stage: training_main
+[train:main] ============================================================
+[train:main] Command:
+[train:main]   /home/prakharg/miniconda3/envs/cot/bin/python \
+[train:main]     scripts/tinker_training/train_rl.py \
+[train:main]     --model \
+[train:main]     meta-llama/Llama-3.1-8B-Instruct \
+[train:main]     --experiment-name \
+[train:main]     sweep-kl-coef \
+[train:main]     --run-name \
+[train:main]     llama-rlct-kl0.01 \
+[train:main]     --bias-types \
+[train:main]     suggested_answer \
+[train:main]     --datasets \
+[train:main]     mmlu \
+[train:main]     --n-datapoints \
+[train:main]     128 \
+[train:main]     --lora-rank \
+[train:main]     8 \
+[train:main]     --kl-coef \
+[train:main]     0.01 \
+[train:main]     --anchor-weight \
+[train:main]     0.5 \
+[train:main]     --loss-fn \
+[train:main]     ppo \
+[train:main]     --n-ref-rollouts \
+[train:main]     64 \
+[train:main]     --n-train-rollouts \
+[train:main]     64 \
+[train:main]     --n-consistency-rollouts \
+[train:main]     16 \
+[train:main]     --batch-size \
+[train:main]     1 \
+[train:main]     --refresh-every \
+[train:main]     1 \
+[train:main]     --checkpoint-every \
+[train:main]     64 \
+[train:main]     -y
+
+
+[train:control] ============================================================
+[train:control]   Stage: training_control
+[train:control] ============================================================
+[train:control] Command:
+[train:control]   /home/prakharg/miniconda3/envs/cot/bin/python \
+[train:control]     scripts/tinker_training/train_rl.py \
+[train:control]     --model \
+[train:control]     meta-llama/Llama-3.1-8B-Instruct \
+[train:control]     --experiment-name \
+[train:control]     sweep-kl-coef \
+[train:control]     --run-name \
+[train:control]     llama-rlct-kl0.01-ctrl \
+[train:control]     --bias-types \
+[train:control]     suggested_answer \
+[train:control]     --datasets \
+[train:control]     mmlu \
+[train:control]     --n-datapoints \
+[train:control]     128 \
+[train:control]     --lora-rank \
+[train:control]     8 \
+[train:control]     --kl-coef \
+[train:control]     0.01 \
+[train:control]     --anchor-weight \
+[train:control]     0.5 \
+[train:control]     --loss-fn \
+[train:control]     ppo \
+[train:control]     --n-ref-rollouts \
+[train:control]     64 \
+[train:control]     --n-train-rollouts \
+[train:control]     64 \
+[train:control]     --n-consistency-rollouts \
+[train:control]     16 \
+[train:control]     --batch-size \
+[train:control]     1 \
+[train:control]     --refresh-every \
+[train:control]     1 \
+[train:control]     --checkpoint-every \
+[train:control]     64 \
+[train:control]     --control \
+[train:control]     -y
+
+[train:control] Your Tinker SDK version is outdated. Please upgrade to the latest version.
+[train:main] Your Tinker SDK version is outdated. Please upgrade to the latest version.
+
+[train:main] Loading datapoints: 128 total across 1 combos (128 per combo)
+[train:main]   Loaded 128 from mmlu_suggested_answer.jsonl
+
+[train:main] ============================================================
+[train:main] RL Training Configuration
+[train:main] ============================================================
+[train:main]   Model:              meta-llama/Llama-3.1-8B-Instruct
+[train:main]   Experiment:         sweep-kl-coef/llama-rlct-kl0.01
+[train:main]   Bias types:         ['suggested_answer']
+[train:main]   Datasets:           ['mmlu']
+[train:main]   Total datapoints:   128
+[train:main]   Perturbations:      unbiased (ref) + biased (train)
+[train:main]   LR:                 None (constant)
+[train:main]   LoRA rank:          8
+[train:main]   Batch size:         1
+[train:main]   Grad accum steps:   1
+[train:main]   N epochs:           1
+[train:main]   Estimated steps:    128
+[train:main]   Checkpoint every:   64 steps
+[train:main]   n_ref_rollouts:     64
+[train:main]   n_train_rollouts:   64
+[train:main]   n_consistency_rollouts: 16
+[train:main]   n_anchor_rollouts:  None
+[train:main]   KL coef:            0.01
+[train:main]   Anchor weight:      0.5
+[train:main]   Anchor model:       base
+[train:main]   Loss fn:            ppo
+[train:main] ============================================================
+[train:main] Traceback (most recent call last):
+[train:main]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 301, in <module>
+[train:main]     main()
+[train:main]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 283, in main
+[train:main]     trainer.setup()
+[train:main]   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 258, in setup
+[train:main]     self.training_client = self.service_client.create_lora_training_client(
+[train:main]                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 75, in wrapper
+[train:main]     return func(*args, **kwargs)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 394, in _wrapper
+
+[train:control] Loading datapoints: 128 total across 1 combos (128 per combo)
+[train:control]   Loaded 128 from mmlu_suggested_answer.jsonl
+
+[train:control] ============================================================
+[train:control] RL Training Configuration
+[train:control] ============================================================
+[train:control]   Model:              meta-llama/Llama-3.1-8B-Instruct
+[train:control]   Experiment:         sweep-kl-coef/llama-rlct-kl0.01-ctrl
+[train:control]   Bias types:         ['suggested_answer']
+[train:main]     return func(*args, **kwargs)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 201, in create_lora_training_client
+[train:control]   Datasets:           ['mmlu']
+[train:control]   Total datapoints:   128
+[train:control]   Perturbations:      unbiased (ref) + unbiased (train) [CONTROL]
+[train:control]   LR:                 None (constant)
+[train:control]   LoRA rank:          8
+[train:control]   Batch size:         1
+[train:control]   Grad accum steps:   1
+[train:control]   N epochs:           1
+[train:control]   Estimated steps:    128
+[train:control]   Checkpoint every:   64 steps
+[train:control]   n_ref_rollouts:     64
+[train:control]   n_train_rollouts:   64
+[train:control]   n_consistency_rollouts: 16
+[train:control]   n_anchor_rollouts:  None
+[train:control]   KL coef:            0.01
+[train:control]   Anchor weight:      0.5
+[train:control]   Anchor model:       base
+[train:control]   Loss fn:            ppo
+[train:control] ============================================================
+[train:control] Traceback (most recent call last):
+[train:control]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 301, in <module>
+[train:control]     main()
+[train:control]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 283, in main
+[train:control]     trainer.setup()
+[train:control]   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 258, in setup
+[train:control]     self.training_client = self.service_client.create_lora_training_client(
+[train:main]     ).result()
+[train:main]       ^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 127, in result
+[train:control]                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 75, in wrapper
+[train:control]     return func(*args, **kwargs)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 394, in _wrapper
+[train:main]     return self._future.result(timeout)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 456, in result
+[train:control]     return func(*args, **kwargs)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 201, in create_lora_training_client
+[train:control]     ).result()
+[train:control]       ^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 127, in result
+[train:control]     return self._future.result(timeout)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 456, in result
+[train:main]     return self.__get_result()
+[train:main]            ^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+[train:control]     return self.__get_result()
+[train:control]            ^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+[train:main]     raise self._exception
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 136, in _create_lora_training_client_async
+[train:control]     raise self._exception
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 136, in _create_lora_training_client_async
+[train:main]     future = await client.models.create(request=request)
+[train:main]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/models.py", line 61, in create
+[train:control]     future = await client.models.create(request=request)
+[train:control]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/models.py", line 61, in create
+[train:main]     return await self._post(
+[train:main]            ^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, in post
+[train:control]     return await self._post(
+[train:control]            ^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, in post
+[train:control]     return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+[train:main]     return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, in request
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, in request
+[train:control]     raise self._make_status_error_from_response(err.response) from None
+[train:main]     raise self._make_status_error_from_response(err.response) from None
+[train:control] tinker.APIStatusError: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'}
+[train:main] tinker.APIStatusError: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'}
+
+============================================================
+  Pipeline summary: sweep-kl-0.01
+============================================================
+  Completed: 0 / 4
+  Failed:    2
+    - train:main: exit code 1
+    - train:control: exit code 1
+  Cancelled: 2 (upstream failure)
+    - eval:main
+    - eval:control
+
+  Check logs: /home/prakharg/cot-transparency/experiments/sweep-kl-0.01/logs/
+  Fix the issue and re-run the same command — completed tasks will skip.
+FAILED: kl_coef=0.01 (exit 1)
+Continuing to next config...
+
+========================================
+[2/4] kl_coef=0.05
+Config: scripts/tinker_training/experiment_configs/sweep_kl_coef_0.05.yaml
+Time: Tue Apr 14 12:07:37 EDT 2026
+========================================
+Experiment: sweep-kl-0.05
+Model: meta-llama/Llama-3.1-8B-Instruct
+
+Stages to run: training, evaluation
+
+  Skipping eval:base for llama-base: all 5 (bias × dataset) combos already present under sycophancy_eval_inspect/logs/tinker_evals/llama-base (use --force to re-run)
+
+[train:main] ============================================================
+[train:main]   Stage: training_main
+[train:main] ============================================================
+[train:main] Command:
+[train:main]   /home/prakharg/miniconda3/envs/cot/bin/python \
+[train:main]     scripts/tinker_training/train_rl.py \
+[train:main]     --model \
+[train:main]     meta-llama/Llama-3.1-8B-Instruct \
+[train:main]     --experiment-name \
+[train:main]     sweep-kl-coef \
+[train:main]     --run-name \
+[train:main]     llama-rlct-kl0.05 \
+[train:main]     --bias-types \
+[train:main]     suggested_answer \
+[train:main]     --datasets \
+[train:main]     mmlu \
+[train:main]     --n-datapoints \
+[train:main]     128 \
+[train:main]     --lora-rank \
+[train:main]     8 \
+[train:main]     --kl-coef \
+[train:main]     0.05 \
+[train:main]     --anchor-weight \
+[train:main]     0.5 \
+[train:main]     --loss-fn \
+[train:main]     ppo \
+[train:main]     --n-ref-rollouts \
+[train:main]     64 \
+[train:main]     --n-train-rollouts \
+[train:main]     64 \
+[train:main]     --n-consistency-rollouts \
+[train:main]     16 \
+[train:main]     --batch-size \
+[train:main]     1 \
+[train:main]     --refresh-every \
+[train:main]     1 \
+[train:main]     --checkpoint-every \
+[train:main]     64 \
+[train:main]     -y
+
+
+[train:control] ============================================================
+[train:control]   Stage: training_control
+[train:control] ============================================================
+[train:control] Command:
+[train:control]   /home/prakharg/miniconda3/envs/cot/bin/python \
+[train:control]     scripts/tinker_training/train_rl.py \
+[train:control]     --model \
+[train:control]     meta-llama/Llama-3.1-8B-Instruct \
+[train:control]     --experiment-name \
+[train:control]     sweep-kl-coef \
+[train:control]     --run-name \
+[train:control]     llama-rlct-kl0.05-ctrl \
+[train:control]     --bias-types \
+[train:control]     suggested_answer \
+[train:control]     --datasets \
+[train:control]     mmlu \
+[train:control]     --n-datapoints \
+[train:control]     128 \
+[train:control]     --lora-rank \
+[train:control]     8 \
+[train:control]     --kl-coef \
+[train:control]     0.05 \
+[train:control]     --anchor-weight \
+[train:control]     0.5 \
+[train:control]     --loss-fn \
+[train:control]     ppo \
+[train:control]     --n-ref-rollouts \
+[train:control]     64 \
+[train:control]     --n-train-rollouts \
+[train:control]     64 \
+[train:control]     --n-consistency-rollouts \
+[train:control]     16 \
+[train:control]     --batch-size \
+[train:control]     1 \
+[train:control]     --refresh-every \
+[train:control]     1 \
+[train:control]     --checkpoint-every \
+[train:control]     64 \
+[train:control]     --control \
+[train:control]     -y
+
+[train:control] Your Tinker SDK version is outdated. Please upgrade to the latest version.
+[train:main] Your Tinker SDK version is outdated. Please upgrade to the latest version.
+
+[train:control] Loading datapoints: 128 total across 1 combos (128 per combo)
+[train:control]   Loaded 128 from mmlu_suggested_answer.jsonl
+
+[train:control] ============================================================
+[train:control] RL Training Configuration
+[train:control] ============================================================
+[train:control]   Model:              meta-llama/Llama-3.1-8B-Instruct
+[train:control]   Experiment:         sweep-kl-coef/llama-rlct-kl0.05-ctrl
+[train:control]   Bias types:         ['suggested_answer']
+[train:control]   Datasets:           ['mmlu']
+[train:control]   Total datapoints:   128
+[train:control]   Perturbations:      unbiased (ref) + unbiased (train) [CONTROL]
+[train:control]   LR:                 None (constant)
+[train:control]   LoRA rank:          8
+[train:control]   Batch size:         1
+[train:control]   Grad accum steps:   1
+[train:control]   N epochs:           1
+[train:control]   Estimated steps:    128
+[train:control]   Checkpoint every:   64 steps
+[train:control]   n_ref_rollouts:     64
+[train:control]   n_train_rollouts:   64
+[train:control]   n_consistency_rollouts: 16
+[train:control]   n_anchor_rollouts:  None
+[train:control]   KL coef:            0.05
+[train:control]   Anchor weight:      0.5
+[train:control]   Anchor model:       base
+[train:control]   Loss fn:            ppo
+[train:control] ============================================================
+[train:control] Traceback (most recent call last):
+[train:control]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 301, in <module>
+[train:control]     main()
+[train:control]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 283, in main
+[train:control]     trainer.setup()
+[train:control]   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 258, in setup
+[train:control]     self.training_client = self.service_client.create_lora_training_client(
+[train:control]                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 75, in wrapper
+[train:control]     return func(*args, **kwargs)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 394, in _wrapper
+[train:control]     return func(*args, **kwargs)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 201, in create_lora_training_client
+[train:control]     ).result()
+[train:control]       ^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 127, in result
+[train:control]     return self._future.result(timeout)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 456, in result
+[train:control]     return self.__get_result()
+[train:control]            ^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+[train:control]     raise self._exception
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 136, in _create_lora_training_client_async
+[train:control]     future = await client.models.create(request=request)
+[train:control]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/models.py", line 61, in create
+[train:control]     return await self._post(
+[train:control]            ^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, in post
+[train:control]     return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, in request
+[train:control]     raise self._make_status_error_from_response(err.response) from None
+[train:control] tinker.APIStatusError: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'}
+
+[train:main] Loading datapoints: 128 total across 1 combos (128 per combo)
+[train:main]   Loaded 128 from mmlu_suggested_answer.jsonl
+
+[train:main] ============================================================
+[train:main] RL Training Configuration
+[train:main] ============================================================
+[train:main]   Model:              meta-llama/Llama-3.1-8B-Instruct
+[train:main]   Experiment:         sweep-kl-coef/llama-rlct-kl0.05
+[train:main]   Bias types:         ['suggested_answer']
+[train:main]   Datasets:           ['mmlu']
+[train:main]   Total datapoints:   128
+[train:main]   Perturbations:      unbiased (ref) + biased (train)
+[train:main]   LR:                 None (constant)
+[train:main]   LoRA rank:          8
+[train:main]   Batch size:         1
+[train:main]   Grad accum steps:   1
+[train:main]   N epochs:           1
+[train:main]   Estimated steps:    128
+[train:main]   Checkpoint every:   64 steps
+[train:main]   n_ref_rollouts:     64
+[train:main]   n_train_rollouts:   64
+[train:main]   n_consistency_rollouts: 16
+[train:main]   n_anchor_rollouts:  None
+[train:main]   KL coef:            0.05
+[train:main]   Anchor weight:      0.5
+[train:main]   Anchor model:       base
+[train:main]   Loss fn:            ppo
+[train:main] ============================================================
+[train:main] Traceback (most recent call last):
+[train:main]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 301, in <module>
+[train:main]     main()
+[train:main]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 283, in main
+[train:main]     trainer.setup()
+[train:main]   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 258, in setup
+[train:main]     self.training_client = self.service_client.create_lora_training_client(
+[train:main]                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 75, in wrapper
+[train:main]     return func(*args, **kwargs)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 394, in _wrapper
+[train:main]     return func(*args, **kwargs)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 201, in create_lora_training_client
+[train:main]     ).result()
+[train:main]       ^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 127, in result
+[train:main]     return self._future.result(timeout)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 456, in result
+[train:main]     return self.__get_result()
+[train:main]            ^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+[train:main]     raise self._exception
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 136, in _create_lora_training_client_async
+[train:main]     future = await client.models.create(request=request)
+[train:main]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/models.py", line 61, in create
+[train:main]     return await self._post(
+[train:main]            ^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, in post
+[train:main]     return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, in request
+[train:main]     raise self._make_status_error_from_response(err.response) from None
+[train:main] tinker.APIStatusError: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'}
+
+============================================================
+  Pipeline summary: sweep-kl-0.05
+============================================================
+  Completed: 0 / 4
+  Failed:    2
+    - train:main: exit code 1
+    - train:control: exit code 1
+  Cancelled: 2 (upstream failure)
+    - eval:main
+    - eval:control
+
+  Check logs: /home/prakharg/cot-transparency/experiments/sweep-kl-0.05/logs/
+  Fix the issue and re-run the same command — completed tasks will skip.
+FAILED: kl_coef=0.05 (exit 1)
+Continuing to next config...
+
+========================================
+[3/4] kl_coef=0.1
+Config: scripts/tinker_training/experiment_configs/sweep_kl_coef_0.1.yaml
+Time: Tue Apr 14 12:07:52 EDT 2026
+========================================
+Experiment: sweep-kl-0.1
+Model: meta-llama/Llama-3.1-8B-Instruct
+
+Stages to run: training, evaluation
+
+  Skipping eval:base for llama-base: all 5 (bias × dataset) combos already present under sycophancy_eval_inspect/logs/tinker_evals/llama-base (use --force to re-run)
+
+[train:main] ============================================================
+[train:main]   Stage: training_main
+[train:main] ============================================================
+[train:main] Command:
+[train:main]   /home/prakharg/miniconda3/envs/cot/bin/python \
+[train:main]     scripts/tinker_training/train_rl.py \
+[train:main]     --model \
+[train:main]     meta-llama/Llama-3.1-8B-Instruct \
+[train:main]     --experiment-name \
+[train:main]     sweep-kl-coef \
+[train:main]     --run-name \
+[train:main]     llama-rlct-kl0.1 \
+[train:main]     --bias-types \
+[train:main]     suggested_answer \
+[train:main]     --datasets \
+[train:main]     mmlu \
+[train:main]     --n-datapoints \
+[train:main]     128 \
+[train:main]     --lora-rank \
+[train:main]     8 \
+[train:main]     --kl-coef \
+[train:main]     0.1 \
+[train:main]     --anchor-weight \
+[train:main]     0.5 \
+[train:main]     --loss-fn \
+[train:main]     ppo \
+[train:main]     --n-ref-rollouts \
+[train:main]     64 \
+[train:main]     --n-train-rollouts \
+[train:main]     64 \
+[train:main]     --n-consistency-rollouts \
+[train:main]     16 \
+[train:main]     --batch-size \
+[train:main]     1 \
+[train:main]     --refresh-every \
+[train:main]     1 \
+[train:main]     --checkpoint-every \
+[train:main]     64 \
+[train:main]     -y
+
+
+[train:control] ============================================================
+[train:control]   Stage: training_control
+[train:control] ============================================================
+[train:control] Command:
+[train:control]   /home/prakharg/miniconda3/envs/cot/bin/python \
+[train:control]     scripts/tinker_training/train_rl.py \
+[train:control]     --model \
+[train:control]     meta-llama/Llama-3.1-8B-Instruct \
+[train:control]     --experiment-name \
+[train:control]     sweep-kl-coef \
+[train:control]     --run-name \
+[train:control]     llama-rlct-kl0.1-ctrl \
+[train:control]     --bias-types \
+[train:control]     suggested_answer \
+[train:control]     --datasets \
+[train:control]     mmlu \
+[train:control]     --n-datapoints \
+[train:control]     128 \
+[train:control]     --lora-rank \
+[train:control]     8 \
+[train:control]     --kl-coef \
+[train:control]     0.1 \
+[train:control]     --anchor-weight \
+[train:control]     0.5 \
+[train:control]     --loss-fn \
+[train:control]     ppo \
+[train:control]     --n-ref-rollouts \
+[train:control]     64 \
+[train:control]     --n-train-rollouts \
+[train:control]     64 \
+[train:control]     --n-consistency-rollouts \
+[train:control]     16 \
+[train:control]     --batch-size \
+[train:control]     1 \
+[train:control]     --refresh-every \
+[train:control]     1 \
+[train:control]     --checkpoint-every \
+[train:control]     64 \
+[train:control]     --control \
+[train:control]     -y
+
+[train:main] Your Tinker SDK version is outdated. Please upgrade to the latest version.
+[train:control] Your Tinker SDK version is outdated. Please upgrade to the latest version.
+
+[train:main] Loading datapoints: 128 total across 1 combos (128 per combo)
+[train:main]   Loaded 128 from mmlu_suggested_answer.jsonl
+
+[train:main] ============================================================
+[train:main] RL Training Configuration
+[train:main] ============================================================
+[train:main]   Model:              meta-llama/Llama-3.1-8B-Instruct
+[train:main]   Experiment:         sweep-kl-coef/llama-rlct-kl0.1
+[train:main]   Bias types:         ['suggested_answer']
+[train:main]   Datasets:           ['mmlu']
+[train:main]   Total datapoints:   128
+[train:main]   Perturbations:      unbiased (ref) + biased (train)
+[train:main]   LR:                 None (constant)
+[train:main]   LoRA rank:          8
+[train:main]   Batch size:         1
+[train:main]   Grad accum steps:   1
+[train:main]   N epochs:           1
+[train:main]   Estimated steps:    128
+[train:main]   Checkpoint every:   64 steps
+[train:main]   n_ref_rollouts:     64
+[train:main]   n_train_rollouts:   64
+[train:main]   n_consistency_rollouts: 16
+[train:main]   n_anchor_rollouts:  None
+[train:main]   KL coef:            0.1
+[train:main]   Anchor weight:      0.5
+[train:main]   Anchor model:       base
+[train:main]   Loss fn:            ppo
+[train:main] ============================================================
+[train:main] Traceback (most recent call last):
+[train:main]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 301, in <module>
+[train:main]     main()
+[train:main]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 283, in main
+[train:main]     trainer.setup()
+[train:main]   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 258, in setup
+[train:main]     self.training_client = self.service_client.create_lora_training_client(
+[train:main]                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 75, in wrapper
+[train:main]     return func(*args, **kwargs)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 394, in _wrapper
+[train:main]     return func(*args, **kwargs)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 201, in create_lora_training_client
+[train:main]     ).result()
+[train:main]       ^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 127, in result
+[train:main]     return self._future.result(timeout)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 456, in result
+[train:main]     return self.__get_result()
+[train:main]            ^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+[train:main]     raise self._exception
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 136, in _create_lora_training_client_async
+[train:main]     future = await client.models.create(request=request)
+[train:main]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/models.py", line 61, in create
+[train:main]     return await self._post(
+[train:main]            ^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, in post
+[train:main]     return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, in request
+[train:main]     raise self._make_status_error_from_response(err.response) from None
+[train:main] tinker.APIStatusError: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'}
+
+[train:control] Loading datapoints: 128 total across 1 combos (128 per combo)
+[train:control]   Loaded 128 from mmlu_suggested_answer.jsonl
+
+[train:control] ============================================================
+[train:control] RL Training Configuration
+[train:control] ============================================================
+[train:control]   Model:              meta-llama/Llama-3.1-8B-Instruct
+[train:control]   Experiment:         sweep-kl-coef/llama-rlct-kl0.1-ctrl
+[train:control]   Bias types:         ['suggested_answer']
+[train:control]   Datasets:           ['mmlu']
+[train:control]   Total datapoints:   128
+[train:control]   Perturbations:      unbiased (ref) + unbiased (train) [CONTROL]
+[train:control]   LR:                 None (constant)
+[train:control]   LoRA rank:          8
+[train:control]   Batch size:         1
+[train:control]   Grad accum steps:   1
+[train:control]   N epochs:           1
+[train:control]   Estimated steps:    128
+[train:control]   Checkpoint every:   64 steps
+[train:control]   n_ref_rollouts:     64
+[train:control]   n_train_rollouts:   64
+[train:control]   n_consistency_rollouts: 16
+[train:control]   n_anchor_rollouts:  None
+[train:control]   KL coef:            0.1
+[train:control]   Anchor weight:      0.5
+[train:control]   Anchor model:       base
+[train:control]   Loss fn:            ppo
+[train:control] ============================================================
+[train:control] Traceback (most recent call last):
+[train:control]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 301, in <module>
+[train:control]     main()
+[train:control]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 283, in main
+[train:control]     trainer.setup()
+[train:control]   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 258, in setup
+[train:control]     self.training_client = self.service_client.create_lora_training_client(
+[train:control]                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 75, in wrapper
+[train:control]     return func(*args, **kwargs)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 394, in _wrapper
+[train:control]     return func(*args, **kwargs)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 201, in create_lora_training_client
+[train:control]     ).result()
+[train:control]       ^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 127, in result
+[train:control]     return self._future.result(timeout)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 456, in result
+[train:control]     return self.__get_result()
+[train:control]            ^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+[train:control]     raise self._exception
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 136, in _create_lora_training_client_async
+[train:control]     future = await client.models.create(request=request)
+[train:control]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/models.py", line 61, in create
+[train:control]     return await self._post(
+[train:control]            ^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, in post
+[train:control]     return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, in request
+[train:control]     raise self._make_status_error_from_response(err.response) from None
+[train:control] tinker.APIStatusError: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'}
+
+============================================================
+  Pipeline summary: sweep-kl-0.1
+============================================================
+  Completed: 0 / 4
+  Failed:    2
+    - train:main: exit code 1
+    - train:control: exit code 1
+  Cancelled: 2 (upstream failure)
+    - eval:main
+    - eval:control
+
+  Check logs: /home/prakharg/cot-transparency/experiments/sweep-kl-0.1/logs/
+  Fix the issue and re-run the same command — completed tasks will skip.
+FAILED: kl_coef=0.1 (exit 1)
+Continuing to next config...
+
+========================================
+[4/4] kl_coef=0.5
+Config: scripts/tinker_training/experiment_configs/sweep_kl_coef_0.5.yaml
+Time: Tue Apr 14 12:08:07 EDT 2026
+========================================
+Experiment: sweep-kl-0.5
+Model: meta-llama/Llama-3.1-8B-Instruct
+
+Stages to run: training, evaluation
+
+  Skipping eval:base for llama-base: all 5 (bias × dataset) combos already present under sycophancy_eval_inspect/logs/tinker_evals/llama-base (use --force to re-run)
+
+[train:main] ============================================================
+[train:main]   Stage: training_main
+[train:main] ============================================================
+[train:main] Command:
+[train:main]   /home/prakharg/miniconda3/envs/cot/bin/python \
+[train:main]     scripts/tinker_training/train_rl.py \
+[train:main]     --model \
+[train:main]     meta-llama/Llama-3.1-8B-Instruct \
+[train:main]     --experiment-name \
+[train:main]     sweep-kl-coef \
+[train:main]     --run-name \
+[train:main]     llama-rlct-kl0.5 \
+[train:main]     --bias-types \
+[train:main]     suggested_answer \
+[train:main]     --datasets \
+[train:main]     mmlu \
+[train:main]     --n-datapoints \
+[train:main]     128 \
+[train:main]     --lora-rank \
+[train:main]     8 \
+[train:main]     --kl-coef \
+[train:main]     0.5 \
+[train:main]     --anchor-weight \
+[train:main]     0.5 \
+[train:main]     --loss-fn \
+[train:main]     ppo \
+[train:main]     --n-ref-rollouts \
+[train:main]     64 \
+[train:main]     --n-train-rollouts \
+[train:main]     64 \
+[train:main]     --n-consistency-rollouts \
+[train:main]     16 \
+[train:main]     --batch-size \
+[train:main]     1 \
+[train:main]     --refresh-every \
+[train:main]     1 \
+[train:main]     --checkpoint-every \
+[train:main]     64 \
+[train:main]     -y
+
+
+[train:control] ============================================================
+[train:control]   Stage: training_control
+[train:control] ============================================================
+[train:control] Command:
+[train:control]   /home/prakharg/miniconda3/envs/cot/bin/python \
+[train:control]     scripts/tinker_training/train_rl.py \
+[train:control]     --model \
+[train:control]     meta-llama/Llama-3.1-8B-Instruct \
+[train:control]     --experiment-name \
+[train:control]     sweep-kl-coef \
+[train:control]     --run-name \
+[train:control]     llama-rlct-kl0.5-ctrl \
+[train:control]     --bias-types \
+[train:control]     suggested_answer \
+[train:control]     --datasets \
+[train:control]     mmlu \
+[train:control]     --n-datapoints \
+[train:control]     128 \
+[train:control]     --lora-rank \
+[train:control]     8 \
+[train:control]     --kl-coef \
+[train:control]     0.5 \
+[train:control]     --anchor-weight \
+[train:control]     0.5 \
+[train:control]     --loss-fn \
+[train:control]     ppo \
+[train:control]     --n-ref-rollouts \
+[train:control]     64 \
+[train:control]     --n-train-rollouts \
+[train:control]     64 \
+[train:control]     --n-consistency-rollouts \
+[train:control]     16 \
+[train:control]     --batch-size \
+[train:control]     1 \
+[train:control]     --refresh-every \
+[train:control]     1 \
+[train:control]     --checkpoint-every \
+[train:control]     64 \
+[train:control]     --control \
+[train:control]     -y
+
+[train:main] Your Tinker SDK version is outdated. Please upgrade to the latest version.
+[train:control] Your Tinker SDK version is outdated. Please upgrade to the latest version.
+
+[train:main] Loading datapoints: 128 total across 1 combos (128 per combo)
+[train:main]   Loaded 128 from mmlu_suggested_answer.jsonl
+
+[train:main] ============================================================
+[train:main] RL Training Configuration
+[train:main] ============================================================
+[train:main]   Model:              meta-llama/Llama-3.1-8B-Instruct
+[train:main]   Experiment:         sweep-kl-coef/llama-rlct-kl0.5
+[train:main]   Bias types:         ['suggested_answer']
+[train:main]   Datasets:           ['mmlu']
+[train:main]   Total datapoints:   128
+[train:main]   Perturbations:      unbiased (ref) + biased (train)
+[train:main]   LR:                 None (constant)
+[train:main]   LoRA rank:          8
+[train:main]   Batch size:         1
+[train:main]   Grad accum steps:   1
+[train:main]   N epochs:           1
+[train:main]   Estimated steps:    128
+[train:main]   Checkpoint every:   64 steps
+[train:main]   n_ref_rollouts:     64
+[train:main]   n_train_rollouts:   64
+[train:main]   n_consistency_rollouts: 16
+[train:main]   n_anchor_rollouts:  None
+[train:main]   KL coef:            0.5
+[train:main]   Anchor weight:      0.5
+[train:main]   Anchor model:       base
+[train:main]   Loss fn:            ppo
+[train:main] ============================================================
+[train:main] Traceback (most recent call last):
+[train:main]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 301, in <module>
+[train:main]     main()
+[train:main]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 283, in main
+[train:main]     trainer.setup()
+[train:main]   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 258, in setup
+[train:main]     self.training_client = self.service_client.create_lora_training_client(
+[train:main]                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 75, in wrapper
+[train:main]     return func(*args, **kwargs)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 394, in _wrapper
+[train:main]     return func(*args, **kwargs)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 201, in create_lora_training_client
+[train:main]     ).result()
+[train:main]       ^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 127, in result
+[train:main]     return self._future.result(timeout)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 456, in result
+[train:main]     return self.__get_result()
+[train:main]            ^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+[train:main]     raise self._exception
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 136, in _create_lora_training_client_async
+[train:main]     future = await client.models.create(request=request)
+[train:main]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/models.py", line 61, in create
+[train:main]     return await self._post(
+[train:main]            ^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, in post
+[train:main]     return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+[train:main]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:main]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, in request
+[train:main]     raise self._make_status_error_from_response(err.response) from None
+[train:main] tinker.APIStatusError: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'}
+
+[train:control] Loading datapoints: 128 total across 1 combos (128 per combo)
+[train:control]   Loaded 128 from mmlu_suggested_answer.jsonl
+
+[train:control] ============================================================
+[train:control] RL Training Configuration
+[train:control] ============================================================
+[train:control]   Model:              meta-llama/Llama-3.1-8B-Instruct
+[train:control]   Experiment:         sweep-kl-coef/llama-rlct-kl0.5-ctrl
+[train:control]   Bias types:         ['suggested_answer']
+[train:control]   Datasets:           ['mmlu']
+[train:control]   Total datapoints:   128
+[train:control]   Perturbations:      unbiased (ref) + unbiased (train) [CONTROL]
+[train:control]   LR:                 None (constant)
+[train:control]   LoRA rank:          8
+[train:control]   Batch size:         1
+[train:control]   Grad accum steps:   1
+[train:control]   N epochs:           1
+[train:control]   Estimated steps:    128
+[train:control]   Checkpoint every:   64 steps
+[train:control]   n_ref_rollouts:     64
+[train:control]   n_train_rollouts:   64
+[train:control]   n_consistency_rollouts: 16
+[train:control]   n_anchor_rollouts:  None
+[train:control]   KL coef:            0.5
+[train:control]   Anchor weight:      0.5
+[train:control]   Anchor model:       base
+[train:control]   Loss fn:            ppo
+[train:control] ============================================================
+[train:control] Traceback (most recent call last):
+[train:control]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 301, in <module>
+[train:control]     main()
+[train:control]   File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 283, in main
+[train:control]     trainer.setup()
+[train:control]   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 258, in setup
+[train:control]     self.training_client = self.service_client.create_lora_training_client(
+[train:control]                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 75, in wrapper
+[train:control]     return func(*args, **kwargs)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 394, in _wrapper
+[train:control]     return func(*args, **kwargs)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 201, in create_lora_training_client
+[train:control]     ).result()
+[train:control]       ^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 127, in result
+[train:control]     return self._future.result(timeout)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 456, in result
+[train:control]     return self.__get_result()
+[train:control]            ^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+[train:control]     raise self._exception
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 136, in _create_lora_training_client_async
+[train:control]     future = await client.models.create(request=request)
+[train:control]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/models.py", line 61, in create
+[train:control]     return await self._post(
+[train:control]            ^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, in post
+[train:control]     return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+[train:control]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[train:control]   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, in request
+[train:control]     raise self._make_status_error_from_response(err.response) from None
+[train:control] tinker.APIStatusError: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'}
+
+============================================================
+  Pipeline summary: sweep-kl-0.5
+============================================================
+  Completed: 0 / 4
+  Failed:    2
+    - train:main: exit code 1
+    - train:control: exit code 1
+  Cancelled: 2 (upstream failure)
+    - eval:main
+    - eval:control
+
+  Check logs: /home/prakharg/cot-transparency/experiments/sweep-kl-0.5/logs/
+  Fix the issue and re-run the same command — completed tasks will skip.
+FAILED: kl_coef=0.5 (exit 1)
+Continuing to next config...
+
+=== Sweep complete: Tue Apr 14 12:08:20 EDT 2026 ===

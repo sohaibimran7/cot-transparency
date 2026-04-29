@@ -1,0 +1,9 @@
+# Unbiased-eval accuracy for sweep: rollouts
+# variant=unbiased only, mcq_bias_scorer.correct
+
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-rlct-nr128                 193      0.482
+  llama-rlct-nr32                  191      0.623
+  llama-rlct-nr64                  199      0.462

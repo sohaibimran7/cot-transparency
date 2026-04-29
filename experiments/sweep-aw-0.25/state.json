@@ -1,0 +1,48 @@
+{
+  "experiment": "sweep-aw-0.25",
+  "config_hash": "61a02c827bbc",
+  "stages": {
+    "training": {
+      "status": "failed",
+      "completed_at": "2026-04-14T16:07:07.698703+00:00",
+      "outputs": {}
+    },
+    "evaluation": {
+      "status": "failed",
+      "completed_at": "2026-04-14T16:07:07.698721+00:00",
+      "outputs": {}
+    }
+  },
+  "tasks": {
+    "train:main": {
+      "status": "failed",
+      "stage": "training",
+      "label": "main",
+      "started_at": "2026-04-14T14:06:19.587988+00:00",
+      "completed_at": "2026-04-14T16:07:00.649903+00:00",
+      "error": "exit code 1"
+    },
+    "train:control": {
+      "status": "failed",
+      "stage": "training",
+      "label": "control",
+      "started_at": "2026-04-14T14:06:19.594168+00:00",
+      "completed_at": "2026-04-14T16:07:07.691724+00:00",
+      "error": "exit code 1"
+    },
+    "eval:main": {
+      "status": "cancelled",
+      "stage": "evaluation",
+      "label": "main",
+      "completed_at": "2026-04-14T16:07:00.659585+00:00",
+      "error": "upstream task failed"
+    },
+    "eval:control": {
+      "status": "cancelled",
+      "stage": "evaluation",
+      "label": "control",
+      "completed_at": "2026-04-14T16:07:07.695470+00:00",
+      "error": "upstream task failed"
+    }
+  }
+}

@@ -1,0 +1,305 @@
+Loading samples...
+  bct_cot.jsonl: 2000 samples
+Total: 2000 samples
+
+Model: meta-llama/Llama-3.1-8B-Instruct
+Experiment: sweep-bct-instruct / llama-bct-noinst
+Hyperparams: lr=auto, batch=128, epochs=1, lora_rank=8
+Steps: 15, checkpoints: ~0 intermediate + 1 final
+Final checkpoint: always saves full state (for resuming)
+WARNING: WANDB_API_KEY environment variable not set. Skipping W&B logging. 
+root:654 [[92mINFO[0m] Command line invocation: scripts/tinker_training/train_sft.py --model meta-llama/Llama-3.1-8B-Instruct --data dataset_dumps/train_seed_42/llama-3-1-8b-instruct/sa-mmlu-hp/bct_cot.jsonl --experiment-name sweep-bct-instruct --run-name llama-bct-noinst --batch-size 128 --epochs 1 --lora-rank 8 --save-every 9999 -y
+tinker_cookbook.utils.ml_log:592 [[92mINFO[0m] Logging to: logs/sweep-bct-instruct/llama-bct-noinst
+
+============================================================
+WARNING: Git working tree is DIRTY (52 file(s) changed)
+Commit: a3276f0d7774c54dc046e1eb2011f0d280021f92
+Branch: reasoning-history-last-fix
+Changed files:
+M cot_transparency/apis/tinker/rl_training.py
+ M sycophancy_eval_inspect/model_registry.json
+?? midterm_report.md
+?? progress.md
+?? scripts/test_gpt_oss_channel_stripping.py
+?? scripts/tinker_training/analyze_by_sweep.sh
+?? scripts/tinker_training/clear_stale_state.sh
+?? scripts/tinker_training/combined_analysis.sh
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.0.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.25.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.5.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.75.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_1.0.yaml
+?? scripts/tinker_training/experiment_configs/sweep_bct_batch_size_128.yaml
+?? scripts/tinker_training/experiment_configs/sweep_bct_batch_size_256.yaml
+?? scripts/tinker_training/experiment_configs/sweep_bct_batch_size_32.yaml
+?? scripts/tinker_training/experiment_configs/sweep_bct_batch_size_64.yaml
+?? scripts/tinker_training/experiment_configs/sweep_bct_n_datapoints_1000.yaml
+?? scripts/tinker_training/experiment_configs/sweep_bct_n_datapoints_2000.yaml
+?? scripts/tinker_training/experiment_configs/sweep_bct_n_datapoints_500.yaml
+?? scripts/tinker_training/experiment_configs/sweep_bct_no_instruct.yaml
+?? scripts/tinker_training/experiment_configs/sweep_bct_with_instruct.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.01.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.05.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.1.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.5.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_consistency_16.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_consistency_32.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_consistency_64.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_datapoints_128.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_datapoints_256.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_datapoints_64.yaml
+?? scripts/tinker_training/experiment_configs/sweep_refresh_every_1.yaml
+?? scripts/tinker_training/experiment_configs/sweep_refresh_every_10.yaml
+?? scripts/tinker_training/experiment_configs/sweep_refresh_every_5.yaml
+?? scripts/tinker_training/experiment_configs/sweep_rollouts_128.yaml
+?? scripts/tinker_training/experiment_configs/sweep_rollouts_32.yaml
+?? scripts/tinker_training/experiment_configs/sweep_rollouts_64.yaml
+?? scripts/tinker_training/run_analysis.sh
+?? scripts/tinker_training/setup_bct_sweep_data.sh
+?? scripts/tinker_training/sweep_anchor_weight.sh
+?? scripts/tinker_training/sweep_bct_batch_size.sh
+?? scripts/tinker_training/sweep_bct_instruct.sh
+?? scripts/tinker_training/sweep_bct_n_datapoints.sh
+?? scripts/tinker_training/sweep_kl_coef.sh
+?? scripts/tinker_training/sweep_lr.py
+?? scripts/tinker_training/sweep_lr.sh
+?? scripts/tinker_training/sweep_n_consistency.sh
+?? scripts/tinker_training/sweep_n_datapoints.sh
+?? scripts/tinker_training/sweep_ngrad.sh
+?? scripts/tinker_training/sweep_refresh_every.sh
+?? scripts/tinker_training/sweep_rollouts.sh
+The diff is logged to WandB for reproducibility.
+============================================================
+
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+Configuration:
+  git: {'git_sha': 'a3276f0d7774c54dc046e1eb2011f0d280021f92', 'git_branch': 
+'reasoning-history-last-fix', 'git_dirty': True, 'git_dirt ... : "black",\n+    
+"training_biases": [\n+        "suggested_answer"\n+      ]\n     }\n   }\n 
+}\n\\ No newline at end of file'}
+SFT Training: 2000 samples, batch=128, 15 steps, lr=2.86e-04
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+Configuration:
+  n_samples: 2000
+  total_steps: 15
+  file: 
+'dataset_dumps/train_seed_42/llama-3-1-8b-instruct/sa-mmlu-hp/bct_cot.jsonl'
+  base_lr: 0.0002856415043086949
+tinker.lib.internal_client_holder:289 [[93mWARNING[0m] Your Tinker SDK version is outdated. Please upgrade to the latest version.
+tinker.lib.public_interfaces.service_client:67 [[92mINFO[0m] ServiceClient initialized for session d51eb189-87fd-5e51-b9b2-6459523b6a6a
+tinker.lib.sync_only:70 [[93mWARNING[0m] Synchronous method 'ServiceClient.create_lora_training_client()' called from async context. Use 'ServiceClient.create_lora_training_client_async()' instead.
+Calling sync methods from async code can cause deadlocks and performance issues.
+tinker.lib.sync_only:71 [[93mWARNING[0m] ===== Stack for calling sync from async ===== 
+['  File "/home/prakharg/cot-transparency/scripts/tinker_training/train_sft.py", line 237, in <module>\n    main()\n', '  File "/home/prakharg/cot-transparency/scripts/tinker_training/train_sft.py", line 232, in main\n    final_checkpoint = asyncio.run(train_sft(data_path, config, resume_from=args.resume_from))\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/runners.py", line 195, in run\n    return runner.run(main)\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/runners.py", line 118, in run\n    return self._loop.run_until_complete(task)\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/base_events.py", line 678, in run_until_complete\n    self.run_forever()\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/base_events.py", line 645, in run_forever\n    self._run_once()\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/base_events.py", line 1999, in _run_once\n    handle._run()\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/events.py", line 88, in _run\n    self._context.run(self._callback, *self._args)\n', '  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/finetune.py", line 138, in train_sft\n    training_client = service_client.create_lora_training_client(\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 72, in wrapper\n    f"===== Stack for calling sync from async ===== \\n{traceback.format_stack()}\\n ==========="\n']
+ ===========
+tinker.lib.public_interfaces.service_client:151 [[92mINFO[0m] TrainingClient initialized for model d51eb189-87fd-5e51-b9b2-6459523b6a6a:train:0
+
+Epoch 1:   0%|          | 0/16 [00:00<?, ?it/s]
+Epoch 1:   0%|          | 0/16 [00:04<?, ?it/s, nll=0.2385, lr=2.86e-04]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 1               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000286 │
+│ train/nll            │ 0.238516 │
+└──────────────────────┴──────────┘
+
+Epoch 1:   6%|▋         | 1/16 [00:04<01:04,  4.30s/it, nll=0.2385, lr=2.86e-04]
+Epoch 1:   6%|▋         | 1/16 [00:07<01:04,  4.30s/it, nll=0.1983, lr=2.67e-04]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 2               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000267 │
+│ train/nll            │ 0.198304 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  12%|█▎        | 2/16 [00:07<00:53,  3.80s/it, nll=0.1983, lr=2.67e-04]
+Epoch 1:  12%|█▎        | 2/16 [00:10<00:53,  3.80s/it, nll=0.1703, lr=2.48e-04]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 3               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000248 │
+│ train/nll            │ 0.170288 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  19%|█▉        | 3/16 [00:10<00:44,  3.41s/it, nll=0.1703, lr=2.48e-04]
+Epoch 1:  19%|█▉        | 3/16 [00:15<00:44,  3.41s/it, nll=0.1483, lr=2.29e-04]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 4               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000229 │
+│ train/nll            │ 0.148253 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  25%|██▌       | 4/16 [00:15<00:46,  3.89s/it, nll=0.1483, lr=2.29e-04]
+Epoch 1:  25%|██▌       | 4/16 [00:18<00:46,  3.89s/it, nll=0.1405, lr=2.09e-04]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 5               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000209 │
+│ train/nll            │ 0.140518 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  31%|███▏      | 5/16 [00:18<00:41,  3.81s/it, nll=0.1405, lr=2.09e-04]
+Epoch 1:  31%|███▏      | 5/16 [00:22<00:41,  3.81s/it, nll=0.1265, lr=1.90e-04]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 6               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000190 │
+│ train/nll            │ 0.126512 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  38%|███▊      | 6/16 [00:22<00:38,  3.80s/it, nll=0.1265, lr=1.90e-04]
+Epoch 1:  38%|███▊      | 6/16 [00:26<00:38,  3.80s/it, nll=0.1273, lr=1.71e-04]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 7               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000171 │
+│ train/nll            │ 0.127256 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  44%|████▍     | 7/16 [00:26<00:34,  3.83s/it, nll=0.1273, lr=1.71e-04]
+Epoch 1:  44%|████▍     | 7/16 [00:29<00:34,  3.83s/it, nll=0.1290, lr=1.52e-04]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 8               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000152 │
+│ train/nll            │ 0.128984 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  50%|█████     | 8/16 [00:29<00:28,  3.51s/it, nll=0.1290, lr=1.52e-04]
+Epoch 1:  50%|█████     | 8/16 [00:33<00:28,  3.51s/it, nll=0.1372, lr=1.33e-04]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 9               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000133 │
+│ train/nll            │ 0.137195 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  56%|█████▋    | 9/16 [00:33<00:25,  3.70s/it, nll=0.1372, lr=1.33e-04]
+Epoch 1:  56%|█████▋    | 9/16 [00:37<00:25,  3.70s/it, nll=0.1281, lr=1.14e-04]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 10              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000114 │
+│ train/nll            │ 0.128079 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  62%|██████▎   | 10/16 [00:37<00:22,  3.78s/it, nll=0.1281, lr=1.14e-04]
+Epoch 1:  62%|██████▎   | 10/16 [00:41<00:22,  3.78s/it, nll=0.1248, lr=9.52e-05]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 11              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000095 │
+│ train/nll            │ 0.124780 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  69%|██████▉   | 11/16 [00:41<00:19,  3.80s/it, nll=0.1248, lr=9.52e-05]
+Epoch 1:  69%|██████▉   | 11/16 [00:45<00:19,  3.80s/it, nll=0.1263, lr=7.62e-05]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 12              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000076 │
+│ train/nll            │ 0.126294 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  75%|███████▌  | 12/16 [00:45<00:15,  3.88s/it, nll=0.1263, lr=7.62e-05]
+Epoch 1:  75%|███████▌  | 12/16 [00:48<00:15,  3.88s/it, nll=0.1259, lr=5.71e-05]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 13              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000057 │
+│ train/nll            │ 0.125927 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  81%|████████▏ | 13/16 [00:48<00:10,  3.53s/it, nll=0.1259, lr=5.71e-05]
+Epoch 1:  81%|████████▏ | 13/16 [01:07<00:10,  3.53s/it, nll=0.1259, lr=3.81e-05]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 14              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000038 │
+│ train/nll            │ 0.125907 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  88%|████████▊ | 14/16 [01:07<00:16,  8.38s/it, nll=0.1259, lr=3.81e-05]
+Epoch 1:  88%|████████▊ | 14/16 [01:24<00:16,  8.38s/it, nll=0.1293, lr=1.90e-05]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 15              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000019 │
+│ train/nll            │ 0.129286 │
+└──────────────────────┴──────────┘
+
+Epoch 1:  94%|█████████▍| 15/16 [01:24<00:10, 10.85s/it, nll=0.1293, lr=1.90e-05]
+Epoch 1:  94%|█████████▍| 15/16 [01:37<00:10, 10.85s/it, nll=0.1205, lr=0.00e+00]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 16              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000000 │
+│ train/nll            │ 0.120499 │
+└──────────────────────┴──────────┘
+
+Epoch 1: 100%|██████████| 16/16 [01:37<00:00, 11.50s/it, nll=0.1205, lr=0.00e+00]
+Epoch 1: 100%|██████████| 16/16 [01:37<00:00,  6.09s/it, nll=0.1205, lr=0.00e+00]
+tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+Epoch 1 avg NLL: 0.1435
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+              Step 16              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/epoch          │ 1        │
+│ train/epoch_nll      │ 0.143537 │
+└──────────────────────┴──────────┘
+tinker_cookbook.checkpoint_utils:461 [[92mINFO[0m] Saved checkpoints: {'sampler_path': 'tinker://d51eb189-87fd-5e51-b9b2-6459523b6a6a:train:0/sampler_weights/sweep-bct-instruct_llama-bct-noinst'}
+tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-bct-instruct/llama-bct-noinst/metrics.jsonl
+
+Training complete. Final checkpoint: tinker://d51eb189-87fd-5e51-b9b2-6459523b6a6a:train:0/sampler_weights/sweep-bct-instruct_llama-bct-noinst
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                                    Step 16                                     
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Metric               ┃ Value                                                 ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ final_checkpoint     │ tinker://d51eb189-87fd-5e51-b9b2-6459523b6a6a:train:… │
+└──────────────────────┴───────────────────────────────────────────────────────┘
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+Configuration:
+  final_checkpoint: 
+'tinker://d51eb189-87fd-5e51-b9b2-6459523b6a6a:train:0/sampler_weights/sweep-bct
+-instruct_llama-bct-noinst'
+  all_checkpoints: 
+['tinker://d51eb189-87fd-5e51-b9b2-6459523b6a6a:train:0/sampler_weights/sweep-bc
+t-instruct_llama-bct-noinst']
+
+Done! Final checkpoint: tinker://d51eb189-87fd-5e51-b9b2-6459523b6a6a:train:0/sampler_weights/sweep-bct-instruct_llama-bct-noinst

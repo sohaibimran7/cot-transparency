@@ -1,0 +1,6 @@
+Model,Prompt,Variant,Bias Type
+LLAMA,cot,BIR,Argument
+LLAMA,cot,BIR,Fact
+LLAMA,cot,BIR,Squares
+LLAMA,cot,BIR,Sugg. Answer
+LLAMA,cot,BIR,Wrong FS

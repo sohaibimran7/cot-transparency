@@ -1,0 +1,57 @@
+{
+  "experiment_name": "sweep-n-consistency",
+  "run_name": "llama-rlct-nc16-ctrl",
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "lora": {
+    "rank": 8,
+    "train_mlp": true,
+    "train_attn": true,
+    "train_unembed": true,
+    "seed": null
+  },
+  "optimizer": {
+    "learning_rate": null,
+    "lr_schedule": "constant",
+    "beta1": 0.9,
+    "beta2": 0.95,
+    "eps": 1e-08,
+    "weight_decay": 0.0,
+    "grad_clip_norm": 1.0
+  },
+  "reference_rate": {
+    "perturbation_indices": [
+      0
+    ],
+    "n_rollouts": 64,
+    "aggregation": "mean"
+  },
+  "training": {
+    "perturbation_indices": [
+      1
+    ],
+    "n_rollouts_for_rate": 64,
+    "n_rollouts_for_consistency": 16,
+    "n_rollouts_for_anchor": null
+  },
+  "loop": {
+    "batch_size": 1,
+    "gradient_accumulation_steps": 1,
+    "refresh_policy_every_n_steps": 1,
+    "n_epochs": 1
+  },
+  "generation": {
+    "max_new_tokens": 8192,
+    "temperature": 1.0
+  },
+  "checkpoint": {
+    "save_every_n_steps": 64,
+    "save_state": false,
+    "skip_near_final_steps": 0
+  },
+  "kl_coef": 0.05,
+  "kl_discount_factor": 0.0,
+  "loss_fn": "ppo",
+  "anchor_weight": 0.0,
+  "anchor_model": "base",
+  "log_base_dir": "logs"
+}

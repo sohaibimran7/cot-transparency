@@ -1,0 +1,60 @@
+{
+  "experiment": "sweep-re-5",
+  "config_hash": "7a0e208bc5b2",
+  "stages": {
+    "training": {
+      "status": "completed",
+      "completed_at": "2026-04-16T16:27:11.240751+00:00",
+      "outputs": {
+        "main_checkpoint": "tinker://1afcafaa-52df-525b-a935-0acee79c3b16:train:0/sampler_weights/sweep-refresh-every_llama-rlct-re5",
+        "checkpoint": "tinker://1afcafaa-52df-525b-a935-0acee79c3b16:train:0/sampler_weights/sweep-refresh-every_llama-rlct-re5",
+        "control_checkpoint": "tinker://ab7d3c58-c44c-5bc7-ac85-a7b2a33d43c9:train:0/sampler_weights/sweep-refresh-every_llama-rlct-re5-ctrl"
+      }
+    },
+    "evaluation": {
+      "status": "completed",
+      "completed_at": "2026-04-16T16:27:11.240768+00:00",
+      "outputs": {}
+    },
+    "analysis": {
+      "status": "completed",
+      "completed_at": "2026-04-17T03:27:18.788836+00:00"
+    }
+  },
+  "tasks": {
+    "train:main": {
+      "status": "completed",
+      "stage": "training",
+      "label": "main",
+      "started_at": "2026-04-16T15:12:57.083932+00:00",
+      "completed_at": "2026-04-16T15:52:32.162625+00:00",
+      "outputs": {
+        "checkpoint": "tinker://1afcafaa-52df-525b-a935-0acee79c3b16:train:0/sampler_weights/sweep-refresh-every_llama-rlct-re5"
+      }
+    },
+    "train:control": {
+      "status": "completed",
+      "stage": "training",
+      "label": "control",
+      "started_at": "2026-04-16T15:12:57.087138+00:00",
+      "completed_at": "2026-04-16T15:59:48.025521+00:00",
+      "outputs": {
+        "checkpoint": "tinker://ab7d3c58-c44c-5bc7-ac85-a7b2a33d43c9:train:0/sampler_weights/sweep-refresh-every_llama-rlct-re5-ctrl"
+      }
+    },
+    "eval:main": {
+      "status": "completed",
+      "stage": "evaluation",
+      "label": "main",
+      "started_at": "2026-04-16T15:52:32.167552+00:00",
+      "completed_at": "2026-04-16T16:18:04.158271+00:00"
+    },
+    "eval:control": {
+      "status": "completed",
+      "stage": "evaluation",
+      "label": "control",
+      "started_at": "2026-04-16T15:59:48.029299+00:00",
+      "completed_at": "2026-04-16T16:27:11.236440+00:00"
+    }
+  }
+}

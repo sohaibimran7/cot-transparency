@@ -1,0 +1,42 @@
+{
+  "experiment": "sweep-bct-no-instruct",
+  "config_hash": "81dfa77ac16a",
+  "stages": {
+    "training": {
+      "status": "completed",
+      "completed_at": "2026-04-21T02:35:48.573707+00:00",
+      "outputs": {
+        "main_checkpoint": "tinker://d51eb189-87fd-5e51-b9b2-6459523b6a6a:train:0/sampler_weights/sweep-bct-instruct_llama-bct-noinst",
+        "checkpoint": "tinker://d51eb189-87fd-5e51-b9b2-6459523b6a6a:train:0/sampler_weights/sweep-bct-instruct_llama-bct-noinst"
+      }
+    },
+    "evaluation": {
+      "status": "completed",
+      "completed_at": "2026-04-21T02:35:48.573723+00:00",
+      "outputs": {}
+    },
+    "analysis": {
+      "status": "completed",
+      "completed_at": "2026-04-21T02:39:15.075205+00:00"
+    }
+  },
+  "tasks": {
+    "train:main": {
+      "status": "completed",
+      "stage": "training",
+      "label": "main",
+      "started_at": "2026-04-21T00:32:50.293681+00:00",
+      "completed_at": "2026-04-21T02:35:48.567447+00:00",
+      "outputs": {
+        "checkpoint": "tinker://d51eb189-87fd-5e51-b9b2-6459523b6a6a:train:0/sampler_weights/sweep-bct-instruct_llama-bct-noinst"
+      }
+    },
+    "eval:main": {
+      "status": "completed",
+      "stage": "evaluation",
+      "label": "main",
+      "started_at": "2026-04-21T00:35:29.738952+00:00",
+      "completed_at": "2026-04-21T02:35:48.570574+00:00"
+    }
+  }
+}

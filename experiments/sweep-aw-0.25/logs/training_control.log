@@ -1,0 +1,2190 @@
+Your Tinker SDK version is outdated. Please upgrade to the latest version.
+
+Loading datapoints: 100 total across 1 combos (100 per combo)
+  Loaded 100 from mmlu_suggested_answer.jsonl
+
+============================================================
+RL Training Configuration
+============================================================
+  Model:              meta-llama/Llama-3.1-8B-Instruct
+  Experiment:         sweep-anchor-weight/llama-rlct-aw0.25-ctrl
+  Bias types:         ['suggested_answer']
+  Datasets:           ['mmlu']
+  Total datapoints:   100
+  Perturbations:      unbiased (ref) + unbiased (train) [CONTROL]
+  LR:                 None (constant)
+  LoRA rank:          8
+  Batch size:         1
+  Grad accum steps:   1
+  N epochs:           1
+  Estimated steps:    100
+  Checkpoint every:   25 steps
+  n_ref_rollouts:     128
+  n_train_rollouts:   128
+  n_consistency_rollouts: 128
+  n_anchor_rollouts:  None
+  KL coef:            0.05
+  Anchor weight:      0.25
+  Anchor model:       base
+  Loss fn:            ppo
+============================================================
+WARNING: WANDB_API_KEY environment variable not set. Skipping W&B logging. 
+root:654 [[92mINFO[0m] Command line invocation: scripts/tinker_training/train_rl.py --model meta-llama/Llama-3.1-8B-Instruct --experiment-name sweep-anchor-weight --run-name llama-rlct-aw0.25-ctrl --bias-types suggested_answer --datasets mmlu --n-datapoints 100 --lora-rank 8 --kl-coef 0.05 --anchor-weight 0.25 --loss-fn ppo --n-ref-rollouts 128 --n-train-rollouts 128 --refresh-every 1 --checkpoint-every 25 --control -y
+tinker_cookbook.utils.ml_log:592 [[92mINFO[0m] Logging to: logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl
+
+============================================================
+WARNING: Git working tree is DIRTY (33 file(s) changed)
+Commit: 805c2833db224d35988f5e2311dd9512bd71fdca
+Branch: reasoning-history-last-fix
+Changed files:
+M cot_transparency/apis/tinker/rl_training.py
+ M sycophancy_eval_inspect/model_registry.json
+?? midterm_report.md
+?? progress.md
+?? scripts/test_gpt_oss_channel_stripping.py
+?? scripts/tinker_training/clear_stale_state.sh
+?? scripts/tinker_training/combined_analysis.sh
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.0.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.25.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.5.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_0.75.yaml
+?? scripts/tinker_training/experiment_configs/sweep_anchor_weight_1.0.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.01.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.05.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.1.yaml
+?? scripts/tinker_training/experiment_configs/sweep_kl_coef_0.5.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_datapoints_128.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_datapoints_256.yaml
+?? scripts/tinker_training/experiment_configs/sweep_n_datapoints_64.yaml
+?? scripts/tinker_training/experiment_configs/sweep_refresh_every_1.yaml
+?? scripts/tinker_training/experiment_configs/sweep_refresh_every_10.yaml
+?? scripts/tinker_training/experiment_configs/sweep_refresh_every_5.yaml
+?? scripts/tinker_training/experiment_configs/sweep_rollouts_128.yaml
+?? scripts/tinker_training/experiment_configs/sweep_rollouts_32.yaml
+?? scripts/tinker_training/experiment_configs/sweep_rollouts_64.yaml
+?? scripts/tinker_training/sweep_anchor_weight.sh
+?? scripts/tinker_training/sweep_kl_coef.sh
+?? scripts/tinker_training/sweep_lr.py
+?? scripts/tinker_training/sweep_lr.sh
+?? scripts/tinker_training/sweep_n_datapoints.sh
+?? scripts/tinker_training/sweep_ngrad.sh
+?? scripts/tinker_training/sweep_refresh_every.sh
+?? scripts/tinker_training/sweep_rollouts.sh
+The diff is logged to WandB for reproducibility.
+============================================================
+
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+Configuration:
+  git: {'git_sha': '805c2833db224d35988f5e2311dd9512bd71fdca', 'git_branch': 'reasoning-history-last-fix', 'git_dirty': True, 
+'git_dirt ...     "hatch": "//",\n+      "edgecolor": "black",\n+      "training_biases": []\n     }\n   }\n }\n\\ No newline at end 
+of file'}
+RL Training: 100 datapoints, 100 steps/epoch, 100 total steps, lr=2.86e-04
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+Configuration:
+  n_datapoints: 100
+  total_steps: 100
+  n_perturbations: 2
+  base_lr: 0.0002856415043086949
+
+Epoch 1:   0%|          | 0/100 [00:00<?, ?it/s]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 1                
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:   1%|          | 1/100 [00:48<1:19:39, 48.27s/it]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+
+⚠️  Low parse rate (77.7%) at step 2
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                          Step 2                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 3.873616       │
+│ optim/kl_sample_train_v1              │ 0.000471       │
+│ optim/kl_sample_train_v2              │ 0.000494       │
+│ train/advantage_abs_mean              │ 0.300418       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.012668       │
+│ train/avg_response_length             │ 679.949749     │
+│ train/consistency_gap_1               │ -0.043544      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.012406       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.000364       │
+│ train/n_anchor_rollouts               │ 98             │
+│ train/n_consistency_rollouts          │ 101            │
+│ train/n_ref_parsed                    │ 98             │
+│ train/n_training_parsed               │ 101            │
+│ train/p_hat_1                         │ 0.089109       │
+│ train/p_ref                           │ 0.132653       │
+│ train/p_ref_drift                     │ -0.037347      │
+│ train/p_ref_init                      │ 0.170000       │
+│ train/parse_rate                      │ 0.777344       │
+│ train/rate_var                        │ 0.000474       │
+│ train/reward_pert0_trait0_count       │ 85             │
+│ train/reward_pert0_trait0_mean        │ -0.004954      │
+│ train/reward_pert0_trait1_count       │ 13             │
+│ train/reward_pert0_trait1_mean        │ 0.032393       │
+│ train/reward_pert1_trait0_count       │ 92             │
+│ train/reward_pert1_trait0_mean        │ -0.003880      │
+│ train/reward_pert1_trait1_count       │ 9              │
+│ train/reward_pert1_trait1_mean        │ 0.039664       │
+│ train/train/clock_cycle:unique        │ 8803244.000000 │
+│ train/train/clock_cycle:unique_1      │ 8803245.000000 │
+│ train/train/loss:sum                  │ -44090.496399  │
+│ train/train/ppo_clipped_fraction:mean │ 0.103633       │
+│ train/train/ppo_kl_div:mean           │ 0.402151       │
+│ train/train/ppo_mean_ratio:mean       │ 0.915079       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:   1%|          | 1/100 [05:45<1:19:39, 48.27s/it, kl=0.0005, gap=-0.044, p_hat=0.09, adv=0.300]
+Epoch 1:   2%|▏         | 2/100 [05:46<5:19:15, 195.47s/it, kl=0.0005, gap=-0.044, p_hat=0.09, adv=0.300]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                          Step 3                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.873320       │
+│ optim/kl_sample_train_v1              │ 0.000335       │
+│ optim/kl_sample_train_v2              │ 0.000455       │
+│ train/advantage_abs_mean              │ 0.354700       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.004778       │
+│ train/avg_response_length             │ 458.687500     │
+│ train/consistency_gap_1               │ 0.025000       │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.008718       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.001169       │
+│ train/n_anchor_rollouts               │ 120            │
+│ train/n_consistency_rollouts          │ 120            │
+│ train/n_ref_parsed                    │ 120            │
+│ train/n_training_parsed               │ 120            │
+│ train/p_hat_1                         │ 0.858333       │
+│ train/p_ref                           │ 0.833333       │
+│ train/p_ref_drift                     │ -0.012821      │
+│ train/p_ref_init                      │ 0.846154       │
+│ train/parse_rate                      │ 0.937500       │
+│ train/rate_var                        │ 0.000156       │
+│ train/reward_pert0_trait0_count       │ 20             │
+│ train/reward_pert0_trait0_mean        │ -0.010684      │
+│ train/reward_pert0_trait1_count       │ 100            │
+│ train/reward_pert0_trait1_mean        │ 0.002137       │
+│ train/reward_pert1_trait0_count       │ 17             │
+│ train/reward_pert1_trait0_mean        │ 0.021458       │
+│ train/reward_pert1_trait1_count       │ 103            │
+│ train/reward_pert1_trait1_mean        │ -0.003542      │
+│ train/train/clock_cycle:unique        │ 8803355.000000 │
+│ train/train/clock_cycle:unique_1      │ 8803356.000000 │
+│ train/train/loss:sum                  │ 8597.703300    │
+│ train/train/ppo_clipped_fraction:mean │ 0.129343       │
+│ train/train/ppo_kl_div:mean           │ 0.446999       │
+│ train/train/ppo_mean_ratio:mean       │ 0.898690       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:   2%|▏         | 2/100 [08:58<5:19:15, 195.47s/it, kl=0.0003, gap=0.025, p_hat=0.86, adv=0.355] 
+Epoch 1:   3%|▎         | 3/100 [09:08<5:20:49, 198.45s/it, kl=0.0003, gap=0.025, p_hat=0.86, adv=0.355]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                          Step 4                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.334281       │
+│ optim/kl_sample_train_v1              │ 0.000576       │
+│ optim/kl_sample_train_v2              │ 0.000507       │
+│ train/advantage_abs_mean              │ 0.159408       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.002873       │
+│ train/avg_response_length             │ 352.266129     │
+│ train/consistency_gap_1               │ -0.008065      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.001239       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.002697       │
+│ train/n_anchor_rollouts               │ 124            │
+│ train/n_consistency_rollouts          │ 124            │
+│ train/n_ref_parsed                    │ 124            │
+│ train/n_training_parsed               │ 124            │
+│ train/p_hat_1                         │ 0.024194       │
+│ train/p_ref                           │ 0.032258       │
+│ train/p_ref_drift                     │ 0.016258       │
+│ train/p_ref_init                      │ 0.016000       │
+│ train/parse_rate                      │ 0.968750       │
+│ train/rate_var                        │ 0.000016       │
+│ train/reward_pert0_trait0_count       │ 120            │
+│ train/reward_pert0_trait0_mean        │ 0.000524       │
+│ train/reward_pert0_trait1_count       │ 4              │
+│ train/reward_pert0_trait1_mean        │ -0.015734      │
+│ train/reward_pert1_trait0_count       │ 121            │
+│ train/reward_pert1_trait0_mean        │ -0.000195      │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ 0.007869       │
+│ train/train/clock_cycle:unique        │ 8803461.000000 │
+│ train/train/loss:sum                  │ 385.769413     │
+│ train/train/ppo_clipped_fraction:mean │ 0.199834       │
+│ train/train/ppo_kl_div:mean           │ 0.746083       │
+│ train/train/ppo_mean_ratio:mean       │ 0.840020       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:   3%|▎         | 3/100 [11:03<5:20:49, 198.45s/it, kl=0.0006, gap=-0.008, p_hat=0.02, adv=0.159]
+Epoch 1:   4%|▍         | 4/100 [11:04<4:25:08, 165.72s/it, kl=0.0006, gap=-0.008, p_hat=0.02, adv=0.159]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 5                
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:   5%|▌         | 5/100 [13:13<4:01:33, 152.56s/it, kl=0.0006, gap=-0.008, p_hat=0.02, adv=0.159]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                          Step 6                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.765024       │
+│ optim/kl_sample_train_v1              │ 0.000469       │
+│ optim/kl_sample_train_v2              │ 0.000560       │
+│ train/advantage_abs_mean              │ 0.157565       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.001542       │
+│ train/avg_response_length             │ 329.137795     │
+│ train/consistency_gap_1               │ -0.007874      │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.001196       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.002759       │
+│ train/n_anchor_rollouts               │ 127            │
+│ train/n_consistency_rollouts          │ 127            │
+│ train/n_ref_parsed                    │ 127            │
+│ train/n_training_parsed               │ 127            │
+│ train/p_hat_1                         │ 0.023622       │
+│ train/p_ref                           │ 0.031496       │
+│ train/p_ref_drift                     │ -0.008827      │
+│ train/p_ref_init                      │ 0.040323       │
+│ train/parse_rate                      │ 0.992188       │
+│ train/rate_var                        │ 0.000016       │
+│ train/reward_pert0_trait0_count       │ 123            │
+│ train/reward_pert0_trait0_mean        │ -0.000278      │
+│ train/reward_pert0_trait1_count       │ 4              │
+│ train/reward_pert0_trait1_mean        │ 0.008549       │
+│ train/reward_pert1_trait0_count       │ 124            │
+│ train/reward_pert1_trait0_mean        │ -0.000186      │
+│ train/reward_pert1_trait1_count       │ 3              │
+│ train/reward_pert1_trait1_mean        │ 0.007688       │
+│ train/train/clock_cycle:unique        │ 8803588.000000 │
+│ train/train/loss:sum                  │ -1132.648899   │
+│ train/train/ppo_clipped_fraction:mean │ 0.184480       │
+│ train/train/ppo_kl_div:mean           │ 0.690875       │
+│ train/train/ppo_mean_ratio:mean       │ 0.855399       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:   5%|▌         | 5/100 [14:05<4:01:33, 152.56s/it, kl=0.0005, gap=-0.008, p_hat=0.02, adv=0.158]
+Epoch 1:   6%|▌         | 6/100 [14:07<3:06:19, 118.93s/it, kl=0.0005, gap=-0.008, p_hat=0.02, adv=0.158]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 7                
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:   7%|▋         | 7/100 [14:46<2:24:07, 92.98s/it, kl=0.0005, gap=-0.008, p_hat=0.02, adv=0.158] tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 8                
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:   8%|▊         | 8/100 [16:03<2:14:27, 87.69s/it, kl=0.0005, gap=-0.008, p_hat=0.02, adv=0.158]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                          Step 9                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.132364       │
+│ optim/kl_sample_train_v1              │ 0.000550       │
+│ optim/kl_sample_train_v2              │ 0.000689       │
+│ train/advantage_abs_mean              │ 0.498102       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.045993       │
+│ train/avg_response_length             │ 399.105691     │
+│ train/consistency_gap_1               │ 0.094444       │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.046930       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.011282       │
+│ train/n_anchor_rollouts               │ 120            │
+│ train/n_consistency_rollouts          │ 126            │
+│ train/n_ref_parsed                    │ 120            │
+│ train/n_training_parsed               │ 126            │
+│ train/p_hat_1                         │ 0.444444       │
+│ train/p_ref                           │ 0.350000       │
+│ train/p_ref_drift                     │ -0.096429      │
+│ train/p_ref_init                      │ 0.446429       │
+│ train/parse_rate                      │ 0.960938       │
+│ train/rate_var                        │ 0.002230       │
+│ train/reward_pert0_trait0_count       │ 78             │
+│ train/reward_pert0_trait0_mean        │ -0.033750      │
+│ train/reward_pert0_trait1_count       │ 42             │
+│ train/reward_pert0_trait1_mean        │ 0.062679       │
+│ train/reward_pert1_trait0_count       │ 70             │
+│ train/reward_pert1_trait0_mean        │ 0.041975       │
+│ train/reward_pert1_trait1_count       │ 56             │
+│ train/reward_pert1_trait1_mean        │ -0.052469      │
+│ train/train/clock_cycle:unique        │ 8803749.000000 │
+│ train/train/clock_cycle:unique_1      │ 8803749.000000 │
+│ train/train/loss:sum                  │ -4727.627258   │
+│ train/train/ppo_clipped_fraction:mean │ 0.306390       │
+│ train/train/ppo_kl_div:mean           │ 0.883117       │
+│ train/train/ppo_mean_ratio:mean       │ 0.762156       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:   8%|▊         | 8/100 [18:17<2:14:27, 87.69s/it, kl=0.0006, gap=0.094, p_hat=0.44, adv=0.498] 
+Epoch 1:   9%|▉         | 9/100 [18:18<2:35:31, 102.54s/it, kl=0.0006, gap=0.094, p_hat=0.44, adv=0.498]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 10                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.489785       │
+│ optim/kl_sample_train_v1              │ 0.000632       │
+│ optim/kl_sample_train_v2              │ 0.000518       │
+│ train/advantage_abs_mean              │ 0.466153       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.031384       │
+│ train/avg_response_length             │ 251.733333     │
+│ train/consistency_gap_1               │ 0.018209       │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.008440       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.005946       │
+│ train/n_anchor_rollouts               │ 127            │
+│ train/n_consistency_rollouts          │ 128            │
+│ train/n_ref_parsed                    │ 127            │
+│ train/n_training_parsed               │ 128            │
+│ train/p_hat_1                         │ 0.687500       │
+│ train/p_ref                           │ 0.669291       │
+│ train/p_ref_drift                     │ -0.066709      │
+│ train/p_ref_init                      │ 0.736000       │
+│ train/parse_rate                      │ 0.996094       │
+│ train/rate_var                        │ 0.000083       │
+│ train/reward_pert0_trait0_count       │ 42             │
+│ train/reward_pert0_trait0_mean        │ -0.044648      │
+│ train/reward_pert0_trait1_count       │ 85             │
+│ train/reward_pert0_trait1_mean        │ 0.022061       │
+│ train/reward_pert1_trait0_count       │ 40             │
+│ train/reward_pert1_trait0_mean        │ 0.012518       │
+│ train/reward_pert1_trait1_count       │ 88             │
+│ train/reward_pert1_trait1_mean        │ -0.005690      │
+│ train/train/clock_cycle:unique        │ 8803786.000000 │
+│ train/train/clock_cycle:unique_1      │ 8803787.000000 │
+│ train/train/loss:sum                  │ 394.194309     │
+│ train/train/ppo_clipped_fraction:mean │ 0.410633       │
+│ train/train/ppo_kl_div:mean           │ 1.502376       │
+│ train/train/ppo_mean_ratio:mean       │ 0.662189       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:   9%|▉         | 9/100 [19:11<2:35:31, 102.54s/it, kl=0.0006, gap=0.018, p_hat=0.69, adv=0.466]
+Epoch 1:  10%|█         | 10/100 [19:12<2:11:25, 87.61s/it, kl=0.0006, gap=0.018, p_hat=0.69, adv=0.466]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 11                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.918188       │
+│ optim/kl_sample_train_v1              │ 0.000475       │
+│ optim/kl_sample_train_v2              │ 0.000550       │
+│ train/advantage_abs_mean              │ 0.442566       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.011172       │
+│ train/avg_response_length             │ 391.515748     │
+│ train/consistency_gap_1               │ 0.035342       │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.015753       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.008555       │
+│ train/n_anchor_rollouts               │ 126            │
+│ train/n_consistency_rollouts          │ 128            │
+│ train/n_ref_parsed                    │ 126            │
+│ train/n_training_parsed               │ 128            │
+│ train/p_hat_1                         │ 0.273438       │
+│ train/p_ref                           │ 0.238095       │
+│ train/p_ref_drift                     │ 0.026231       │
+│ train/p_ref_init                      │ 0.211864       │
+│ train/parse_rate                      │ 0.992188       │
+│ train/rate_var                        │ 0.000312       │
+│ train/reward_pert0_trait0_count       │ 96             │
+│ train/reward_pert0_trait0_mean        │ 0.006245       │
+│ train/reward_pert0_trait1_count       │ 30             │
+│ train/reward_pert0_trait1_mean        │ -0.019985      │
+│ train/reward_pert1_trait0_count       │ 93             │
+│ train/reward_pert1_trait0_mean        │ 0.009664       │
+│ train/reward_pert1_trait1_count       │ 35             │
+│ train/reward_pert1_trait1_mean        │ -0.025678      │
+│ train/train/clock_cycle:unique        │ 8803929.000000 │
+│ train/train/clock_cycle:unique_1      │ 8803929.000000 │
+│ train/train/loss:sum                  │ -2090.166000   │
+│ train/train/ppo_clipped_fraction:mean │ 0.147974       │
+│ train/train/ppo_kl_div:mean           │ 0.575000       │
+│ train/train/ppo_mean_ratio:mean       │ 0.877398       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  10%|█         | 10/100 [22:41<2:11:25, 87.61s/it, kl=0.0005, gap=0.035, p_hat=0.27, adv=0.443]
+Epoch 1:  11%|█         | 11/100 [22:43<3:05:51, 125.30s/it, kl=0.0005, gap=0.035, p_hat=0.27, adv=0.443]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 12                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.085980       │
+│ optim/kl_sample_train_v1              │ 0.000749       │
+│ optim/kl_sample_train_v2              │ 0.000573       │
+│ train/advantage_abs_mean              │ 0.337084       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.019246       │
+│ train/avg_response_length             │ 204.091270     │
+│ train/consistency_gap_1               │ 0.091734       │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.033308       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.010706       │
+│ train/n_anchor_rollouts               │ 124            │
+│ train/n_consistency_rollouts          │ 128            │
+│ train/n_ref_parsed                    │ 124            │
+│ train/n_training_parsed               │ 128            │
+│ train/p_hat_1                         │ 0.156250       │
+│ train/p_ref                           │ 0.064516       │
+│ train/p_ref_drift                     │ -0.078341      │
+│ train/p_ref_init                      │ 0.142857       │
+│ train/parse_rate                      │ 0.984375       │
+│ train/rate_var                        │ 0.002104       │
+│ train/reward_pert0_trait0_count       │ 116            │
+│ train/reward_pert0_trait0_mean        │ -0.005054      │
+│ train/reward_pert0_trait1_count       │ 8              │
+│ train/reward_pert0_trait1_mean        │ 0.073287       │
+│ train/reward_pert1_trait0_count       │ 108            │
+│ train/reward_pert1_trait0_mean        │ 0.014333       │
+│ train/reward_pert1_trait1_count       │ 20             │
+│ train/reward_pert1_trait1_mean        │ -0.077400      │
+│ train/train/clock_cycle:unique        │ 8804038.000000 │
+│ train/train/loss:sum                  │ 1228.243126    │
+│ train/train/ppo_clipped_fraction:mean │ 0.207501       │
+│ train/train/ppo_kl_div:mean           │ 0.931538       │
+│ train/train/ppo_mean_ratio:mean       │ 0.825583       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  11%|█         | 11/100 [25:21<3:05:51, 125.30s/it, kl=0.0007, gap=0.092, p_hat=0.16, adv=0.337]
+Epoch 1:  12%|█▏        | 12/100 [25:25<3:20:14, 136.53s/it, kl=0.0007, gap=0.092, p_hat=0.16, adv=0.337]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 13               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:  13%|█▎        | 13/100 [26:48<2:54:23, 120.28s/it, kl=0.0007, gap=0.092, p_hat=0.16, adv=0.337]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 14                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.329191       │
+│ optim/kl_sample_train_v1              │ 0.000590       │
+│ optim/kl_sample_train_v2              │ 0.000568       │
+│ train/advantage_abs_mean              │ 0.050157       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.037366       │
+│ train/avg_response_length             │ 567.453782     │
+│ train/consistency_gap_1               │ 0.000000       │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.000000       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.015575       │
+│ train/n_anchor_rollouts               │ 119            │
+│ train/n_consistency_rollouts          │ 119            │
+│ train/n_ref_parsed                    │ 119            │
+│ train/n_training_parsed               │ 119            │
+│ train/p_hat_1                         │ 0.042017       │
+│ train/p_ref                           │ 0.042017       │
+│ train/p_ref_drift                     │ -0.186244      │
+│ train/p_ref_init                      │ 0.228261       │
+│ train/parse_rate                      │ 0.929688       │
+│ train/rate_var                        │ 0.000000       │
+│ train/reward_pert0_trait0_count       │ 114            │
+│ train/reward_pert0_trait0_mean        │ -0.007825      │
+│ train/reward_pert0_trait1_count       │ 5              │
+│ train/reward_pert0_trait1_mean        │ 0.178419       │
+│ train/reward_pert1_trait0_count       │ 114            │
+│ train/reward_pert1_trait0_mean        │ 0.000000       │
+│ train/reward_pert1_trait1_count       │ 5              │
+│ train/reward_pert1_trait1_mean        │ 0.000000       │
+│ train/train/clock_cycle:unique        │ 8804320.000000 │
+│ train/train/clock_cycle:unique_1      │ 8804321.000000 │
+│ train/train/loss:sum                  │ 318.517350     │
+│ train/train/ppo_clipped_fraction:mean │ 0.121129       │
+│ train/train/ppo_kl_div:mean           │ 0.457891       │
+│ train/train/ppo_mean_ratio:mean       │ 0.903223       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  13%|█▎        | 13/100 [31:20<2:54:23, 120.28s/it, kl=0.0006, gap=0.000, p_hat=0.04, adv=0.050]
+Epoch 1:  14%|█▍        | 14/100 [31:22<3:58:50, 166.63s/it, kl=0.0006, gap=0.000, p_hat=0.04, adv=0.050]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 15                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.651487       │
+│ optim/kl_sample_train_v1              │ 0.000407       │
+│ optim/kl_sample_train_v2              │ 0.000522       │
+│ train/advantage_abs_mean              │ 0.177161       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.011128       │
+│ train/avg_response_length             │ 341.024490     │
+│ train/consistency_gap_1               │ 0.000800       │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.000143       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.019889       │
+│ train/n_anchor_rollouts               │ 124            │
+│ train/n_consistency_rollouts          │ 121            │
+│ train/n_ref_parsed                    │ 124            │
+│ train/n_training_parsed               │ 121            │
+│ train/p_hat_1                         │ 0.033058       │
+│ train/p_ref                           │ 0.032258       │
+│ train/p_ref_drift                     │ -0.062980      │
+│ train/p_ref_init                      │ 0.095238       │
+│ train/parse_rate                      │ 0.957031       │
+│ train/rate_var                        │ 0.000000       │
+│ train/reward_pert0_trait0_count       │ 120            │
+│ train/reward_pert0_trait0_mean        │ -0.002032      │
+│ train/reward_pert0_trait1_count       │ 4              │
+│ train/reward_pert0_trait1_mean        │ 0.060948       │
+│ train/reward_pert1_trait0_count       │ 117            │
+│ train/reward_pert1_trait0_mean        │ 0.000026       │
+│ train/reward_pert1_trait1_count       │ 4              │
+│ train/reward_pert1_trait1_mean        │ -0.000773      │
+│ train/train/clock_cycle:unique        │ 8804545.000000 │
+│ train/train/loss:sum                  │ 485.698929     │
+│ train/train/ppo_clipped_fraction:mean │ 0.149991       │
+│ train/train/ppo_kl_div:mean           │ 0.616722       │
+│ train/train/ppo_mean_ratio:mean       │ 0.874709       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  14%|█▍        | 14/100 [34:06<3:58:50, 166.63s/it, kl=0.0004, gap=0.001, p_hat=0.03, adv=0.177]
+Epoch 1:  15%|█▌        | 15/100 [34:26<4:03:38, 171.98s/it, kl=0.0004, gap=0.001, p_hat=0.03, adv=0.177]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 16                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.866315       │
+│ optim/kl_sample_train_v1              │ 0.000765       │
+│ optim/kl_sample_train_v2              │ 0.000771       │
+│ train/advantage_abs_mean              │ 0.492877       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.003457       │
+│ train/avg_response_length             │ 302.089431     │
+│ train/consistency_gap_1               │ 0.048780       │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.024156       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.017844       │
+│ train/n_anchor_rollouts               │ 123            │
+│ train/n_consistency_rollouts          │ 123            │
+│ train/n_ref_parsed                    │ 123            │
+│ train/n_training_parsed               │ 123            │
+│ train/p_hat_1                         │ 0.430894       │
+│ train/p_ref                           │ 0.382114       │
+│ train/p_ref_drift                     │ 0.007114       │
+│ train/p_ref_init                      │ 0.375000       │
+│ train/parse_rate                      │ 0.960938       │
+│ train/rate_var                        │ 0.000595       │
+│ train/reward_pert0_trait0_count       │ 76             │
+│ train/reward_pert0_trait0_mean        │ 0.002718       │
+│ train/reward_pert0_trait1_count       │ 47             │
+│ train/reward_pert0_trait1_mean        │ -0.004396      │
+│ train/reward_pert1_trait0_count       │ 70             │
+│ train/reward_pert1_trait0_mean        │ 0.021019       │
+│ train/reward_pert1_trait1_count       │ 53             │
+│ train/reward_pert1_trait1_mean        │ -0.027761      │
+│ train/train/clock_cycle:unique        │ 8804662.000000 │
+│ train/train/clock_cycle:unique_1      │ 8804663.000000 │
+│ train/train/loss:sum                  │ 141.811106     │
+│ train/train/ppo_clipped_fraction:mean │ 0.343438       │
+│ train/train/ppo_kl_div:mean           │ 1.164640       │
+│ train/train/ppo_mean_ratio:mean       │ 0.725745       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  15%|█▌        | 15/100 [35:39<4:03:38, 171.98s/it, kl=0.0008, gap=0.049, p_hat=0.43, adv=0.493]
+Epoch 1:  16%|█▌        | 16/100 [36:05<3:30:13, 150.17s/it, kl=0.0008, gap=0.049, p_hat=0.43, adv=0.493]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 17                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 3.549111       │
+│ optim/kl_sample_train_v1              │ 0.000484       │
+│ optim/kl_sample_train_v2              │ 0.000490       │
+│ train/advantage_abs_mean              │ 0.096556       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000080       │
+│ train/avg_response_length             │ 476.144186     │
+│ train/consistency_gap_1               │ -0.000433      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.000041       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.010244       │
+│ train/n_anchor_rollouts               │ 105            │
+│ train/n_consistency_rollouts          │ 110            │
+│ train/n_ref_parsed                    │ 105            │
+│ train/n_training_parsed               │ 110            │
+│ train/p_hat_1                         │ 0.009091       │
+│ train/p_ref                           │ 0.009524       │
+│ train/p_ref_drift                     │ 0.000828       │
+│ train/p_ref_init                      │ 0.008696       │
+│ train/parse_rate                      │ 0.839844       │
+│ train/rate_var                        │ 0.000000       │
+│ train/reward_pert0_trait0_count       │ 104            │
+│ train/reward_pert0_trait0_mean        │ 0.000008       │
+│ train/reward_pert0_trait1_count       │ 1              │
+│ train/reward_pert0_trait1_mean        │ -0.000820      │
+│ train/reward_pert1_trait0_count       │ 109            │
+│ train/reward_pert1_trait0_mean        │ -0.000004      │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ 0.000429       │
+│ train/train/clock_cycle:unique        │ 8805039.000000 │
+│ train/train/clock_cycle:unique_1      │ 8805039.000000 │
+│ train/train/loss:sum                  │ -918.347549    │
+│ train/train/ppo_clipped_fraction:mean │ 0.162343       │
+│ train/train/ppo_kl_div:mean           │ 0.560388       │
+│ train/train/ppo_mean_ratio:mean       │ 0.868611       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  16%|█▌        | 16/100 [40:46<3:30:13, 150.17s/it, kl=0.0005, gap=-0.000, p_hat=0.01, adv=0.097]
+Epoch 1:  17%|█▋        | 17/100 [40:59<4:27:17, 193.22s/it, kl=0.0005, gap=-0.000, p_hat=0.01, adv=0.097]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 18               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:  18%|█▊        | 18/100 [41:52<3:26:25, 151.04s/it, kl=0.0005, gap=-0.000, p_hat=0.01, adv=0.097]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 19               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:  19%|█▉        | 19/100 [43:14<2:55:57, 130.34s/it, kl=0.0005, gap=-0.000, p_hat=0.01, adv=0.097]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 20                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 6.572027       │
+│ optim/kl_sample_train_v1              │ 0.000444       │
+│ optim/kl_sample_train_v2              │ 0.000441       │
+│ train/advantage_abs_mean              │ 0.344542       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.012383       │
+│ train/avg_response_length             │ 1145.169643    │
+│ train/consistency_gap_1               │ 0.078211       │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.028621       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.006893       │
+│ train/n_anchor_rollouts               │ 111            │
+│ train/n_consistency_rollouts          │ 113            │
+│ train/n_ref_parsed                    │ 111            │
+│ train/n_training_parsed               │ 113            │
+│ train/p_hat_1                         │ 0.159292       │
+│ train/p_ref                           │ 0.081081       │
+│ train/p_ref_drift                     │ 0.045367       │
+│ train/p_ref_init                      │ 0.035714       │
+│ train/parse_rate                      │ 0.875000       │
+│ train/rate_var                        │ 0.001529       │
+│ train/reward_pert0_trait0_count       │ 102            │
+│ train/reward_pert0_trait0_mean        │ 0.003678       │
+│ train/reward_pert0_trait1_count       │ 9              │
+│ train/reward_pert0_trait1_mean        │ -0.041688      │
+│ train/reward_pert1_trait0_count       │ 95             │
+│ train/reward_pert1_trait0_mean        │ 0.012458       │
+│ train/reward_pert1_trait1_count       │ 18             │
+│ train/reward_pert1_trait1_mean        │ -0.065753      │
+│ train/train/clock_cycle:unique        │ 8805516.000000 │
+│ train/train/clock_cycle:unique_1      │ 8805517.000000 │
+│ train/train/clock_cycle:unique_2      │ 8805517.000000 │
+│ train/train/loss:sum                  │ 10364.355804   │
+│ train/train/ppo_clipped_fraction:mean │ 0.056415       │
+│ train/train/ppo_kl_div:mean           │ 0.217797       │
+│ train/train/ppo_mean_ratio:mean       │ 0.954978       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  19%|█▉        | 19/100 [47:37<2:55:57, 130.34s/it, kl=0.0004, gap=0.078, p_hat=0.16, adv=0.345] 
+Epoch 1:  20%|██        | 20/100 [47:38<3:47:33, 170.67s/it, kl=0.0004, gap=0.078, p_hat=0.16, adv=0.345]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 21                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.019835       │
+│ optim/kl_sample_train_v1              │ 0.000376       │
+│ optim/kl_sample_train_v2              │ 0.000460       │
+│ train/advantage_abs_mean              │ 0.088910       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.000713       │
+│ train/avg_response_length             │ 406.666667     │
+│ train/consistency_gap_1               │ -0.000126      │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.000011       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.022362       │
+│ train/n_anchor_rollouts               │ 125            │
+│ train/n_consistency_rollouts          │ 127            │
+│ train/n_ref_parsed                    │ 125            │
+│ train/n_training_parsed               │ 127            │
+│ train/p_hat_1                         │ 0.007874       │
+│ train/p_ref                           │ 0.008000       │
+│ train/p_ref_drift                     │ 0.008000       │
+│ train/p_ref_init                      │ 0.000000       │
+│ train/parse_rate                      │ 0.984375       │
+│ train/rate_var                        │ 0.000000       │
+│ train/reward_pert0_trait0_count       │ 124            │
+│ train/reward_pert0_trait0_mean        │ 0.000064       │
+│ train/reward_pert0_trait1_count       │ 1              │
+│ train/reward_pert0_trait1_mean        │ -0.007936      │
+│ train/reward_pert1_trait0_count       │ 126            │
+│ train/reward_pert1_trait0_mean        │ -0.000001      │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ 0.000125       │
+│ train/train/clock_cycle:unique        │ 8805704.000000 │
+│ train/train/clock_cycle:unique_1      │ 8805705.000000 │
+│ train/train/loss:sum                  │ 533.163845     │
+│ train/train/ppo_clipped_fraction:mean │ 0.143257       │
+│ train/train/ppo_kl_div:mean           │ 0.538262       │
+│ train/train/ppo_mean_ratio:mean       │ 0.885325       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  20%|██        | 20/100 [50:08<3:47:33, 170.67s/it, kl=0.0004, gap=-0.000, p_hat=0.01, adv=0.089]
+Epoch 1:  21%|██        | 21/100 [50:35<3:47:08, 172.52s/it, kl=0.0004, gap=-0.000, p_hat=0.01, adv=0.089]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 22                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.907584       │
+│ optim/kl_sample_train_v1              │ 0.000826       │
+│ optim/kl_sample_train_v2              │ 0.000631       │
+│ train/advantage_abs_mean              │ 0.088904       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.000704       │
+│ train/avg_response_length             │ 465.420000     │
+│ train/consistency_gap_1               │ 0.000128       │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.000011       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.017677       │
+│ train/n_anchor_rollouts               │ 126            │
+│ train/n_consistency_rollouts          │ 124            │
+│ train/n_ref_parsed                    │ 126            │
+│ train/n_training_parsed               │ 124            │
+│ train/p_hat_1                         │ 0.008065       │
+│ train/p_ref                           │ 0.007937       │
+│ train/p_ref_drift                     │ 0.007937       │
+│ train/p_ref_init                      │ 0.000000       │
+│ train/parse_rate                      │ 0.976562       │
+│ train/rate_var                        │ 0.000000       │
+│ train/reward_pert0_trait0_count       │ 125            │
+│ train/reward_pert0_trait0_mean        │ 0.000063       │
+│ train/reward_pert0_trait1_count       │ 1              │
+│ train/reward_pert0_trait1_mean        │ -0.007874      │
+│ train/reward_pert1_trait0_count       │ 123            │
+│ train/reward_pert1_trait0_mean        │ 0.000001       │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ -0.000127      │
+│ train/train/clock_cycle:unique        │ 8805932.000000 │
+│ train/train/clock_cycle:unique_1      │ 8805933.000000 │
+│ train/train/loss:sum                  │ 239.852402     │
+│ train/train/ppo_clipped_fraction:mean │ 0.269524       │
+│ train/train/ppo_kl_div:mean           │ 0.923586       │
+│ train/train/ppo_mean_ratio:mean       │ 0.780460       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  21%|██        | 21/100 [53:21<3:47:08, 172.52s/it, kl=0.0008, gap=0.000, p_hat=0.01, adv=0.089] 
+Epoch 1:  22%|██▏       | 22/100 [53:46<3:51:11, 177.84s/it, kl=0.0008, gap=0.000, p_hat=0.01, adv=0.089]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 23                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 5.614094       │
+│ optim/kl_sample_train_v1              │ 0.000625       │
+│ optim/kl_sample_train_v2              │ 0.000553       │
+│ train/advantage_abs_mean              │ 0.413723       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.008565       │
+│ train/avg_response_length             │ 1001.322870    │
+│ train/consistency_gap_1               │ 0.051963       │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.021939       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.009622       │
+│ train/n_anchor_rollouts               │ 111            │
+│ train/n_consistency_rollouts          │ 112            │
+│ train/n_ref_parsed                    │ 111            │
+│ train/n_training_parsed               │ 112            │
+│ train/p_hat_1                         │ 0.232143       │
+│ train/p_ref                           │ 0.180180       │
+│ train/p_ref_drift                     │ 0.022285       │
+│ train/p_ref_init                      │ 0.157895       │
+│ train/parse_rate                      │ 0.871094       │
+│ train/rate_var                        │ 0.000675       │
+│ train/reward_pert0_trait0_count       │ 91             │
+│ train/reward_pert0_trait0_mean        │ 0.004015       │
+│ train/reward_pert0_trait1_count       │ 20             │
+│ train/reward_pert0_trait1_mean        │ -0.018270      │
+│ train/reward_pert1_trait0_count       │ 86             │
+│ train/reward_pert1_trait0_mean        │ 0.012063       │
+│ train/reward_pert1_trait1_count       │ 26             │
+│ train/reward_pert1_trait1_mean        │ -0.039900      │
+│ train/train/clock_cycle:unique        │ 8806331.000000 │
+│ train/train/clock_cycle:unique_1      │ 8806332.000000 │
+│ train/train/clock_cycle:unique_2      │ 8806332.000000 │
+│ train/train/loss:sum                  │ -9249.377192   │
+│ train/train/ppo_clipped_fraction:mean │ 0.101101       │
+│ train/train/ppo_kl_div:mean           │ 0.362166       │
+│ train/train/ppo_mean_ratio:mean       │ 0.919254       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  22%|██▏       | 22/100 [58:54<3:51:11, 177.84s/it, kl=0.0006, gap=0.052, p_hat=0.23, adv=0.414]
+Epoch 1:  23%|██▎       | 23/100 [58:57<4:39:40, 217.92s/it, kl=0.0006, gap=0.052, p_hat=0.23, adv=0.414]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 24                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.716352       │
+│ optim/kl_sample_train_v1              │ 0.000870       │
+│ optim/kl_sample_train_v2              │ 0.000726       │
+│ train/advantage_abs_mean              │ 0.502726       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.082638       │
+│ train/avg_response_length             │ 619.198312     │
+│ train/consistency_gap_1               │ 0.115489       │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.057695       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.015055       │
+│ train/n_anchor_rollouts               │ 116            │
+│ train/n_consistency_rollouts          │ 121            │
+│ train/n_ref_parsed                    │ 116            │
+│ train/n_training_parsed               │ 121            │
+│ train/p_hat_1                         │ 0.520661       │
+│ train/p_ref                           │ 0.405172       │
+│ train/p_ref_drift                     │ 0.168330       │
+│ train/p_ref_init                      │ 0.236842       │
+│ train/parse_rate                      │ 0.925781       │
+│ train/rate_var                        │ 0.003334       │
+│ train/reward_pert0_trait0_count       │ 69             │
+│ train/reward_pert0_trait0_mean        │ 0.068203       │
+│ train/reward_pert0_trait1_count       │ 47             │
+│ train/reward_pert0_trait1_mean        │ -0.100128      │
+│ train/reward_pert1_trait0_count       │ 58             │
+│ train/reward_pert1_trait0_mean        │ 0.060131       │
+│ train/reward_pert1_trait1_count       │ 63             │
+│ train/reward_pert1_trait1_mean        │ -0.055358      │
+│ train/train/clock_cycle:unique        │ 8806579.000000 │
+│ train/train/clock_cycle:unique_1      │ 8806580.000000 │
+│ train/train/loss:sum                  │ -8967.334791   │
+│ train/train/ppo_clipped_fraction:mean │ 0.285775       │
+│ train/train/ppo_kl_div:mean           │ 0.813215       │
+│ train/train/ppo_mean_ratio:mean       │ 0.782969       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  23%|██▎       | 23/100 [1:02:16<4:39:40, 217.92s/it, kl=0.0009, gap=0.115, p_hat=0.52, adv=0.503]
+Epoch 1:  24%|██▍       | 24/100 [1:02:41<4:38:29, 219.86s/it, kl=0.0009, gap=0.115, p_hat=0.52, adv=0.503]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 25                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.397228       │
+│ optim/kl_sample_train_v1              │ 0.000518       │
+│ optim/kl_sample_train_v2              │ 0.000548       │
+│ train/advantage_abs_mean              │ 0.038718       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.002462       │
+│ train/avg_response_length             │ 467.204918     │
+│ train/consistency_gap_1               │ -0.024590      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.000000       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.015736       │
+│ train/n_anchor_rollouts               │ 122            │
+│ train/n_consistency_rollouts          │ 122            │
+│ train/n_ref_parsed                    │ 122            │
+│ train/n_training_parsed               │ 122            │
+│ train/p_hat_1                         │ 0.000000       │
+│ train/p_ref                           │ 0.024590       │
+│ train/p_ref_drift                     │ 0.015895       │
+│ train/p_ref_init                      │ 0.008696       │
+│ train/parse_rate                      │ 0.953125       │
+│ train/rate_var                        │ 0.000151       │
+│ train/reward_pert0_trait0_count       │ 119            │
+│ train/reward_pert0_trait0_mean        │ 0.000391       │
+│ train/reward_pert0_trait1_count       │ 3              │
+│ train/reward_pert0_trait1_mean        │ -0.015504      │
+│ train/reward_pert1_trait0_count       │ 122            │
+│ train/reward_pert1_trait0_mean        │ 0.000000       │
+│ train/train/clock_cycle:unique        │ 8806844.000000 │
+│ train/train/clock_cycle:unique_1      │ 8806845.000000 │
+│ train/train/loss:sum                  │ -549.153664    │
+│ train/train/ppo_clipped_fraction:mean │ 0.142292       │
+│ train/train/ppo_kl_div:mean           │ 0.528233       │
+│ train/train/ppo_mean_ratio:mean       │ 0.887802       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  24%|██▍       | 24/100 [1:06:02<4:38:29, 219.86s/it, kl=0.0005, gap=-0.025, p_hat=0.00, adv=0.039]tinker_cookbook.checkpoint_utils:461 [[92mINFO[0m] Saved checkpoints: {'sampler_path': 'tinker://237f87a9-b4be-5fa0-8795-5383fabe83c7:train:0/sampler_weights/sweep-anchor-weight_llama-rlct-aw0.25-ctrl_step25'}
+tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                                                               Step 25                                                                
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Metric               ┃ Value                                                                                                       ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ checkpoint           │ tinker://237f87a9-b4be-5fa0-8795-5383fabe83c7:train:0/sampler_weights/sweep-anchor-weight_llama-rlct-aw0.2… │
+└──────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+Epoch 1:  25%|██▌       | 25/100 [1:06:05<4:28:47, 215.03s/it, kl=0.0005, gap=-0.025, p_hat=0.00, adv=0.039]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 26               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:  26%|██▌       | 26/100 [1:06:53<3:23:18, 164.84s/it, kl=0.0005, gap=-0.025, p_hat=0.00, adv=0.039]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 27                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 3.569767       │
+│ optim/kl_sample_train_v1              │ 0.000612       │
+│ optim/kl_sample_train_v2              │ 0.000624       │
+│ train/advantage_abs_mean              │ 0.406768       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.031534       │
+│ train/avg_response_length             │ 616.945946     │
+│ train/consistency_gap_1               │ -0.052367      │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.022016       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.014126       │
+│ train/n_anchor_rollouts               │ 113            │
+│ train/n_consistency_rollouts          │ 109            │
+│ train/n_ref_parsed                    │ 113            │
+│ train/n_training_parsed               │ 109            │
+│ train/p_hat_1                         │ 0.770642       │
+│ train/p_ref                           │ 0.823009       │
+│ train/p_ref_drift                     │ 0.082624       │
+│ train/p_ref_init                      │ 0.740385       │
+│ train/parse_rate                      │ 0.867188       │
+│ train/rate_var                        │ 0.000686       │
+│ train/reward_pert0_trait0_count       │ 20             │
+│ train/reward_pert0_trait0_mean        │ 0.068000       │
+│ train/reward_pert0_trait1_count       │ 93             │
+│ train/reward_pert0_trait1_mean        │ -0.014624      │
+│ train/reward_pert1_trait0_count       │ 25             │
+│ train/reward_pert1_trait0_mean        │ -0.040356      │
+│ train/reward_pert1_trait1_count       │ 84             │
+│ train/reward_pert1_trait1_mean        │ 0.012011       │
+│ train/train/clock_cycle:unique        │ 8807149.000000 │
+│ train/train/clock_cycle:unique_1      │ 8807150.000000 │
+│ train/train/loss:sum                  │ -4327.140671   │
+│ train/train/ppo_clipped_fraction:mean │ 0.281732       │
+│ train/train/ppo_kl_div:mean           │ 0.925873       │
+│ train/train/ppo_mean_ratio:mean       │ 0.770917       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  26%|██▌       | 26/100 [1:10:18<3:23:18, 164.84s/it, kl=0.0006, gap=-0.052, p_hat=0.77, adv=0.407]
+Epoch 1:  27%|██▋       | 27/100 [1:10:19<3:35:45, 177.34s/it, kl=0.0006, gap=-0.052, p_hat=0.77, adv=0.407]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 28                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.710198       │
+│ optim/kl_sample_train_v1              │ 0.000716       │
+│ optim/kl_sample_train_v2              │ 0.000648       │
+│ train/advantage_abs_mean              │ 0.268958       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.006853       │
+│ train/avg_response_length             │ 360.861660     │
+│ train/consistency_gap_1               │ -0.032308      │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.008290       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.015137       │
+│ train/n_anchor_rollouts               │ 126            │
+│ train/n_consistency_rollouts          │ 127            │
+│ train/n_ref_parsed                    │ 126            │
+│ train/n_training_parsed               │ 127            │
+│ train/p_hat_1                         │ 0.070866       │
+│ train/p_ref                           │ 0.103175       │
+│ train/p_ref_drift                     │ 0.022529       │
+│ train/p_ref_init                      │ 0.080645       │
+│ train/parse_rate                      │ 0.988281       │
+│ train/rate_var                        │ 0.000261       │
+│ train/reward_pert0_trait0_count       │ 113            │
+│ train/reward_pert0_trait0_mean        │ 0.002324       │
+│ train/reward_pert0_trait1_count       │ 13             │
+│ train/reward_pert0_trait1_mean        │ -0.020205      │
+│ train/reward_pert1_trait0_count       │ 118            │
+│ train/reward_pert1_trait0_mean        │ -0.002290      │
+│ train/reward_pert1_trait1_count       │ 9              │
+│ train/reward_pert1_trait1_mean        │ 0.030019       │
+│ train/train/clock_cycle:unique        │ 8807342.000000 │
+│ train/train/clock_cycle:unique_1      │ 8807342.000000 │
+│ train/train/loss:sum                  │ 234.073669     │
+│ train/train/ppo_clipped_fraction:mean │ 0.333979       │
+│ train/train/ppo_kl_div:mean           │ 1.350321       │
+│ train/train/ppo_mean_ratio:mean       │ 0.718143       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  27%|██▋       | 27/100 [1:12:55<3:35:45, 177.34s/it, kl=0.0007, gap=-0.032, p_hat=0.07, adv=0.269]
+Epoch 1:  28%|██▊       | 28/100 [1:12:57<3:25:41, 171.42s/it, kl=0.0007, gap=-0.032, p_hat=0.07, adv=0.269]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 29                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.943981       │
+│ optim/kl_sample_train_v1              │ 0.000662       │
+│ optim/kl_sample_train_v2              │ 0.000620       │
+│ train/advantage_abs_mean              │ 0.479394       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.074278       │
+│ train/avg_response_length             │ 352.441767     │
+│ train/consistency_gap_1               │ 0.032714       │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.015511       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.013613       │
+│ train/n_anchor_rollouts               │ 123            │
+│ train/n_consistency_rollouts          │ 126            │
+│ train/n_ref_parsed                    │ 123            │
+│ train/n_training_parsed               │ 126            │
+│ train/p_hat_1                         │ 0.658730       │
+│ train/p_ref                           │ 0.626016       │
+│ train/p_ref_drift                     │ -0.153511      │
+│ train/p_ref_init                      │ 0.779528       │
+│ train/parse_rate                      │ 0.972656       │
+│ train/rate_var                        │ 0.000268       │
+│ train/reward_pert0_trait0_count       │ 46             │
+│ train/reward_pert0_trait0_mean        │ -0.096101      │
+│ train/reward_pert0_trait1_count       │ 77             │
+│ train/reward_pert0_trait1_mean        │ 0.057411       │
+│ train/reward_pert1_trait0_count       │ 43             │
+│ train/reward_pert1_trait0_mean        │ 0.021550       │
+│ train/reward_pert1_trait1_count       │ 83             │
+│ train/reward_pert1_trait1_mean        │ -0.011164      │
+│ train/train/clock_cycle:unique        │ 8807425.000000 │
+│ train/train/loss:sum                  │ -1886.418533   │
+│ train/train/ppo_clipped_fraction:mean │ 0.133960       │
+│ train/train/ppo_kl_div:mean           │ 0.681412       │
+│ train/train/ppo_mean_ratio:mean       │ 0.887571       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  28%|██▊       | 28/100 [1:14:12<3:25:41, 171.42s/it, kl=0.0007, gap=0.033, p_hat=0.66, adv=0.479] 
+Epoch 1:  29%|██▉       | 29/100 [1:14:31<2:55:32, 148.34s/it, kl=0.0007, gap=0.033, p_hat=0.66, adv=0.479]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 30                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.903833       │
+│ optim/kl_sample_train_v1              │ 0.000706       │
+│ optim/kl_sample_train_v2              │ 0.000693       │
+│ train/advantage_abs_mean              │ 0.038110       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.001185       │
+│ train/avg_response_length             │ 431.015936     │
+│ train/consistency_gap_1               │ -0.024000      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.000000       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.021420       │
+│ train/n_anchor_rollouts               │ 125            │
+│ train/n_consistency_rollouts          │ 126            │
+│ train/n_ref_parsed                    │ 125            │
+│ train/n_training_parsed               │ 126            │
+│ train/p_hat_1                         │ 0.000000       │
+│ train/p_ref                           │ 0.024000       │
+│ train/p_ref_drift                     │ 0.007740       │
+│ train/p_ref_init                      │ 0.016260       │
+│ train/parse_rate                      │ 0.980469       │
+│ train/rate_var                        │ 0.000144       │
+│ train/reward_pert0_trait0_count       │ 122            │
+│ train/reward_pert0_trait0_mean        │ 0.000186       │
+│ train/reward_pert0_trait1_count       │ 3              │
+│ train/reward_pert0_trait1_mean        │ -0.007554      │
+│ train/reward_pert1_trait0_count       │ 126            │
+│ train/reward_pert1_trait0_mean        │ 0.000000       │
+│ train/train/clock_cycle:unique        │ 8807603.000000 │
+│ train/train/clock_cycle:unique_1      │ 8807603.000000 │
+│ train/train/loss:sum                  │ -181.786423    │
+│ train/train/ppo_clipped_fraction:mean │ 0.345247       │
+│ train/train/ppo_kl_div:mean           │ 1.084391       │
+│ train/train/ppo_mean_ratio:mean       │ 0.723496       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  29%|██▉       | 29/100 [1:16:39<2:55:32, 148.34s/it, kl=0.0007, gap=-0.024, p_hat=0.00, adv=0.038]
+Epoch 1:  30%|███       | 30/100 [1:16:41<2:46:29, 142.71s/it, kl=0.0007, gap=-0.024, p_hat=0.00, adv=0.038]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 31                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.532880       │
+│ optim/kl_sample_train_v1              │ 0.000557       │
+│ optim/kl_sample_train_v2              │ 0.000517       │
+│ train/advantage_abs_mean              │ 0.097275       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.000079       │
+│ train/avg_response_length             │ 406.692913     │
+│ train/consistency_gap_1               │ -0.007688      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.000682       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.012623       │
+│ train/n_anchor_rollouts               │ 128            │
+│ train/n_consistency_rollouts          │ 126            │
+│ train/n_ref_parsed                    │ 128            │
+│ train/n_training_parsed               │ 126            │
+│ train/p_hat_1                         │ 0.007937       │
+│ train/p_ref                           │ 0.015625       │
+│ train/p_ref_drift                     │ -0.000635      │
+│ train/p_ref_init                      │ 0.016260       │
+│ train/parse_rate                      │ 0.992188       │
+│ train/rate_var                        │ 0.000015       │
+│ train/reward_pert0_trait0_count       │ 126            │
+│ train/reward_pert0_trait0_mean        │ -0.000010      │
+│ train/reward_pert0_trait1_count       │ 2              │
+│ train/reward_pert0_trait1_mean        │ 0.000625       │
+│ train/reward_pert1_trait0_count       │ 125            │
+│ train/reward_pert1_trait0_mean        │ -0.000061      │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ 0.007627       │
+│ train/train/clock_cycle:unique        │ 8807833.000000 │
+│ train/train/clock_cycle:unique_1      │ 8807834.000000 │
+│ train/train/loss:sum                  │ 36.066330      │
+│ train/train/ppo_clipped_fraction:mean │ 0.193052       │
+│ train/train/ppo_kl_div:mean           │ 0.755028       │
+│ train/train/ppo_mean_ratio:mean       │ 0.838471       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  30%|███       | 30/100 [1:20:10<2:46:29, 142.71s/it, kl=0.0006, gap=-0.008, p_hat=0.01, adv=0.097]
+Epoch 1:  31%|███       | 31/100 [1:20:11<3:07:26, 162.99s/it, kl=0.0006, gap=-0.008, p_hat=0.01, adv=0.097]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 32               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:  32%|███▏      | 32/100 [1:20:54<2:23:55, 126.99s/it, kl=0.0006, gap=-0.008, p_hat=0.01, adv=0.097]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 33                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.982795       │
+│ optim/kl_sample_train_v1              │ 0.000490       │
+│ optim/kl_sample_train_v2              │ 0.000703       │
+│ train/advantage_abs_mean              │ 0.451640       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.059385       │
+│ train/avg_response_length             │ 469.301205     │
+│ train/consistency_gap_1               │ -0.031896      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.014087       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.024128       │
+│ train/n_anchor_rollouts               │ 121            │
+│ train/n_consistency_rollouts          │ 128            │
+│ train/n_ref_parsed                    │ 121            │
+│ train/n_training_parsed               │ 128            │
+│ train/p_hat_1                         │ 0.265625       │
+│ train/p_ref                           │ 0.297521       │
+│ train/p_ref_drift                     │ -0.129899      │
+│ train/p_ref_init                      │ 0.427419       │
+│ train/parse_rate                      │ 0.972656       │
+│ train/rate_var                        │ 0.000254       │
+│ train/reward_pert0_trait0_count       │ 85             │
+│ train/reward_pert0_trait0_mean        │ -0.038648      │
+│ train/reward_pert0_trait1_count       │ 36             │
+│ train/reward_pert0_trait1_mean        │ 0.091251       │
+│ train/reward_pert1_trait0_count       │ 94             │
+│ train/reward_pert1_trait0_mean        │ -0.008472      │
+│ train/reward_pert1_trait1_count       │ 34             │
+│ train/reward_pert1_trait1_mean        │ 0.023423       │
+│ train/train/clock_cycle:unique        │ 8808104.000000 │
+│ train/train/clock_cycle:unique_1      │ 8808105.000000 │
+│ train/train/loss:sum                  │ 5805.829570    │
+│ train/train/ppo_clipped_fraction:mean │ 0.334083       │
+│ train/train/ppo_kl_div:mean           │ 0.998218       │
+│ train/train/ppo_mean_ratio:mean       │ 0.738490       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  32%|███▏      | 32/100 [1:23:35<2:23:55, 126.99s/it, kl=0.0005, gap=-0.032, p_hat=0.27, adv=0.452]
+Epoch 1:  33%|███▎      | 33/100 [1:23:59<2:41:13, 144.38s/it, kl=0.0005, gap=-0.032, p_hat=0.27, adv=0.452]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 34                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.228985       │
+│ optim/kl_sample_train_v1              │ 0.000752       │
+│ optim/kl_sample_train_v2              │ 0.000565       │
+│ train/advantage_abs_mean              │ 0.127373       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.002107       │
+│ train/avg_response_length             │ 290.934156     │
+│ train/consistency_gap_1               │ -0.000135      │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.000017       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.028323       │
+│ train/n_anchor_rollouts               │ 121            │
+│ train/n_consistency_rollouts          │ 122            │
+│ train/n_ref_parsed                    │ 121            │
+│ train/n_training_parsed               │ 122            │
+│ train/p_hat_1                         │ 0.016393       │
+│ train/p_ref                           │ 0.016529       │
+│ train/p_ref_drift                     │ 0.016529       │
+│ train/p_ref_init                      │ 0.000000       │
+│ train/parse_rate                      │ 0.949219       │
+│ train/rate_var                        │ 0.000000       │
+│ train/reward_pert0_trait0_count       │ 119            │
+│ train/reward_pert0_trait0_mean        │ 0.000273       │
+│ train/reward_pert0_trait1_count       │ 2              │
+│ train/reward_pert0_trait1_mean        │ -0.016256      │
+│ train/reward_pert1_trait0_count       │ 120            │
+│ train/reward_pert1_trait0_mean        │ -0.000002      │
+│ train/reward_pert1_trait1_count       │ 2              │
+│ train/reward_pert1_trait1_mean        │ 0.000133       │
+│ train/train/clock_cycle:unique        │ 8808203.000000 │
+│ train/train/loss:sum                  │ 914.956821     │
+│ train/train/ppo_clipped_fraction:mean │ 0.161045       │
+│ train/train/ppo_kl_div:mean           │ 0.862675       │
+│ train/train/ppo_mean_ratio:mean       │ 0.858921       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  33%|███▎      | 33/100 [1:25:59<2:41:13, 144.38s/it, kl=0.0008, gap=-0.000, p_hat=0.02, adv=0.127]
+Epoch 1:  34%|███▍      | 34/100 [1:26:00<2:31:05, 137.35s/it, kl=0.0008, gap=-0.000, p_hat=0.02, adv=0.127]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 35                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.486590       │
+│ optim/kl_sample_train_v1              │ 0.000409       │
+│ optim/kl_sample_train_v2              │ 0.000558       │
+│ train/advantage_abs_mean              │ 0.132593       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.003717       │
+│ train/avg_response_length             │ 396.176000     │
+│ train/consistency_gap_1               │ -0.008321      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.001040       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.021176       │
+│ train/n_anchor_rollouts               │ 124            │
+│ train/n_consistency_rollouts          │ 126            │
+│ train/n_ref_parsed                    │ 124            │
+│ train/n_training_parsed               │ 126            │
+│ train/p_hat_1                         │ 0.015873       │
+│ train/p_ref                           │ 0.024194       │
+│ train/p_ref_drift                     │ 0.024194       │
+│ train/p_ref_init                      │ 0.000000       │
+│ train/parse_rate                      │ 0.976562       │
+│ train/rate_var                        │ 0.000017       │
+│ train/reward_pert0_trait0_count       │ 121            │
+│ train/reward_pert0_trait0_mean        │ 0.000585       │
+│ train/reward_pert0_trait1_count       │ 3              │
+│ train/reward_pert0_trait1_mean        │ -0.023608      │
+│ train/reward_pert1_trait0_count       │ 124            │
+│ train/reward_pert1_trait0_mean        │ -0.000132      │
+│ train/reward_pert1_trait1_count       │ 2              │
+│ train/reward_pert1_trait1_mean        │ 0.008188       │
+│ train/train/clock_cycle:unique        │ 8808272.000000 │
+│ train/train/clock_cycle:unique_1      │ 8808273.000000 │
+│ train/train/loss:sum                  │ -304.124290    │
+│ train/train/ppo_clipped_fraction:mean │ 0.186220       │
+│ train/train/ppo_kl_div:mean           │ 0.737728       │
+│ train/train/ppo_mean_ratio:mean       │ 0.844734       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  34%|███▍      | 34/100 [1:27:46<2:31:05, 137.35s/it, kl=0.0004, gap=-0.008, p_hat=0.02, adv=0.133]
+Epoch 1:  35%|███▌      | 35/100 [1:27:47<2:18:54, 128.22s/it, kl=0.0004, gap=-0.008, p_hat=0.02, adv=0.133]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 36               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:  36%|███▌      | 36/100 [1:29:04<2:00:28, 112.95s/it, kl=0.0004, gap=-0.008, p_hat=0.02, adv=0.133]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 37               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:  37%|███▋      | 37/100 [1:29:53<1:38:26, 93.76s/it, kl=0.0004, gap=-0.008, p_hat=0.02, adv=0.133] tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 38               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:  38%|███▊      | 38/100 [1:30:48<1:24:37, 81.89s/it, kl=0.0004, gap=-0.008, p_hat=0.02, adv=0.133]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 39                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.779912       │
+│ optim/kl_sample_train_v1              │ 0.000698       │
+│ optim/kl_sample_train_v2              │ 0.000562       │
+│ train/advantage_abs_mean              │ 0.089174       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.000721       │
+│ train/avg_response_length             │ 337.776892     │
+│ train/consistency_gap_1               │ -0.000191      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.000017       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.022411       │
+│ train/n_anchor_rollouts               │ 124            │
+│ train/n_consistency_rollouts          │ 127            │
+│ train/n_ref_parsed                    │ 124            │
+│ train/n_training_parsed               │ 127            │
+│ train/p_hat_1                         │ 0.007874       │
+│ train/p_ref                           │ 0.008065       │
+│ train/p_ref_drift                     │ 0.008065       │
+│ train/p_ref_init                      │ 0.000000       │
+│ train/parse_rate                      │ 0.980469       │
+│ train/rate_var                        │ 0.000000       │
+│ train/reward_pert0_trait0_count       │ 123            │
+│ train/reward_pert0_trait0_mean        │ 0.000065       │
+│ train/reward_pert0_trait1_count       │ 1              │
+│ train/reward_pert0_trait1_mean        │ -0.007999      │
+│ train/reward_pert1_trait0_count       │ 126            │
+│ train/reward_pert1_trait0_mean        │ -0.000002      │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ 0.000189       │
+│ train/train/clock_cycle:unique        │ 8808527.000000 │
+│ train/train/loss:sum                  │ 90.194763      │
+│ train/train/ppo_clipped_fraction:mean │ 0.162110       │
+│ train/train/ppo_kl_div:mean           │ 0.788621       │
+│ train/train/ppo_mean_ratio:mean       │ 0.856702       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  38%|███▊      | 38/100 [1:32:45<1:24:37, 81.89s/it, kl=0.0007, gap=-0.000, p_hat=0.01, adv=0.089]
+Epoch 1:  39%|███▉      | 39/100 [1:32:47<1:34:41, 93.14s/it, kl=0.0007, gap=-0.000, p_hat=0.01, adv=0.089]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 40                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.921417       │
+│ optim/kl_sample_train_v1              │ 0.000430       │
+│ optim/kl_sample_train_v2              │ 0.000479       │
+│ train/advantage_abs_mean              │ 0.309700       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.024418       │
+│ train/avg_response_length             │ 387.914286     │
+│ train/consistency_gap_1               │ 0.025323       │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.008071       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.017909       │
+│ train/n_anchor_rollouts               │ 123            │
+│ train/n_consistency_rollouts          │ 122            │
+│ train/n_ref_parsed                    │ 123            │
+│ train/n_training_parsed               │ 122            │
+│ train/p_hat_1                         │ 0.114754       │
+│ train/p_ref                           │ 0.089431       │
+│ train/p_ref_drift                     │ -0.085569      │
+│ train/p_ref_init                      │ 0.175000       │
+│ train/parse_rate                      │ 0.957031       │
+│ train/rate_var                        │ 0.000160       │
+│ train/reward_pert0_trait0_count       │ 112            │
+│ train/reward_pert0_trait0_mean        │ -0.007653      │
+│ train/reward_pert0_trait1_count       │ 11             │
+│ train/reward_pert0_trait1_mean        │ 0.077917       │
+│ train/reward_pert1_trait0_count       │ 108            │
+│ train/reward_pert1_trait0_mean        │ 0.002906       │
+│ train/reward_pert1_trait1_count       │ 14             │
+│ train/reward_pert1_trait1_mean        │ -0.022417      │
+│ train/train/clock_cycle:unique        │ 8808648.000000 │
+│ train/train/clock_cycle:unique_1      │ 8808649.000000 │
+│ train/train/loss:sum                  │ 1740.791439    │
+│ train/train/ppo_clipped_fraction:mean │ 0.162694       │
+│ train/train/ppo_kl_div:mean           │ 0.596420       │
+│ train/train/ppo_mean_ratio:mean       │ 0.869201       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  39%|███▉      | 39/100 [1:35:20<1:34:41, 93.14s/it, kl=0.0004, gap=0.025, p_hat=0.11, adv=0.310] 
+Epoch 1:  40%|████      | 40/100 [1:35:23<1:52:04, 112.08s/it, kl=0.0004, gap=0.025, p_hat=0.11, adv=0.310]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 41                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.477236       │
+│ optim/kl_sample_train_v1              │ 0.000473       │
+│ optim/kl_sample_train_v2              │ 0.000598       │
+│ train/advantage_abs_mean              │ 0.243327       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.009426       │
+│ train/avg_response_length             │ 352.079365     │
+│ train/consistency_gap_1               │ 0.001008       │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.000247       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.012968       │
+│ train/n_anchor_rollouts               │ 127            │
+│ train/n_consistency_rollouts          │ 125            │
+│ train/n_ref_parsed                    │ 127            │
+│ train/n_training_parsed               │ 125            │
+│ train/p_hat_1                         │ 0.064000       │
+│ train/p_ref                           │ 0.062992       │
+│ train/p_ref_drift                     │ 0.038799       │
+│ train/p_ref_init                      │ 0.024194       │
+│ train/parse_rate                      │ 0.984375       │
+│ train/rate_var                        │ 0.000000       │
+│ train/reward_pert0_trait0_count       │ 119            │
+│ train/reward_pert0_trait0_mean        │ 0.002444       │
+│ train/reward_pert0_trait1_count       │ 8              │
+│ train/reward_pert0_trait1_mean        │ -0.036355      │
+│ train/reward_pert1_trait0_count       │ 117            │
+│ train/reward_pert1_trait0_mean        │ 0.000065       │
+│ train/reward_pert1_trait1_count       │ 8              │
+│ train/reward_pert1_trait1_mean        │ -0.000943      │
+│ train/train/clock_cycle:unique        │ 8808731.000000 │
+│ train/train/loss:sum                  │ 6852.145752    │
+│ train/train/ppo_clipped_fraction:mean │ 0.147175       │
+│ train/train/ppo_kl_div:mean           │ 0.686852       │
+│ train/train/ppo_mean_ratio:mean       │ 0.869804       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  40%|████      | 40/100 [1:37:39<1:52:04, 112.08s/it, kl=0.0005, gap=0.001, p_hat=0.06, adv=0.243]
+Epoch 1:  41%|████      | 41/100 [1:37:46<1:59:09, 121.18s/it, kl=0.0005, gap=0.001, p_hat=0.06, adv=0.243]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 42               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:  42%|████▏     | 42/100 [1:39:36<1:54:01, 117.96s/it, kl=0.0005, gap=0.001, p_hat=0.06, adv=0.243]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 43                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.008253       │
+│ optim/kl_sample_train_v1              │ 0.000552       │
+│ optim/kl_sample_train_v2              │ 0.000520       │
+│ train/advantage_abs_mean              │ 0.022270       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.000037       │
+│ train/avg_response_length             │ 288.337349     │
+│ train/consistency_gap_1               │ -0.008065      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.000000       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.018308       │
+│ train/n_anchor_rollouts               │ 124            │
+│ train/n_consistency_rollouts          │ 125            │
+│ train/n_ref_parsed                    │ 124            │
+│ train/n_training_parsed               │ 125            │
+│ train/p_hat_1                         │ 0.000000       │
+│ train/p_ref                           │ 0.008065       │
+│ train/p_ref_drift                     │ -0.000410      │
+│ train/p_ref_init                      │ 0.008475       │
+│ train/parse_rate                      │ 0.972656       │
+│ train/rate_var                        │ 0.000016       │
+│ train/reward_pert0_trait0_count       │ 123            │
+│ train/reward_pert0_trait0_mean        │ -0.000003      │
+│ train/reward_pert0_trait1_count       │ 1              │
+│ train/reward_pert0_trait1_mean        │ 0.000407       │
+│ train/reward_pert1_trait0_count       │ 125            │
+│ train/reward_pert1_trait0_mean        │ 0.000000       │
+│ train/train/clock_cycle:unique        │ 8808848.000000 │
+│ train/train/loss:sum                  │ -88.449293     │
+│ train/train/ppo_clipped_fraction:mean │ 0.215630       │
+│ train/train/ppo_kl_div:mean           │ 0.846000       │
+│ train/train/ppo_mean_ratio:mean       │ 0.817625       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  42%|████▏     | 42/100 [1:42:00<1:54:01, 117.96s/it, kl=0.0006, gap=-0.008, p_hat=0.00, adv=0.022]
+Epoch 1:  43%|████▎     | 43/100 [1:42:03<2:00:15, 126.59s/it, kl=0.0006, gap=-0.008, p_hat=0.00, adv=0.022]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 44                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.916290       │
+│ optim/kl_sample_train_v1              │ 0.000683       │
+│ optim/kl_sample_train_v2              │ 0.000661       │
+│ train/advantage_abs_mean              │ 0.227429       │
+│ train/anchor_reward_mean              │ -0.000000      │
+│ train/anchor_reward_std               │ 0.044725       │
+│ train/avg_response_length             │ 359.975709     │
+│ train/consistency_gap_1               │ -0.007671      │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.001770       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.027036       │
+│ train/n_anchor_rollouts               │ 123            │
+│ train/n_consistency_rollouts          │ 124            │
+│ train/n_ref_parsed                    │ 123            │
+│ train/n_training_parsed               │ 124            │
+│ train/p_hat_1                         │ 0.943548       │
+│ train/p_ref                           │ 0.951220       │
+│ train/p_ref_drift                     │ 0.207630       │
+│ train/p_ref_init                      │ 0.743590       │
+│ train/parse_rate                      │ 0.964844       │
+│ train/rate_var                        │ 0.000015       │
+│ train/reward_pert0_trait0_count       │ 6              │
+│ train/reward_pert0_trait0_mean        │ 0.197501       │
+│ train/reward_pert0_trait1_count       │ 117            │
+│ train/reward_pert0_trait1_mean        │ -0.010128      │
+│ train/reward_pert1_trait0_count       │ 7              │
+│ train/reward_pert1_trait0_mean        │ -0.007238      │
+│ train/reward_pert1_trait1_count       │ 117            │
+│ train/reward_pert1_trait1_mean        │ 0.000433       │
+│ train/train/clock_cycle:unique        │ 8808941.000000 │
+│ train/train/loss:sum                  │ -560.035736    │
+│ train/train/ppo_clipped_fraction:mean │ 0.185714       │
+│ train/train/ppo_kl_div:mean           │ 0.826294       │
+│ train/train/ppo_mean_ratio:mean       │ 0.848218       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  43%|████▎     | 43/100 [1:43:42<2:00:15, 126.59s/it, kl=0.0007, gap=-0.008, p_hat=0.94, adv=0.227]
+Epoch 1:  44%|████▍     | 44/100 [1:43:43<1:50:52, 118.80s/it, kl=0.0007, gap=-0.008, p_hat=0.94, adv=0.227]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 45               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:  45%|████▌     | 45/100 [1:45:11<1:40:22, 109.51s/it, kl=0.0007, gap=-0.008, p_hat=0.94, adv=0.227]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 46                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.998407       │
+│ optim/kl_sample_train_v1              │ 0.000650       │
+│ optim/kl_sample_train_v2              │ 0.000518       │
+│ train/advantage_abs_mean              │ 0.488978       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.107191       │
+│ train/avg_response_length             │ 549.186364     │
+│ train/consistency_gap_1               │ 0.012082       │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.006014       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.012796       │
+│ train/n_anchor_rollouts               │ 114            │
+│ train/n_consistency_rollouts          │ 106            │
+│ train/n_ref_parsed                    │ 114            │
+│ train/n_training_parsed               │ 106            │
+│ train/p_hat_1                         │ 0.547170       │
+│ train/p_ref                           │ 0.535088       │
+│ train/p_ref_drift                     │ -0.214912      │
+│ train/p_ref_init                      │ 0.750000       │
+│ train/parse_rate                      │ 0.859375       │
+│ train/rate_var                        │ 0.000036       │
+│ train/reward_pert0_trait0_count       │ 53             │
+│ train/reward_pert0_trait0_mean        │ -0.114997      │
+│ train/reward_pert0_trait1_count       │ 61             │
+│ train/reward_pert0_trait1_mean        │ 0.099915       │
+│ train/reward_pert1_trait0_count       │ 48             │
+│ train/reward_pert1_trait0_mean        │ 0.006611       │
+│ train/reward_pert1_trait1_count       │ 58             │
+│ train/reward_pert1_trait1_mean        │ -0.005471      │
+│ train/train/clock_cycle:unique        │ 8809290.000000 │
+│ train/train/clock_cycle:unique_1      │ 8809291.000000 │
+│ train/train/loss:sum                  │ -643.163357    │
+│ train/train/ppo_clipped_fraction:mean │ 0.112026       │
+│ train/train/ppo_kl_div:mean           │ 0.490734       │
+│ train/train/ppo_mean_ratio:mean       │ 0.908246       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  45%|████▌     | 45/100 [1:49:05<1:40:22, 109.51s/it, kl=0.0006, gap=0.012, p_hat=0.55, adv=0.489] 
+Epoch 1:  46%|████▌     | 46/100 [1:49:26<2:17:40, 152.98s/it, kl=0.0006, gap=0.012, p_hat=0.55, adv=0.489]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 47                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.852412       │
+│ optim/kl_sample_train_v1              │ 0.000565       │
+│ optim/kl_sample_train_v2              │ 0.000636       │
+│ train/advantage_abs_mean              │ 0.105873       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.005078       │
+│ train/avg_response_length             │ 389.599190     │
+│ train/consistency_gap_1               │ -0.016590      │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.001478       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.018809       │
+│ train/n_anchor_rollouts               │ 122            │
+│ train/n_consistency_rollouts          │ 125            │
+│ train/n_ref_parsed                    │ 122            │
+│ train/n_training_parsed               │ 125            │
+│ train/p_hat_1                         │ 0.008000       │
+│ train/p_ref                           │ 0.024590       │
+│ train/p_ref_drift                     │ -0.032787      │
+│ train/p_ref_init                      │ 0.057377       │
+│ train/parse_rate                      │ 0.964844       │
+│ train/rate_var                        │ 0.000069       │
+│ train/reward_pert0_trait0_count       │ 119            │
+│ train/reward_pert0_trait0_mean        │ -0.000806      │
+│ train/reward_pert0_trait1_count       │ 3              │
+│ train/reward_pert0_trait1_mean        │ 0.031981       │
+│ train/reward_pert1_trait0_count       │ 124            │
+│ train/reward_pert1_trait0_mean        │ -0.000133      │
+│ train/reward_pert1_trait1_count       │ 1              │
+│ train/reward_pert1_trait1_mean        │ 0.016457       │
+│ train/train/clock_cycle:unique        │ 8809378.000000 │
+│ train/train/loss:sum                  │ -617.682907    │
+│ train/train/ppo_clipped_fraction:mean │ 0.145980       │
+│ train/train/ppo_kl_div:mean           │ 0.687927       │
+│ train/train/ppo_mean_ratio:mean       │ 0.874559       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  46%|████▌     | 46/100 [1:51:34<2:17:40, 152.98s/it, kl=0.0006, gap=-0.017, p_hat=0.01, adv=0.106]
+Epoch 1:  47%|████▋     | 47/100 [1:51:35<2:08:46, 145.78s/it, kl=0.0006, gap=-0.017, p_hat=0.01, adv=0.106]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 48                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.065045       │
+│ optim/kl_sample_train_v1              │ 0.000718       │
+│ optim/kl_sample_train_v2              │ 0.000640       │
+│ train/advantage_abs_mean              │ 0.463119       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.058243       │
+│ train/avg_response_length             │ 387.399209     │
+│ train/consistency_gap_1               │ 0.041932       │
+│ train/consistency_reward_mean         │ -0.000000      │
+│ train/consistency_reward_std          │ 0.019646       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.020774       │
+│ train/n_anchor_rollouts               │ 127            │
+│ train/n_consistency_rollouts          │ 126            │
+│ train/n_ref_parsed                    │ 127            │
+│ train/n_training_parsed               │ 126            │
+│ train/p_hat_1                         │ 0.325397       │
+│ train/p_ref                           │ 0.283465       │
+│ train/p_ref_drift                     │ -0.129234      │
+│ train/p_ref_init                      │ 0.412698       │
+│ train/parse_rate                      │ 0.988281       │
+│ train/rate_var                        │ 0.000440       │
+│ train/reward_pert0_trait0_count       │ 91             │
+│ train/reward_pert0_trait0_mean        │ -0.036633      │
+│ train/reward_pert0_trait1_count       │ 36             │
+│ train/reward_pert0_trait1_mean        │ 0.092601       │
+│ train/reward_pert1_trait0_count       │ 85             │
+│ train/reward_pert1_trait0_mean        │ 0.013645       │
+│ train/reward_pert1_trait1_count       │ 41             │
+│ train/reward_pert1_trait1_mean        │ -0.028288      │
+│ train/train/clock_cycle:unique        │ 8809395.000000 │
+│ train/train/clock_cycle:unique_1      │ 8809396.000000 │
+│ train/train/loss:sum                  │ -1167.246651   │
+│ train/train/ppo_clipped_fraction:mean │ 0.181125       │
+│ train/train/ppo_kl_div:mean           │ 0.711775       │
+│ train/train/ppo_mean_ratio:mean       │ 0.849448       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  47%|████▋     | 47/100 [1:53:31<2:08:46, 145.78s/it, kl=0.0007, gap=0.042, p_hat=0.33, adv=0.463] 
+Epoch 1:  48%|████▊     | 48/100 [1:53:32<1:58:50, 137.12s/it, kl=0.0007, gap=0.042, p_hat=0.33, adv=0.463]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+               Step 49               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric                    ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ train/skipped_empty_batch │ 1     │
+└───────────────────────────┴───────┘
+
+Epoch 1:  49%|████▉     | 49/100 [1:54:10<1:31:27, 107.60s/it, kl=0.0007, gap=0.042, p_hat=0.33, adv=0.463]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 50                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 1.260498       │
+│ optim/kl_sample_train_v1              │ 0.000682       │
+│ optim/kl_sample_train_v2              │ 0.000802       │
+│ train/advantage_abs_mean              │ 0.185119       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.010141       │
+│ train/avg_response_length             │ 341.104000     │
+│ train/consistency_gap_1               │ -0.015361      │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.002714       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.021636       │
+│ train/n_anchor_rollouts               │ 126            │
+│ train/n_consistency_rollouts          │ 124            │
+│ train/n_ref_parsed                    │ 126            │
+│ train/n_training_parsed               │ 124            │
+│ train/p_hat_1                         │ 0.032258       │
+│ train/p_ref                           │ 0.047619       │
+│ train/p_ref_drift                     │ 0.047619       │
+│ train/p_ref_init                      │ 0.000000       │
+│ train/parse_rate                      │ 0.976562       │
+│ train/rate_var                        │ 0.000059       │
+│ train/reward_pert0_trait0_count       │ 120            │
+│ train/reward_pert0_trait0_mean        │ 0.002268       │
+│ train/reward_pert0_trait1_count       │ 6              │
+│ train/reward_pert0_trait1_mean        │ -0.045351      │
+│ train/reward_pert1_trait0_count       │ 120            │
+│ train/reward_pert1_trait0_mean        │ -0.000496      │
+│ train/reward_pert1_trait1_count       │ 4              │
+│ train/reward_pert1_trait1_mean        │ 0.014865       │
+│ train/train/clock_cycle:unique        │ 8809436.000000 │
+│ train/train/clock_cycle:unique_1      │ 8809437.000000 │
+│ train/train/clock_cycle:unique_2      │ 8809437.000000 │
+│ train/train/loss:sum                  │ 68.764374      │
+│ train/train/ppo_clipped_fraction:mean │ 0.532279       │
+│ train/train/ppo_kl_div:mean           │ 1.779413       │
+│ train/train/ppo_mean_ratio:mean       │ 0.567752       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  49%|████▉     | 49/100 [1:56:27<1:31:27, 107.60s/it, kl=0.0007, gap=-0.015, p_hat=0.03, adv=0.185]tinker_cookbook.checkpoint_utils:461 [[92mINFO[0m] Saved checkpoints: {'sampler_path': 'tinker://237f87a9-b4be-5fa0-8795-5383fabe83c7:train:0/sampler_weights/sweep-anchor-weight_llama-rlct-aw0.25-ctrl_step50'}
+tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                                                               Step 50                                                                
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Metric               ┃ Value                                                                                                       ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ checkpoint           │ tinker://237f87a9-b4be-5fa0-8795-5383fabe83c7:train:0/sampler_weights/sweep-anchor-weight_llama-rlct-aw0.2… │
+└──────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+Epoch 1:  50%|█████     | 50/100 [1:56:29<1:37:22, 116.85s/it, kl=0.0007, gap=-0.015, p_hat=0.03, adv=0.185]tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+                         Step 51                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 2.595979       │
+│ optim/kl_sample_train_v1              │ 0.000477       │
+│ optim/kl_sample_train_v2              │ 0.000509       │
+│ train/advantage_abs_mean              │ 0.349547       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 387.975104     │
+│ train/consistency_gap_1               │ 0.105716       │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.049067       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.019950       │
+│ train/n_anchor_rollouts               │ 120            │
+│ train/n_consistency_rollouts          │ 121            │
+│ train/n_ref_parsed                    │ 120            │
+│ train/n_training_parsed               │ 121            │
+│ train/p_hat_1                         │ 0.314050       │
+│ train/p_ref                           │ 0.208333       │
+│ train/p_ref_drift                     │ 0.000000       │
+│ train/p_ref_init                      │ 0.208333       │
+│ train/parse_rate                      │ 0.941406       │
+│ train/rate_var                        │ 0.002794       │
+│ train/reward_pert0_trait0_count       │ 95             │
+│ train/reward_pert0_trait0_mean        │ 0.000000       │
+│ train/reward_pert0_trait1_count       │ 25             │
+│ train/reward_pert0_trait1_mean        │ 0.000000       │
+│ train/reward_pert1_trait0_count       │ 83             │
+│ train/reward_pert1_trait0_mean        │ 0.033200       │
+│ train/reward_pert1_trait1_count       │ 38             │
+│ train/reward_pert1_trait1_mean        │ -0.072516      │
+│ train/train/clock_cycle:unique        │ 8809459.000000 │
+│ train/train/clock_cycle:unique_1      │ 8809460.000000 │
+│ train/train/loss:sum                  │ 2469.999514    │
+│ train/train/ppo_clipped_fraction:mean │ 0.224903       │
+│ train/train/ppo_kl_div:mean           │ 0.937912       │
+│ train/train/ppo_mean_ratio:mean       │ 0.807658       │
+└───────────────────────────────────────┴────────────────┘
+
+Epoch 1:  50%|█████     | 50/100 [1:59:00<1:37:22, 116.85s/it, kl=0.0005, gap=0.106, p_hat=0.31, adv=0.350] 
+Epoch 1:  51%|█████     | 51/100 [1:59:01<1:44:09, 127.55s/it, kl=0.0005, gap=0.106, p_hat=0.31, adv=0.350]tinker.lib.retry_handler:241 [[91mERROR[0m] Request failed with non-retryable error: ValueError: Error retrieving result: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'} with status code e.status_code=402 for self.request_id='237f87a9-b4be-5fa0-8795-5383fabe83c7:sample:1:8853' and expected type self.model_cls=<class 'tinker.SampleResponse'>
+tinker.lib.retry_handler:241 [[91mERROR[0m] Request failed with non-retryable error: ValueError: Error retrieving result: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'} with status code e.status_code=402 for self.request_id='237f87a9-b4be-5fa0-8795-5383fabe83c7:sample:1:8852' and expected type self.model_cls=<class 'tinker.SampleResponse'>
+tinker.lib.telemetry:204 [[92mINFO[0m] Exception logged for session ID: 237f87a9-b4be-5fa0-8795-5383fabe83c7
+
+Epoch 1:  51%|█████     | 51/100 [2:00:08<1:55:26, 141.35s/it, kl=0.0005, gap=0.106, p_hat=0.31, adv=0.350]
+cot_transparency.apis.tinker.rl_training:531 [[91mERROR[0m] Training failed with exception:
+Traceback (most recent call last):
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/api_future_impl.py", line 123, in _result_async
+    response = await client.futures.with_raw_response.retrieve(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_response.py", line 786, in wrapped
+    return cast(AsyncAPIResponse[R], await func(*args, **kwargs))
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/futures.py", line 74, in retrieve
+    await self._post(
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, in request
+    raise self._make_status_error_from_response(err.response) from None
+tinker.APIStatusError: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'}
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 525, in train
+    return await self._train_loop(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 560, in _train_loop
+    return await self._train_loop_inner(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 716, in _train_loop_inner
+    anchor_results = await asyncio.gather(*[_sample_anchor(item) for item in items_needing_anchor])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 710, in _sample_anchor
+    result = await self._collect_rollouts(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 372, in _collect_rollouts
+    results = await asyncio.gather(*[rollout_perturbation(idx) for idx in all_idx])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 356, in rollout_perturbation
+    raw = await self._sample_from_client(client, prompt, n_rollouts_per[idx])
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 292, in _sample_from_client
+    result = await client.sample_async(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_client.py", line 266, in sample_async
+    return await AwaitableConcurrentFuture(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 132, in result_async
+    return await asyncio.wrap_future(self._future)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 384, in _awrapper
+    return await cast(Callable[..., Awaitable[R]], func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_client.py", line 252, in _sample_async_with_retries
+    return await self.retry_handler.execute(_sample_async)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/retry_handler.py", line 155, in execute
+    result = await self._execute_with_retry(func, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/retry_handler.py", line 207, in _execute_with_retry
+    result = await func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_client.py", line 242, in _sample_async
+    return await self._sample_async_impl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_client.py", line 200, in _sample_async_impl
+    return await _APIFuture(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/api_future_impl.py", line 278, in result_async
+    return await asyncio.wait_for(self._future, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 132, in result_async
+    return await asyncio.wrap_future(self._future)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/api_future_impl.py", line 175, in _result_async
+    raise ValueError(
+ValueError: Error retrieving result: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'} with status code e.status_code=402 for self.request_id='237f87a9-b4be-5fa0-8795-5383fabe83c7:sample:1:8853' and expected type self.model_cls=<class 'tinker.SampleResponse'>
+
+tinker_cookbook.utils.ml_log:192 [[92mINFO[0m] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.25-ctrl/metrics.jsonl
+  ⏳ Anchor rate missing for 1 datapoint(s), sampling from base...
+tinker_cookbook.utils.ml_log:265 [[92mINFO[0m] 
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Metric               ┃ Value                                                                                                       ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ train/error          │ Traceback (most recent call last):                                                                          │
+│                      │   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/api_future_impl.py",     │
+│                      │ line 123, in _result_async                                                                                  │
+│                      │     response = await client.futures.with_raw_response.retrieve(                                             │
+│                      │                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                             │
+│                      │   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_response.py", line 786, in  │
+│                      │ wrapped                                                                                                     │
+│                      │     return cast(AsyncAPIResponse[R], await func(*args, **kwargs))                                           │
+│                      │                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^                                            │
+│                      │   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/futures.py", line  │
+│                      │ 74, in retrieve                                                                                             │
+│                      │     await self._post(                                                                                       │
+│                      │   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, │
+│                      │ in post                                                                                                     │
+│                      │     return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)                          │
+│                      │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                          │
+│                      │   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, │
+│                      │ in request                                                                                                  │
+│                      │     raise self._make_status_error_from_response(err.response) from None                                     │
+│                      │ tinker.APIStatusError: Error code: 402 - {'detail': 'Access for                                             │
+│                      │ consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at  │
+│                      │ https://tinker-console.thinkingmachines.ai/billing/balance.'}                                               │
+│                      │                                                                                                             │
+│                      │ The above exception was the direct cause of the following exception:                                        │
+│                      │                                                                                                             │
+│                      │ Traceback (most recent call last):                                                                          │
+│                      │   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 525, in train    │
+│                      │     return await self._train_loop(                                                                          │
+│                      │            ^^^^^^^^^^^^^^^^^^^^^^^                                                                          │
+│                      │   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 560, in          │
+│                      │ _train_loop                                                                                                 │
+│                      │     return await self._train_loop_inner(                                                                    │
+│                      │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                    │
+│                      │   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 716, in          │
+│                      │ _train_loop_inner                                                                                           │
+│                      │     anchor_results = await asyncio.gather(*[_sample_anchor(item) for item in items_needing_anchor])         │
+│                      │                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^         │
+│                      │   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 710, in          │
+│                      │ _sample_anchor                                                                                              │
+│                      │     result = await self._collect_rollouts(                                                                  │
+│                      │              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                  │
+│                      │   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 372, in          │
+│                      │ _collect_rollouts                                                                                           │
+│                      │     results = await asyncio.gather(*)                                                                       │
+│                      │               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                         │
+│                      │   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 356, in          │
+│                      │ rollout_perturbation                                                                                        │
+│                      │     raw = await self._sample_from_client(client, prompt, n_rollouts_per)                                    │
+│                      │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                               │
+│                      │   File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 292, in          │
+│                      │ _sample_from_client                                                                                         │
+│                      │     result = await client.sample_async(                                                                     │
+│                      │              ^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                     │
+│                      │   File                                                                                                      │
+│                      │ "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_cli… │
+│                      │ line 266, in sample_async                                                                                   │
+│                      │     return await AwaitableConcurrentFuture(                                                                 │
+│                      │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                 │
+│                      │   File                                                                                                      │
+│                      │ "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.p… │
+│                      │ line 132, in result_async                                                                                   │
+│                      │     return await asyncio.wrap_future(self._future)                                                          │
+│                      │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                          │
+│                      │   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 384, │
+│                      │ in _awrapper                                                                                                │
+│                      │     return await cast(Callable[..., Awaitable[R]], func)(*args, **kwargs)                                   │
+│                      │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                   │
+│                      │   File                                                                                                      │
+│                      │ "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_cli… │
+│                      │ line 252, in _sample_async_with_retries                                                                     │
+│                      │     return await self.retry_handler.execute(_sample_async)                                                  │
+│                      │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                  │
+│                      │   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/retry_handler.py", line  │
+│                      │ 155, in execute                                                                                             │
+│                      │     result = await self._execute_with_retry(func, *args, **kwargs)                                          │
+│                      │              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                          │
+│                      │   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/retry_handler.py", line  │
+│                      │ 207, in _execute_with_retry                                                                                 │
+│                      │     result = await func(*args, **kwargs)                                                                    │
+│                      │              ^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                    │
+│                      │   File                                                                                                      │
+│                      │ "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_cli… │
+│                      │ line 242, in _sample_async                                                                                  │
+│                      │     return await self._sample_async_impl(                                                                   │
+│                      │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                                   │
+│                      │   File                                                                                                      │
+│                      │ "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_cli… │
+│                      │ line 200, in _sample_async_impl                                                                             │
+│                      │     return await _APIFuture(                                                                                │
+│                      │            ^^^^^^^^^^^^^^^^^                                                                                │
+│                      │   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/api_future_impl.py",     │
+│                      │ line 278, in result_async                                                                                   │
+│                      │     return await asyncio.wait_for(self._future, timeout)                                                    │
+│                      │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                    │
+│                      │   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/tasks.py", line 520, in wait_for          │
+│                      │     return await fut                                                                                        │
+│                      │            ^^^^^^^^^                                                                                        │
+│                      │   File                                                                                                      │
+│                      │ "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.p… │
+│                      │ line 132, in result_async                                                                                   │
+│                      │     return await asyncio.wrap_future(self._future)                                                          │
+│                      │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                                                          │
+│                      │   File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/api_future_impl.py",     │
+│                      │ line 175, in _result_async                                                                                  │
+│                      │     raise ValueError(                                                                                       │
+│                      │ ValueError: Error retrieving result: Error code: 402 - {'detail': 'Access for                               │
+│                      │ consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at  │
+│                      │ https://tinker-console.thinkingmachines.ai/billing/balance.'} with status code e.status_code=402 for        │
+│                      │ self.request_id='237f87a9-b4be-5fa0-8795-5383fabe83c7:sample:1:8853' and expected type                      │
+│                      │ self.model_cls=<class 'tinker.SampleResponse'>                                                              │
+│                      │                                                                                                             │
+└──────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+Traceback (most recent call last):
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/api_future_impl.py", line 123, in _result_async
+    response = await client.futures.with_raw_response.retrieve(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_response.py", line 786, in wrapped
+    return cast(AsyncAPIResponse[R], await func(*args, **kwargs))
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/futures.py", line 74, in retrieve
+    await self._post(
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, in request
+    raise self._make_status_error_from_response(err.response) from None
+tinker.APIStatusError: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'}
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 301, in <module>
+    main()
+  File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 285, in main
+    final_checkpoint = asyncio.run(
+                       ^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 525, in train
+    return await self._train_loop(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 560, in _train_loop
+    return await self._train_loop_inner(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 716, in _train_loop_inner
+    anchor_results = await asyncio.gather(*[_sample_anchor(item) for item in items_needing_anchor])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 710, in _sample_anchor
+    result = await self._collect_rollouts(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 372, in _collect_rollouts
+    results = await asyncio.gather(*[rollout_perturbation(idx) for idx in all_idx])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 356, in rollout_perturbation
+    raw = await self._sample_from_client(client, prompt, n_rollouts_per[idx])
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 292, in _sample_from_client
+    result = await client.sample_async(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_client.py", line 266, in sample_async
+    return await AwaitableConcurrentFuture(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 132, in result_async
+    return await asyncio.wrap_future(self._future)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 384, in _awrapper
+    return await cast(Callable[..., Awaitable[R]], func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_client.py", line 252, in _sample_async_with_retries
+    return await self.retry_handler.execute(_sample_async)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/retry_handler.py", line 155, in execute
+    result = await self._execute_with_retry(func, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/retry_handler.py", line 207, in _execute_with_retry
+    result = await func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_client.py", line 242, in _sample_async
+    return await self._sample_async_impl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/sampling_client.py", line 200, in _sample_async_impl
+    return await _APIFuture(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/api_future_impl.py", line 278, in result_async
+    return await asyncio.wait_for(self._future, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 132, in result_async
+    return await asyncio.wrap_future(self._future)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/api_future_impl.py", line 175, in _result_async
+    raise ValueError(
+ValueError: Error retrieving result: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'} with status code e.status_code=402 for self.request_id='237f87a9-b4be-5fa0-8795-5383fabe83c7:sample:1:8853' and expected type self.model_cls=<class 'tinker.SampleResponse'>

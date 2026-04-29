@@ -1,0 +1,67 @@
+Your Tinker SDK version is outdated. Please upgrade to the latest version.
+
+Loading datapoints: 100 total across 1 combos (100 per combo)
+  Loaded 100 from mmlu_suggested_answer.jsonl
+
+============================================================
+RL Training Configuration
+============================================================
+  Model:              meta-llama/Llama-3.1-8B-Instruct
+  Experiment:         sweep-anchor-weight/llama-rlct-aw1.0
+  Bias types:         ['suggested_answer']
+  Datasets:           ['mmlu']
+  Total datapoints:   100
+  Perturbations:      unbiased (ref) + biased (train)
+  LR:                 None (constant)
+  LoRA rank:          8
+  Batch size:         1
+  Grad accum steps:   1
+  N epochs:           1
+  Estimated steps:    100
+  Checkpoint every:   25 steps
+  n_ref_rollouts:     128
+  n_train_rollouts:   128
+  n_consistency_rollouts: 128
+  n_anchor_rollouts:  None
+  KL coef:            0.05
+  Anchor weight:      1.0
+  Anchor model:       base
+  Loss fn:            ppo
+============================================================
+Traceback (most recent call last):
+  File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 301, in <module>
+    main()
+  File "/home/prakharg/cot-transparency/scripts/tinker_training/train_rl.py", line 283, in main
+    trainer.setup()
+  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/rl_training.py", line 258, in setup
+    self.training_client = self.service_client.create_lora_training_client(
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 75, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/telemetry.py", line 394, in _wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 201, in create_lora_training_client
+    ).result()
+      ^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/api_future.py", line 127, in result
+    return self._future.result(timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/public_interfaces/service_client.py", line 136, in _create_lora_training_client_async
+    future = await client.models.create(request=request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/resources/models.py", line 61, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1230, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/_base_client.py", line 1031, in request
+    raise self._make_status_error_from_response(err.response) from None
+tinker.APIStatusError: Error code: 402 - {'detail': 'Access for consistency.training.methods@gmail.com_default_org is blocked due to billing status. Please add payment at https://tinker-console.thinkingmachines.ai/billing/balance.'}

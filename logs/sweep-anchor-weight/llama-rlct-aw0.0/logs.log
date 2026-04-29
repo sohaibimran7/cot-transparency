@@ -1,0 +1,49 @@
+root:654 [INFO] Command line invocation: scripts/tinker_training/train_rl.py --model meta-llama/Llama-3.1-8B-Instruct --experiment-name sweep-anchor-weight --run-name llama-rlct-aw0.0 --bias-types suggested_answer --datasets mmlu --n-datapoints 100 --lora-rank 8 --kl-coef 0.05 --anchor-weight 0.0 --loss-fn ppo --n-ref-rollouts 128 --n-train-rollouts 128 --refresh-every 1 --checkpoint-every 25 -y
+tinker_cookbook.utils.ml_log:592 [INFO] Logging to: logs/sweep-anchor-weight/llama-rlct-aw0.0
+tinker_cookbook.utils.ml_log:265 [INFO] 
+Configuration:
+  git: {'git_sha': '805c2833db224d35988f5e2311dd9512bd71fdca', 'git_branch': 'reasoning-history-last-fix', 'git_dirty': True, 
+'git_dirt ...     "hatch": "//",\n+      "edgecolor": "black",\n+      "training_biases": []\n     }\n   }\n }\n\\ No newline at end 
+of file'}
+tinker_cookbook.utils.ml_log:265 [INFO] 
+Configuration:
+  n_datapoints: 100
+  total_steps: 100
+  n_perturbations: 2
+  base_lr: 0.0002856415043086949
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-anchor-weight/llama-rlct-aw0.0/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                          Step 1                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric                                ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ optim/entropy                         │ 0.770484       │
+│ optim/kl_sample_train_v1              │ 0.000635       │
+│ optim/kl_sample_train_v2              │ 0.000595       │
+│ train/advantage_abs_mean              │ 0.176085       │
+│ train/anchor_reward_mean              │ 0.000000       │
+│ train/anchor_reward_std               │ 0.000000       │
+│ train/avg_response_length             │ 293.804688     │
+│ train/consistency_gap_1               │ 0.283526       │
+│ train/consistency_reward_mean         │ 0.000000       │
+│ train/consistency_reward_std          │ 0.024962       │
+│ train/epoch                           │ 0              │
+│ train/kl_policy_base                  │ 0.000263       │
+│ train/n_anchor_rollouts               │ 0              │
+│ train/n_consistency_rollouts          │ 128            │
+│ train/n_ref_parsed                    │ 127            │
+│ train/n_training_parsed               │ 128            │
+│ train/p_hat_1                         │ 0.992188       │
+│ train/p_ref                           │ 0.708661       │
+│ train/parse_rate                      │ 0.996094       │
+│ train/rate_var                        │ 0.020097       │
+│ train/reward_pert1_trait0_count       │ 1              │
+│ train/reward_pert1_trait0_mean        │ 0.281311       │
+│ train/reward_pert1_trait1_count       │ 127            │
+│ train/reward_pert1_trait1_mean        │ -0.002215      │
+│ train/train/clock_cycle:unique        │ 1644607.000000 │
+│ train/train/loss:sum                  │ 298.481552     │
+│ train/train/ppo_clipped_fraction:mean │ 0.183574       │
+│ train/train/ppo_kl_div:mean           │ 0.852374       │
+│ train/train/ppo_mean_ratio:mean       │ 0.840151       │
+└───────────────────────────────────────┴────────────────┘

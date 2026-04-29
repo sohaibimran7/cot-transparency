@@ -1,0 +1,42 @@
+{
+  "experiment": "sweep-nroll-32",
+  "config_hash": "dcc9389059d8",
+  "stages": {
+    "training": {
+      "status": "completed",
+      "completed_at": "2026-04-21T13:21:45.173412+00:00",
+      "outputs": {
+        "main_checkpoint": "tinker://935283e8-7307-5ab8-a213-347a91b1ae64:train:0/sampler_weights/sweep-rollouts_llama-rlct-nr32",
+        "checkpoint": "tinker://935283e8-7307-5ab8-a213-347a91b1ae64:train:0/sampler_weights/sweep-rollouts_llama-rlct-nr32"
+      }
+    },
+    "evaluation": {
+      "status": "completed",
+      "completed_at": "2026-04-21T13:21:45.173425+00:00",
+      "outputs": {}
+    },
+    "analysis": {
+      "status": "completed",
+      "completed_at": "2026-04-21T13:25:01.295242+00:00"
+    }
+  },
+  "tasks": {
+    "train:main": {
+      "status": "completed",
+      "stage": "training",
+      "label": "main",
+      "started_at": "2026-04-21T03:51:57.958216+00:00",
+      "completed_at": "2026-04-21T13:21:45.166375+00:00",
+      "outputs": {
+        "checkpoint": "tinker://935283e8-7307-5ab8-a213-347a91b1ae64:train:0/sampler_weights/sweep-rollouts_llama-rlct-nr32"
+      }
+    },
+    "eval:main": {
+      "status": "completed",
+      "stage": "evaluation",
+      "label": "main",
+      "started_at": "2026-04-21T06:10:35.844671+00:00",
+      "completed_at": "2026-04-21T13:21:45.169776+00:00"
+    }
+  }
+}

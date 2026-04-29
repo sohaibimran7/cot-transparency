@@ -1,0 +1,616 @@
+root:654 [INFO] Command line invocation: scripts/tinker_training/train_sft.py --model meta-llama/Llama-3.1-8B-Instruct --data dataset_dumps/train_seed_42/llama-3-1-8b-instruct/sa-mmlu-hp/bct_cot.jsonl --experiment-name sweep-bct-batch-size --run-name llama-bct-bs32 --batch-size 32 --epochs 1 --lora-rank 8 --save-every 9999 -y
+tinker_cookbook.utils.ml_log:592 [INFO] Logging to: logs/sweep-bct-batch-size/llama-bct-bs32
+tinker_cookbook.utils.ml_log:265 [INFO] 
+Configuration:
+  git: {'git_sha': 'a3276f0d7774c54dc046e1eb2011f0d280021f92', 'git_branch': 
+'reasoning-history-last-fix', 'git_dirty': True, 'git_dirt ... : "black",\n+    
+"training_biases": [\n+        "suggested_answer"\n+      ]\n     }\n   }\n 
+}\n\\ No newline at end of file'}
+tinker_cookbook.utils.ml_log:265 [INFO] 
+Configuration:
+  n_samples: 2000
+  total_steps: 62
+  file: 
+'dataset_dumps/train_seed_42/llama-3-1-8b-instruct/sa-mmlu-hp/bct_cot.jsonl'
+  base_lr: 0.0002856415043086949
+tinker.lib.internal_client_holder:289 [WARNING] Your Tinker SDK version is outdated. Please upgrade to the latest version.
+tinker.lib.public_interfaces.service_client:67 [INFO] ServiceClient initialized for session 985f31f8-9752-5773-8054-0ed5b2e730e3
+tinker.lib.sync_only:70 [WARNING] Synchronous method 'ServiceClient.create_lora_training_client()' called from async context. Use 'ServiceClient.create_lora_training_client_async()' instead.
+Calling sync methods from async code can cause deadlocks and performance issues.
+tinker.lib.sync_only:71 [WARNING] ===== Stack for calling sync from async ===== 
+['  File "/home/prakharg/cot-transparency/scripts/tinker_training/train_sft.py", line 237, in <module>\n    main()\n', '  File "/home/prakharg/cot-transparency/scripts/tinker_training/train_sft.py", line 232, in main\n    final_checkpoint = asyncio.run(train_sft(data_path, config, resume_from=args.resume_from))\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/runners.py", line 195, in run\n    return runner.run(main)\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/runners.py", line 118, in run\n    return self._loop.run_until_complete(task)\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/base_events.py", line 678, in run_until_complete\n    self.run_forever()\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/base_events.py", line 645, in run_forever\n    self._run_once()\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/base_events.py", line 1999, in _run_once\n    handle._run()\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/asyncio/events.py", line 88, in _run\n    self._context.run(self._callback, *self._args)\n', '  File "/home/prakharg/cot-transparency/cot_transparency/apis/tinker/finetune.py", line 138, in train_sft\n    training_client = service_client.create_lora_training_client(\n', '  File "/home/prakharg/miniconda3/envs/cot/lib/python3.12/site-packages/tinker/lib/sync_only.py", line 72, in wrapper\n    f"===== Stack for calling sync from async ===== \\n{traceback.format_stack()}\\n ==========="\n']
+ ===========
+tinker.lib.public_interfaces.service_client:151 [INFO] TrainingClient initialized for model 985f31f8-9752-5773-8054-0ed5b2e730e3:train:0
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 1               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000286 │
+│ train/nll            │ 0.217726 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 2               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000281 │
+│ train/nll            │ 0.187954 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 3               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000276 │
+│ train/nll            │ 0.187294 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 4               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000272 │
+│ train/nll            │ 0.191864 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 5               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000267 │
+│ train/nll            │ 0.164503 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 6               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000263 │
+│ train/nll            │ 0.133875 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 7               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000258 │
+│ train/nll            │ 0.142507 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 8               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000253 │
+│ train/nll            │ 0.141680 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 9               
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000249 │
+│ train/nll            │ 0.123638 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 10              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000244 │
+│ train/nll            │ 0.133184 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 11              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000240 │
+│ train/nll            │ 0.132281 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 12              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000235 │
+│ train/nll            │ 0.128455 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 13              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000230 │
+│ train/nll            │ 0.127110 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 14              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000226 │
+│ train/nll            │ 0.111027 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 15              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000221 │
+│ train/nll            │ 0.133888 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 16              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000217 │
+│ train/nll            │ 0.128954 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 17              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000212 │
+│ train/nll            │ 0.132518 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 18              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000207 │
+│ train/nll            │ 0.131876 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 19              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000203 │
+│ train/nll            │ 0.123753 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 20              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000198 │
+│ train/nll            │ 0.127840 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 21              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000193 │
+│ train/nll            │ 0.115279 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 22              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000189 │
+│ train/nll            │ 0.122158 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 23              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000184 │
+│ train/nll            │ 0.131969 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 24              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000180 │
+│ train/nll            │ 0.117204 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 25              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000175 │
+│ train/nll            │ 0.116599 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 26              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000170 │
+│ train/nll            │ 0.120368 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 27              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000166 │
+│ train/nll            │ 0.114875 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 28              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000161 │
+│ train/nll            │ 0.116790 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 29              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000157 │
+│ train/nll            │ 0.129180 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 30              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000152 │
+│ train/nll            │ 0.111447 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 31              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000147 │
+│ train/nll            │ 0.120555 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 32              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000143 │
+│ train/nll            │ 0.121854 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 33              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000138 │
+│ train/nll            │ 0.112178 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 34              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000134 │
+│ train/nll            │ 0.120004 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 35              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000129 │
+│ train/nll            │ 0.119657 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 36              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000124 │
+│ train/nll            │ 0.131993 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 37              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000120 │
+│ train/nll            │ 0.116097 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 38              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000115 │
+│ train/nll            │ 0.118126 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 39              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000111 │
+│ train/nll            │ 0.129273 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 40              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000106 │
+│ train/nll            │ 0.115298 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 41              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000101 │
+│ train/nll            │ 0.106037 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 42              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000097 │
+│ train/nll            │ 0.126062 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 43              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000092 │
+│ train/nll            │ 0.121685 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 44              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000088 │
+│ train/nll            │ 0.123664 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 45              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000083 │
+│ train/nll            │ 0.121830 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 46              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000078 │
+│ train/nll            │ 0.118311 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 47              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000074 │
+│ train/nll            │ 0.129891 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 48              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000069 │
+│ train/nll            │ 0.110959 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 49              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000064 │
+│ train/nll            │ 0.129920 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 50              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000060 │
+│ train/nll            │ 0.131504 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 51              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000055 │
+│ train/nll            │ 0.121858 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 52              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000051 │
+│ train/nll            │ 0.119456 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 53              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000046 │
+│ train/nll            │ 0.114910 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 54              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000041 │
+│ train/nll            │ 0.107757 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 55              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000037 │
+│ train/nll            │ 0.118211 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 56              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000032 │
+│ train/nll            │ 0.102057 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 57              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000028 │
+│ train/nll            │ 0.110530 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 58              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000023 │
+│ train/nll            │ 0.120269 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 59              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000018 │
+│ train/nll            │ 0.121447 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 60              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000014 │
+│ train/nll            │ 0.125586 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 61              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000009 │
+│ train/nll            │ 0.102843 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 62              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000005 │
+│ train/nll            │ 0.105315 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 63              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/lr             │ 0.000000 │
+│ train/nll            │ 0.113576 │
+└──────────────────────┴──────────┘
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+              Step 63              
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Metric               ┃ Value    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ train/epoch          │ 1        │
+│ train/epoch_nll      │ 0.127087 │
+└──────────────────────┴──────────┘
+tinker_cookbook.checkpoint_utils:461 [INFO] Saved checkpoints: {'sampler_path': 'tinker://985f31f8-9752-5773-8054-0ed5b2e730e3:train:0/sampler_weights/sweep-bct-batch-size_llama-bct-bs32'}
+tinker_cookbook.utils.ml_log:192 [INFO] Wrote metrics to logs/sweep-bct-batch-size/llama-bct-bs32/metrics.jsonl
+tinker_cookbook.utils.ml_log:265 [INFO] 
+                                    Step 63                                     
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Metric               ┃ Value                                                 ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ final_checkpoint     │ tinker://985f31f8-9752-5773-8054-0ed5b2e730e3:train:… │
+└──────────────────────┴───────────────────────────────────────────────────────┘
+tinker_cookbook.utils.ml_log:265 [INFO] 
+Configuration:
+  final_checkpoint: 
+'tinker://985f31f8-9752-5773-8054-0ed5b2e730e3:train:0/sampler_weights/sweep-bct
+-batch-size_llama-bct-bs32'
+  all_checkpoints: 
+['tinker://985f31f8-9752-5773-8054-0ed5b2e730e3:train:0/sampler_weights/sweep-bc
+t-batch-size_llama-bct-bs32']

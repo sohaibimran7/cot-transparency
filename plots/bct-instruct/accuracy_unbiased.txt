@@ -1,0 +1,8 @@
+# Unbiased-eval accuracy for sweep: bct-instruct
+# variant=unbiased only, mcq_bias_scorer.correct
+
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-bct-inst                   199      0.598
+  llama-bct-noinst                 197      0.640

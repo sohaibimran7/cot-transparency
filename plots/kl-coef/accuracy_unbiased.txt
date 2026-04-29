@@ -1,0 +1,13 @@
+# Unbiased-eval accuracy for sweep: kl-coef
+# variant=unbiased only, mcq_bias_scorer.correct
+
+  model                              n   accuracy
+  -----------------------------------------------
+  llama-base-tqa-659               625      0.624
+  llama-rlct-kl0.01                200      0.370
+  llama-rlct-kl0.01-ctrl            18      0.389
+  llama-rlct-kl0.05                189      0.402
+  llama-rlct-kl0.05-ctrl           192      0.474
+  llama-rlct-kl0.1                 171      0.497
+  llama-rlct-kl0.1-ctrl            369      0.618
+  llama-rlct-kl0.5                 184      0.592

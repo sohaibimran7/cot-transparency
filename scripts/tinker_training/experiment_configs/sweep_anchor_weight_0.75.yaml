@@ -1,0 +1,41 @@
+# Anchor weight sweep: alpha=0.75 (mostly anchor)
+name: sweep-aw-0.75
+model: meta-llama/Llama-3.1-8B-Instruct
+
+training:
+  method: rl
+  include_control: true
+  args:
+    experiment_name: sweep-anchor-weight
+    run_name: llama-rlct-aw0.75
+    bias_types: suggested_answer
+    datasets: mmlu
+    n_datapoints: 100
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.75
+    loss_fn: ppo
+    n_ref_rollouts: 128
+    n_train_rollouts: 128
+    checkpoint_every: 25
+    refresh_every: 1
+
+evaluation:
+  include_base: true
+  args:
+    bias_types: "suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares"
+    datasets: truthfulqa
+    prompt_styles: cot
+    log_dir: sycophancy_eval_inspect/logs/sweep_anchor_weight
+    limit: 100
+
+analysis:
+  args:
+    bir: true
+    plot: true
+
+viz_registration:
+  dir_suffix: rlct-aw0.75
+  display_name: "RLCT a=0.75"
+  color: "#377eb8"
+  training_biases: [suggested_answer]

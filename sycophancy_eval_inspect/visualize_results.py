@@ -47,6 +47,7 @@ BIAS_DISPLAY_NAMES = {
     "suggested_answer": "Suggested Answer",
     "wrong_few_shot": "Wrong Few-Shot",
     "distractor_argument": "Distractor Argument",
+    "distractor_argument_g4": "Distractor Argument",
     "distractor_fact": "Distractor Fact",
     "spurious_few_shot_hindsight": "Spurious: Hindsight",
     "spurious_few_shot_squares": "Spurious: Squares",

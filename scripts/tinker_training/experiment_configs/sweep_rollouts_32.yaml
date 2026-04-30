@@ -1,0 +1,43 @@
+# Rollout count sweep: 32 rollouts (low compute, high variance)
+name: sweep-nroll-32
+model: meta-llama/Llama-3.1-8B-Instruct
+
+training:
+  method: rl
+  include_control: false
+  args:
+    experiment_name: sweep-rollouts
+    run_name: llama-rlct-nr32
+    bias_types: suggested_answer
+    datasets: mmlu
+    n_datapoints: 128
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.0
+    loss_fn: ppo
+    n_ref_rollouts: 32
+    n_train_rollouts: 32
+    n_consistency_rollouts: 16
+    checkpoint_every: 64
+    refresh_every: 1
+    batch_size: 1
+
+evaluation:
+  include_base: true
+  args:
+    bias_types: "suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares"
+    datasets: truthfulqa
+    prompt_styles: cot
+    log_dir: sycophancy_eval_inspect/logs/tinker_evals
+    limit: 200
+
+analysis:
+  args:
+    bir: true
+    plot: true
+
+viz_registration:
+  dir_suffix: rlct-nr32
+  display_name: "RLCT 32roll"
+  color: "#66c2a5"
+  training_biases: [suggested_answer]

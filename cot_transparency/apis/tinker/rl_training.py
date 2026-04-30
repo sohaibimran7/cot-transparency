@@ -15,6 +15,7 @@ Usage:
         trait_classifier=classifier,
     ))
 """
+from __future__ import annotations
 
 import asyncio
 from collections import defaultdict, deque

@@ -1,0 +1,43 @@
+# KL coefficient sweep: kl_coef=0.1 (moderate KL penalty)
+name: sweep-kl-0.1
+model: meta-llama/Llama-3.1-8B-Instruct
+
+training:
+  method: rl
+  include_control: true
+  args:
+    experiment_name: sweep-kl-coef
+    run_name: llama-rlct-kl0.1
+    bias_types: suggested_answer
+    datasets: mmlu
+    n_datapoints: 128
+    lora_rank: 8
+    kl_coef: 0.1
+    anchor_weight: 0.0
+    loss_fn: ppo
+    n_ref_rollouts: 64
+    n_train_rollouts: 64
+    n_consistency_rollouts: 16
+    refresh_every: 1
+    batch_size: 1
+    checkpoint_every: 64
+
+evaluation:
+  include_base: true
+  args:
+    bias_types: "suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares"
+    datasets: truthfulqa
+    prompt_styles: cot
+    limit: 200
+    log_dir: sycophancy_eval_inspect/logs/tinker_evals
+
+analysis:
+  args:
+    bir: true
+    plot: true
+
+viz_registration:
+  dir_suffix: rlct-kl0.1
+  display_name: "RLCT kl=0.1"
+  color: "#4daf4a"
+  training_biases: [suggested_answer]

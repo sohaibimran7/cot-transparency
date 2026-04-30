@@ -30,6 +30,10 @@ class TrainingTypeInfo:
     method: str = "other"          # "base" | "bct" | "rlct" | "vft" | "other"
     data_scale: str = "da"         # "da" | "dawfs" — drives panel grouping
     is_control: bool = False
+    control_for: str | None = None  # if this is a control, the trained type
+                                    # it pairs with (drives panel placement).
+                                    # Explicit in TOML; auto-filled from the
+                                    # `_ctrl`/`_control` suffix as fallback.
     training_biases: frozenset[str] = field(default_factory=frozenset)
     aggregate_group: str | None = None
     dir_aliases: tuple[str, ...] = ()
@@ -119,6 +123,7 @@ def _build_registry(toml_path: Path, json_path: Path) -> Registry:
                 method=method,
                 data_scale=scale,
                 is_control=is_control,
+                control_for=info.get("control_for"),
                 training_biases=frozenset(info.get("training_biases", [])),
                 aggregate_group=info.get("aggregate_group"),
                 dir_aliases=tuple(info.get("dir_aliases", [])),
@@ -166,6 +171,27 @@ def _build_registry(toml_path: Path, json_path: Path) -> Registry:
                 )
             if tt_key not in reg.training_type_order:
                 reg.training_type_order.append(tt_key)
+
+    # ── 3. Auto-fill control_for from suffix as a convenience fallback ──────
+    # Entries that already set control_for explicitly are left untouched. For
+    # the rest, if the key ends in `_ctrl` or `_control` and the stripped name
+    # matches an existing training_type, link them. This is the only place
+    # control linkage is derived from a name suffix; downstream code reads
+    # `info.control_for` directly and doesn't slice strings.
+    _CONTROL_SUFFIXES = ("_ctrl", "_control")
+    for key, info in list(reg.training_types.items()):
+        if info.control_for is not None:
+            continue
+        if not info.is_control:
+            continue
+        for suffix in _CONTROL_SUFFIXES:
+            if key.endswith(suffix):
+                base = key[: -len(suffix)]
+                if base in reg.training_types:
+                    reg.training_types[key] = TrainingTypeInfo(
+                        **{**info.__dict__, "control_for": base}
+                    )
+                break
 
     return reg
 

@@ -262,6 +262,117 @@
       "hatch": "//",
       "edgecolor": "black",
       "training_biases": []
+    },
+    "bct-da": {
+      "training_type": "bct_da",
+      "display_name": "BCT (DA)",
+      "color": "#2171b5",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-ctrl": {
+      "training_type": "bct_da_ctrl",
+      "display_name": "BCT (DA) Control",
+      "color": "#bdd7e7",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "bct-da-wfs": {
+      "training_type": "bct_da_wfs",
+      "display_name": "BCT (DA+WFS)",
+      "color": "#6baed6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4",
+        "wrong_few_shot"
+      ]
+    },
+    "bct-da-wfs-ctrl": {
+      "training_type": "bct_da_wfs_ctrl",
+      "display_name": "BCT (DA+WFS) Control",
+      "color": "#c6dbef",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-aw0": {
+      "training_type": "rlct_da_aw0",
+      "display_name": "RLCT (DA, aw=0)",
+      "color": "#238b45",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-aw0-ctrl": {
+      "training_type": "rlct_da_aw0_ctrl",
+      "display_name": "RLCT (DA, aw=0) Control",
+      "color": "#bae4b3",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-aw05": {
+      "training_type": "rlct_da_aw05",
+      "display_name": "RLCT (DA, aw=0.5)",
+      "color": "#74c476",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-aw05-ctrl": {
+      "training_type": "rlct_da_aw05_ctrl",
+      "display_name": "RLCT (DA, aw=0.5) Control",
+      "color": "#c7e9c0",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-wfs-aw0": {
+      "training_type": "rlct_da_wfs_aw0",
+      "display_name": "RLCT (DA+WFS, aw=0)",
+      "color": "#31a354",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4",
+        "wrong_few_shot"
+      ]
+    },
+    "rlct-da-wfs-aw0-ctrl": {
+      "training_type": "rlct_da_wfs_aw0_ctrl",
+      "display_name": "RLCT (DA+WFS, aw=0) Control",
+      "color": "#a1d99b",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-wfs-aw05": {
+      "training_type": "rlct_da_wfs_aw05",
+      "display_name": "RLCT (DA+WFS, aw=0.5)",
+      "color": "#78c679",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4",
+        "wrong_few_shot"
+      ]
+    },
+    "rlct-da-wfs-aw05-ctrl": {
+      "training_type": "rlct_da_wfs_aw05_ctrl",
+      "display_name": "RLCT (DA+WFS, aw=0.5) Control",
+      "color": "#d9f0a3",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
     }
   }
 }

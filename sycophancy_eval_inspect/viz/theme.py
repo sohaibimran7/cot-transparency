@@ -1,0 +1,120 @@
+"""Theme: rcParams + per-training-type bar styling.
+
+Replaces the dual hatched-vs-outlined style systems in the legacy code.
+A Theme is just a dataclass exposing:
+  - apply()                 : install rcParams
+  - style_for(training_type): returns dict for `ax.bar(**style)`
+  - palette                 : raw color map (method × scale → hex)
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Callable
+
+from .registry import training_type_info
+
+
+@dataclass(frozen=True)
+class Theme:
+    rcparams: dict
+    palette: dict[str, str]
+    bar_style_for: Callable[[str], dict]
+    ylabel_fontsize: float = 9.0
+    panel_title_fontsize: float = 6.0
+    xtick_label_fontsize: float = 7.0
+    ytick_label_fontsize: float = 7.0
+    bias_spacing: float = 0.6
+    bar_width: float = 0.13
+    cluster_gap: float = 0.025
+    figure_width_intercept: float = 0.9
+    figure_width_per_bias: float = 0.36
+    figure_width_min: float = 3.4
+    figure_height_per_panel: float = 2.1
+    figure_height_intercept: float = 0.3
+    panel_bg_trained: str = "#fbf6ea"
+    panel_bg_summary: str = "#f5f4ef"
+    hairline_color: str = "#d8dadf"
+    hairline_lw: float = 0.6
+    error_color: str = "#141518"
+    error_capsize: float = 1.2
+    error_linewidth: float = 0.6
+    error_alpha: float = 0.7
+    baseline_color: str = "#6b7280"
+    zero_line_color: str = "#141518"
+
+    def apply(self) -> None:
+        import matplotlib as mpl
+        mpl.rcParams.update(self.rcparams)
+
+
+# ── Publication theme ─────────────────────────────────────────────────────
+# Mirrors PUBLICATION_RCPARAMS + PUBLICATION_PALETTE + _light_publication_style_for
+# from the legacy module. Color choice ignores the training type's data_scale
+# (panel headers convey "Trained on …"), so all bars within a method family
+# share the lighter shade.
+
+PUBLICATION_RCPARAMS = {
+    "figure.dpi": 150,
+    "savefig.dpi": 300,
+    "savefig.bbox": "tight",
+    "savefig.pad_inches": 0.02,
+    "font.family": ["IBM Plex Sans", "Inter", "DejaVu Sans", "sans-serif"],
+    "font.size": 9,
+    "axes.titlesize": 10,
+    "axes.titleweight": "semibold",
+    "axes.labelsize": 9,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "axes.grid": True,
+    "axes.axisbelow": True,
+    "grid.color": "#ececee",
+    "grid.linewidth": 0.6,
+    "legend.frameon": False,
+    "legend.fontsize": 8.5,
+    "xtick.labelsize": 8.5,
+    "ytick.labelsize": 8.5,
+    "axes.edgecolor": "#141518",
+    "axes.linewidth": 0.8,
+}
+
+PUBLICATION_PALETTE = {
+    "base":       "#9aa0a6",
+    "bct_da":     "#7aa7d9",
+    "bct_dawfs":  "#2e5f9a",
+    "rlct_da":    "#8cc39a",
+    "rlct_dawfs": "#2f7a4d",
+    "vft":        "#9e9ac8",
+}
+
+
+def _publication_bar_style(training_type: str) -> dict:
+    """Light shade per family (DA shade), regardless of data scale.
+
+    Mirrors legacy `_light_publication_style_for`. Controls drawn as outlined
+    bars: white facecolor with colored edge.
+    """
+    info = training_type_info(training_type)
+    method = info.method
+    if method == "base":
+        color = PUBLICATION_PALETTE["base"]
+    elif method == "bct":
+        color = PUBLICATION_PALETTE["bct_da"]
+    elif method == "rlct":
+        color = PUBLICATION_PALETTE["rlct_da"]
+    elif method == "vft":
+        color = PUBLICATION_PALETTE["vft"]
+    else:
+        color = info.color or "#888888"
+    return {
+        "facecolor": "white" if info.is_control else color,
+        "edgecolor": color,
+        "linewidth": 1.5 if info.is_control else 0.0,
+    }
+
+
+PUBLICATION_THEME = Theme(
+    rcparams=PUBLICATION_RCPARAMS,
+    palette=PUBLICATION_PALETTE,
+    bar_style_for=_publication_bar_style,
+    ylabel_fontsize=7.5,
+)

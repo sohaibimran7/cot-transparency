@@ -1,0 +1,94 @@
+# Single source of truth for the visualization layer.
+#
+# - [biases.X]            — bias type metadata
+# - [models.X]            — model family metadata (display name, dir prefix, prompt styles)
+# - [training_types.X]    — per-training-run color, training biases, etc.
+# - [ordering]            — ordered list of training_types for x-axis sort
+# - [aggregate_names]     — display names for aggregate-mode groups
+#
+# Additional training types live in `model_registry.json` (legacy format) and
+# are merged at load time. Either source works; this TOML is the preferred
+# place for new entries.
+
+# ── Biases ────────────────────────────────────────────────────────────────
+[biases.suggested_answer]
+display_name = "Suggested Answer"
+publication_label = "Suggested\nAnswer"
+
+[biases.wrong_few_shot]
+display_name = "Wrong Few-Shot"
+publication_label = "Wrong\nFew-Shot"
+
+[biases.distractor_argument]
+display_name = "Distractor Argument"
+publication_label = "Distractor\nArgument"
+
+[biases.distractor_argument_g4]
+display_name = "Distractor Argument"
+publication_label = "Distractor\nArgument"
+
+[biases.distractor_fact]
+display_name = "Distractor Fact"
+publication_label = "Distractor\nFact"
+
+[biases.spurious_few_shot_hindsight]
+display_name = "Spurious: Hindsight"
+publication_label = "Spurious:\nHindsight"
+
+[biases.spurious_few_shot_squares]
+display_name = "Spurious: Squares"
+publication_label = "Spurious:\nSquares"
+
+[biases.post_hoc]
+display_name = "Post-Hoc"
+publication_label = "Post-Hoc"
+
+[biases.are_you_sure]
+display_name = "Are You Sure?"
+publication_label = "Are You\nSure?"
+
+# ── Models ────────────────────────────────────────────────────────────────
+# `prompt_styles` replaces the inline `["cot", "no_cot"] if mf == "llama" else ["no_cot"]`
+# rule that used to appear in 6 places.
+
+[models.llama]
+display_name = "Llama-3.1-8B"
+dir_prefix = "llama-"
+prompt_styles = ["cot", "no_cot"]
+
+[models.gpt]
+display_name = "GPT-OSS-20B"
+dir_prefix = "gpt-"
+prompt_styles = ["no_cot"]
+
+[models."gpt-oss-20b"]
+display_name = "GPT-OSS-20B"
+dir_prefix = "gpt-oss-20b-"
+prompt_styles = ["no_cot"]
+
+[models."gpt-oss-120b"]
+display_name = "GPT-OSS-120B"
+dir_prefix = "gpt-oss-120b-"
+prompt_styles = ["no_cot"]
+
+# ── Training types: just the base. Everything else lives in model_registry.json. ──
+[training_types.base]
+display_name = "Base"
+color = "#969696"
+method = "base"
+
+[ordering]
+training_types = [
+    "base",
+    "bct_da", "bct_da_ctrl",
+    "bct_da_wfs", "bct_da_wfs_ctrl",
+    "rlct_da_aw0", "rlct_da_aw0_ctrl",
+    "rlct_da_wfs_aw0", "rlct_da_wfs_aw0_ctrl",
+]
+aggregates = ["base", "control_agg", "bct_agg", "rlct_agg"]
+
+[aggregate_names]
+base = "Base"
+control_agg = "Control (avg)"
+bct_agg = "BCT (avg)"
+rlct_agg = "RLCT (avg)"

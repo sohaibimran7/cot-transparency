@@ -40,20 +40,43 @@ def _is_associated_control(tt: str, all_tts: list[str]) -> bool:
 
 @dataclass(frozen=True)
 class Panel:
-    """A panel groups training types that share a training-bias set."""
-    label: str                          # "Trained on Distractor Argument"
-    training_types: tuple[str, ...]     # ordered list of tts in this panel
-    trained_biases: frozenset[str]      # used to color cream bands
+    """One panel of a faceted plot.
 
-
-def panels_for_training_types(training_types: list[str]) -> list[Panel]:
-    """Group training types into panels by their training_biases set.
-
-    Mirrors legacy `_build_panels`: one panel per unique training-bias set.
-    Each panel contains its trained types + their associated controls + any
-    untrained shared types (base, etc.) not pinned to a specific trained type.
-    Panels ordered by (size, sorted bias keys).
+    The renderer uses these fields:
+      label              — header text drawn above the panel
+      training_types     — ordered subset of training types whose bars to draw
+      data               — rows belonging to this panel (can be the full frame
+                           when faceting only by training_types)
+      highlighted_biases — bias keys to draw with a cream background band
+                           (used by `facet_by_training_biases` for trained-on
+                            biases; empty for other faceters)
     """
+    label: str
+    training_types: tuple[str, ...]
+    data: pd.DataFrame | None = None
+    highlighted_biases: frozenset[str] = frozenset()
+
+
+# A Faceter takes the long-form aggregated frame and returns the panel split.
+# All faceters compose the same way; bar_plot is agnostic to which is used.
+from typing import Callable
+Faceter = Callable[[pd.DataFrame], list[Panel]]
+
+
+def facet_by_training_biases(frame: pd.DataFrame) -> list[Panel]:
+    """Default faceter: one panel per unique training-bias set.
+
+    Mirrors the legacy publication layout: each panel contains its trained
+    types + their associated controls + any untrained shared types (base,
+    etc.) not pinned to a specific trained type. Panels ordered by
+    (size of bias set, sorted bias keys). Highlighted biases = the trained
+    biases of that panel — drives cream-band rendering.
+
+    Returns an empty list if no training_type in `frame` has training_biases.
+    """
+    tts_in_data = set(frame["training_type"].unique())
+    training_types = [t for t in REGISTRY.training_type_order if t in tts_in_data]
+
     groups: dict[frozenset[str], list[str]] = {}
     for tt in training_types:
         biases = training_type_info(tt).training_biases
@@ -79,17 +102,64 @@ def panels_for_training_types(training_types: list[str]) -> list[Panel]:
         for tt in shared:
             if tt not in ordered:
                 ordered.append(tt)
-        # Restore registry order among the picked types
         ordered = [t for t in REGISTRY.training_type_order if t in ordered]
-        from .registry import REGISTRY as _R
-        bias_label = " + ".join(_R.biases.get(b).display_name if b in _R.biases else b
-                                for b in sorted(biases))
+        bias_label = " + ".join(
+            REGISTRY.biases[b].display_name if b in REGISTRY.biases else b
+            for b in sorted(biases)
+        )
         panels.append(Panel(
             label=f"Trained on {bias_label}",
             training_types=tuple(ordered),
-            trained_biases=biases,
+            data=frame,                      # full frame; tts subset narrows it
+            highlighted_biases=biases,
         ))
     return panels
+
+
+def facet_by_column(column: str, *, label_template: str = "{value}") -> Faceter:
+    """Faceter factory: one panel per unique value of `column`.
+
+    The panel's data is the slice where frame[column] == value. All training
+    types present in the slice are rendered in registry order. No bias
+    highlighting (publication cream bands are training-bias-specific).
+
+    Use for non-default faceting dimensions: model_family, prompt_style, seed.
+    """
+    def faceter(frame: pd.DataFrame) -> list[Panel]:
+        if column not in frame.columns:
+            return []
+        out: list[Panel] = []
+        for value in sorted(frame[column].dropna().unique()):
+            sub = frame[frame[column] == value]
+            tts_in = set(sub["training_type"].unique())
+            tts = tuple(t for t in REGISTRY.training_type_order if t in tts_in)
+            if not tts:
+                continue
+            out.append(Panel(
+                label=label_template.format(value=value, column=column),
+                training_types=tts,
+                data=sub,
+            ))
+        return out
+    return faceter
+
+
+def no_facet(frame: pd.DataFrame) -> list[Panel]:
+    """Single-panel faceter: all data in one panel, no header."""
+    tts_in = set(frame["training_type"].unique())
+    tts = tuple(t for t in REGISTRY.training_type_order if t in tts_in)
+    return [Panel(label="", training_types=tts, data=frame)]
+
+
+# Back-compat alias for callers that imported `panels_for_training_types`.
+def panels_for_training_types(training_types: list[str]) -> list[Panel]:
+    """Deprecated: build panels for a flat training_types list.
+
+    Retained so older callers keep working. New code should use a Faceter.
+    """
+    # Build a minimal stub frame so facet_by_training_biases can run
+    stub = pd.DataFrame({"training_type": list(training_types)})
+    return facet_by_training_biases(stub)
 
 
 def order_biases_by_panels(all_biases: list[str], panels: list[Panel]
@@ -100,7 +170,7 @@ def order_biases_by_panels(all_biases: list[str], panels: list[Panel]
     """
     if not panels:
         return list(all_biases), list(all_biases)
-    sets = [set(p.trained_biases) for p in panels]
+    sets = [set(p.highlighted_biases) for p in panels]
     intersection: set[str] = set.intersection(*sets)
     union: set[str] = set.union(*sets)
     intersect = [b for b in all_biases if b in intersection]

@@ -21,10 +21,12 @@ import pandas as pd
 from .registry import REGISTRY, training_type_info
 from .theme import Theme
 from .transforms import (
+    Faceter,
     Panel,
     add_held_out_avg,
+    facet_by_training_biases,
+    no_facet,
     order_biases_by_panels,
-    panels_for_training_types,
 )
 
 
@@ -116,9 +118,10 @@ def bar_plot(
     agg: pd.DataFrame,
     *,
     metric: str,
-    model_family: str,
-    prompt_style: str | None,
+    model_family: str | None = None,
+    prompt_style: str | None = None,
     theme: Theme,
+    faceter: Faceter | None = None,
     output_path: str | Path | None = None,
     ylabel: str = "",
     ylim: tuple[float, float] | None = None,
@@ -132,17 +135,35 @@ def bar_plot(
     write_n_csv: bool = True,
     held_out_avg_label: str = "Held-out Avg",
     auto_held_out: bool = True,
+    n_labels: bool = False,
 ) -> None:
-    """Render a grouped-bars publication figure from a long-form aggregated frame.
+    """Render a grouped-bars figure from a long-form aggregated frame.
 
-    `agg` columns required: model_family, training_type, prompt_style, bias_type,
-    metric, value, stderr, n. Filters to (metric, model_family, prompt_style),
-    then panels by training_biases set.
+    `agg` columns required: training_type, bias_type, metric, value, stderr, n
+    (plus whatever the faceter needs).
+
+    Faceting is delegated to a `Faceter` callable. Default is
+    `facet_by_training_biases`, which mirrors the legacy publication layout
+    (one panel per unique training-bias set, cream-band highlights for trained
+    biases). Pass `facet_by_column("model_family")` (etc.) to facet by any
+    other dimension.
+
+    Parameters affecting which slice of `agg` is plotted:
+      metric        — required filter on the `metric` column
+      model_family  — optional filter; pass None to facet by it via faceter
+      prompt_style  — optional filter; pass None to facet by it via faceter
+
+    `n_labels=True` draws "n=NNN" above each bar (off by default for
+    publication style; on for non-publication parity).
     """
     theme.apply()
+    if faceter is None:
+        faceter = facet_by_training_biases
 
     # ── 1. Filter to the slice we're plotting ─────────────────────────────
-    sel = (agg["metric"] == metric) & (agg["model_family"] == model_family)
+    sel = (agg["metric"] == metric)
+    if model_family is not None and "model_family" in agg.columns:
+        sel = sel & (agg["model_family"] == model_family)
     if prompt_style is not None and "prompt_style" in agg.columns:
         sel = sel & (agg["prompt_style"] == prompt_style)
     sub = agg[sel].copy()
@@ -161,16 +182,23 @@ def bar_plot(
         return
     sub = sub[sub["training_type"].isin(training_types)]
 
-    # ── 3. Panel split + bias ordering ────────────────────────────────────
+    # ── 3. Panel split via the faceter, then bias ordering ────────────────
     all_biases = [b for b in REGISTRY.biases.keys() if b in sub["bias_type"].values]
-    panels = panels_for_training_types(training_types)
+    panels = faceter(sub)
     if not panels:
-        panels = [Panel(label="", training_types=tuple(training_types),
-                        trained_biases=frozenset())]
+        panels = no_facet(sub)
 
     bias_order, held_out_biases = order_biases_by_panels(all_biases, panels)
     if auto_held_out and held_out_biases:
         sub = add_held_out_avg(sub, held_out_biases, label=held_out_avg_label)
+        # Held-out-avg rows need to be reflected in each panel's data too,
+        # since panels carry their own data slices.
+        panels = [Panel(label=p.label, training_types=p.training_types,
+                        data=add_held_out_avg(
+                            p.data if p.data is not None else sub,
+                            held_out_biases, label=held_out_avg_label),
+                        highlighted_biases=p.highlighted_biases)
+                  for p in panels]
         bias_order = bias_order + [held_out_avg_label]
     if not bias_order:
         return
@@ -237,10 +265,23 @@ def bar_plot(
 
         offsets = _cluster_offsets(panel_types, bar_w, cluster_gap)
 
-        # Background bands: cream for trained biases, grey for held-out summary
+        # Per-panel pivots: each panel's data slice may differ when the
+        # faceter splits the frame (e.g. facet_by_column). For training-bias
+        # faceting, panel.data == sub, so the local pivots equal the global ones.
+        if panel.data is not None and panel.data is not sub:
+            p_val = panel.data.pivot(index="bias_type", columns="training_type",
+                                     values="value").reindex(bias_order)
+            p_err = panel.data.pivot(index="bias_type", columns="training_type",
+                                     values="stderr").reindex(bias_order)
+            p_n = panel.data.pivot(index="bias_type", columns="training_type",
+                                   values="n").reindex(bias_order)
+        else:
+            p_val, p_err, p_n = pivot_val, pivot_err, pivot_n
+
+        # Background bands: cream for highlighted biases, grey for held-out summary
         for j, bt in enumerate(bias_order):
             x_center = bias_x[j]
-            if bt in panel.trained_biases:
+            if bt in panel.highlighted_biases:
                 ax.axvspan(x_center - half_span, x_center + half_span,
                            color=theme.panel_bg_trained, alpha=0.7, zorder=0)
             elif bt == held_out_avg_label:
@@ -252,17 +293,17 @@ def bar_plot(
             ax.axvline(x=bias_x[j] - half_span, color=theme.hairline_color,
                        linewidth=theme.hairline_lw, zorder=1)
 
-        # Bars + error bars
+        # Bars + error bars + optional n labels
         for tt in panel_types:
             offset = offsets[tt]
             style = theme.bar_style_for(tt)
             for j, x_val in enumerate(bias_x):
                 bt = bias_order[j]
-                if bt not in pivot_val.index or tt not in pivot_val.columns:
+                if bt not in p_val.index or tt not in p_val.columns:
                     continue
-                val = pivot_val.loc[bt, tt]
-                err = (pivot_err.loc[bt, tt]
-                       if (tt in pivot_err.columns and bt in pivot_err.index)
+                val = p_val.loc[bt, tt]
+                err = (p_err.loc[bt, tt]
+                       if (tt in p_err.columns and bt in p_err.index)
                        else np.nan)
                 if pd.isna(val):
                     continue
@@ -278,6 +319,14 @@ def bar_plot(
                                 capsize=theme.error_capsize,
                                 linewidth=theme.error_linewidth,
                                 alpha=theme.error_alpha, zorder=3)
+                if n_labels and tt in p_n.columns and bt in p_n.index:
+                    n_val = p_n.loc[bt, tt]
+                    if pd.notna(n_val):
+                        text_y = val + (2 * err if pd.notna(err) and err > 0 else 0) \
+                                 + 0.02 * (ylim[1] - ylim[0]) if ylim else val
+                        ax.text(xp, text_y, f"n={int(n_val)}",
+                                ha="center", va="bottom", fontsize=6,
+                                rotation=90, zorder=4)
 
         # Axes formatting
         ax.set_xticks(bias_x)

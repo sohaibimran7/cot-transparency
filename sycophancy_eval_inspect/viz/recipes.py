@@ -80,6 +80,7 @@ class Recipe:
     show_baseline: bool = False             # matches_bias plots → unbiased baseline
     show_random_line: bool = False          # accuracy → 0.25 line
     ylim: tuple[float, float] | None = None  # default: auto
+    n_labels: bool = False                   # draw "n=NNN" above each bar
 
 
 def _default_recipes() -> list[Recipe]:
@@ -298,6 +299,7 @@ def render_all_publication_plots(
                     # Legacy plot_metric_ratio_publication didn't emit n.csv;
                     # only the grouped-bars publication function did.
                     write_n_csv=not recipe.ratio,
+                    n_labels=recipe.n_labels,
                 )
                 n_written += 1
     return n_written

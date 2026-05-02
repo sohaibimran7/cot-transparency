@@ -67,6 +67,8 @@ def _lookup_training_type(model_name: str) -> str | None:
     suffix = _strip_model_prefix(model_name)
     if not suffix:
         return None
+    if suffix == "base":
+        return "base"
     direct = REGISTRY.dir_to_training_type.get(suffix)
     if direct is not None:
         return direct
@@ -76,6 +78,8 @@ def _lookup_training_type(model_name: str) -> str | None:
         stripped = suffix[: m.start()]
         if suffix.endswith("-ctrl"):
             stripped += "-ctrl"
+        if stripped == "base":
+            return "base"
         return REGISTRY.dir_to_training_type.get(stripped)
     return None
 
@@ -145,10 +149,21 @@ def _parse_score_field(json_str, field: str) -> float:
     return float(val)
 
 
-def load_samples(log_dirs: str | Path | list[str | Path]) -> pd.DataFrame:
+def load_samples(log_dirs: str | Path | list[str | Path],
+                 dedup: str = "last") -> pd.DataFrame:
     """Read per-sample data from one or more eval log directories.
 
-    Returns a wide DataFrame with one row per (sample × eval), columns:
+    When the same logical `(model, sample, bias, variant, prompt_style)` was
+    scored by multiple eval runs, choose how to collapse them:
+      - `"last"`  — keep the chronologically latest run only (matches legacy
+                    behavior when re-runs replaced earlier waves).
+      - `"mean"`  — average each score across runs. For binary 0/1 scores this
+                    yields a fractional consensus value (round to get majority
+                    vote); for already-fractional metrics it gives the mean.
+      - `"none"`  — return all rows without dedup (debugging only; downstream
+                    BIR computation will count duplicates).
+
+    Returns a wide DataFrame with one row per logical sample, columns:
         sample_id, eval_id, model_family, training_type, model_name, seed,
         prompt_style, variant, bias_type, dataset,
         correct, matches_bias, answer_parsed,
@@ -169,9 +184,8 @@ def load_samples(log_dirs: str | Path | list[str | Path]) -> pd.DataFrame:
     if samples.empty:
         return samples
 
-    # Pull eval-level metadata into per-sample rows. The `samples` frame
-    # already has a `log` column; we only need eval_id → model_name/base_model.
-    eval_cols = evals[["eval_id", "metadata"]].copy()
+    # Pull eval-level metadata + chronology into per-sample rows.
+    eval_cols = evals[["eval_id", "metadata", "created"]].copy()
     eval_cols["_eval_meta"] = eval_cols["metadata"].fillna("{}").apply(json.loads)
     eval_cols["model_name"] = eval_cols["_eval_meta"].apply(
         lambda m: m.get("model_name", "") if isinstance(m, dict) else ""
@@ -187,6 +201,7 @@ def load_samples(log_dirs: str | Path | list[str | Path]) -> pd.DataFrame:
     out = pd.DataFrame({
         "sample_id": df["id"].astype(str),
         "eval_id": df["eval_id"].astype(str),
+        "created": df["created"],
         "log": df["log"].astype(str),
         "model_name": df["model_name"].fillna("").astype(str),
         "base_model": df["base_model"].fillna("").astype(str),
@@ -238,7 +253,29 @@ def load_samples(log_dirs: str | Path | list[str | Path]) -> pd.DataFrame:
               f"model_name (registry has no dir_alias for "
               f"{sorted(unmatched)[:5]}{'…' if len(unmatched) > 5 else ''})")
 
-    return out.reset_index(drop=True)
+    # Collapse re-runs of the same logical sample. See docstring for modes.
+    dedup_keys = ["model_name", "dataset", "bias_type", "variant",
+                  "sample_id", "prompt_style"]
+    if dedup == "none":
+        return out.reset_index(drop=True)
+    if dedup == "last":
+        return (out.sort_values("created")
+                   .drop_duplicates(subset=dedup_keys, keep="last")
+                   .reset_index(drop=True))
+    if dedup == "mean":
+        score_cols = ["correct", "matches_bias", "answer_parsed",
+                      "bias_acknowledged", "options_considered",
+                      "lenient_correct", "lenient_matches_bias",
+                      "lenient_answer_parsed"]
+        score_cols = [c for c in score_cols if c in out.columns]
+        meta_cols = [c for c in out.columns
+                     if c not in dedup_keys and c not in score_cols]
+        agg = {**{c: "mean" for c in score_cols},
+               **{c: "first" for c in meta_cols}}
+        return (out.groupby(dedup_keys, as_index=False, dropna=False)
+                   .agg(agg)
+                   .reset_index(drop=True))
+    raise ValueError(f"dedup must be 'last', 'mean', or 'none'; got {dedup!r}")
 
 
 def compute_per_question_bsr(samples: pd.DataFrame) -> pd.DataFrame:
@@ -262,6 +299,14 @@ def compute_per_question_bsr(samples: pd.DataFrame) -> pd.DataFrame:
 
     keys = ["model_name", "training_type", "model_family", "prompt_style",
             "sample_id", "dataset", "seed"]
+
+    # Fill NaN in key columns with sentinels so groupby keys are hashable AND
+    # comparable across the biased/unbiased pair (NaN != NaN otherwise breaks
+    # the dict lookup at line ~283 — drops base rows whose seed is NaN).
+    samples = samples.copy()
+    for c in keys:
+        if c in samples.columns and samples[c].isna().any():
+            samples[c] = samples[c].fillna("__NA__" if samples[c].dtype == object else -1)
 
     biased = samples[samples["variant"] == "biased"].copy()
     unbiased = samples[samples["variant"] == "unbiased"].copy()

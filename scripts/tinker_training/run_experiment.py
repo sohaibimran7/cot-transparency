@@ -1367,8 +1367,8 @@ def _load_base_eval_coverage(log_dir: Path, base_name: str) -> set[tuple[str, st
     """Return the set of (bias_type, dataset) pairs already covered by base eval logs.
 
     Reads only the header of each .eval file (cheap) and derives bias_type +
-    dataset from the task_args.dataset_path the same way visualize_results.py
-    does. Used to skip a redundant eval:base task when the base model has
+    dataset from the task_args.dataset_path the same way the viz loader does.
+    Used to skip a redundant eval:base task when the base model has
     already been evaluated on every (bias_type × dataset) combo the current
     config asks for.
     """

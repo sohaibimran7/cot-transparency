@@ -203,6 +203,23 @@ def bar_plot(
     if not bias_order:
         return
 
+    # Detect ambiguous duplicates: more than one row per (bias_type,
+    # training_type) means an un-faceted, un-filtered dimension (typically
+    # model_family or prompt_style) is collapsing visually distinct bars
+    # onto the same color/position. Fail fast with an actionable message
+    # rather than silently overplotting.
+    _dup_check_cols = [c for c in ("model_family", "prompt_style")
+                       if c in sub.columns and sub[c].nunique() > 1]
+    if _dup_check_cols:
+        per_cluster = sub.groupby(["bias_type", "training_type"], dropna=False).size()
+        if (per_cluster > 1).any():
+            raise ValueError(
+                f"Multiple rows per (bias_type, training_type) — bars would "
+                f"overlap in identical style. Column(s) {_dup_check_cols} have "
+                f">1 unique value. Either filter (e.g. prompt_style='cot'), "
+                f"or facet on it via `faceter=facet_by_column('{_dup_check_cols[0]}')`."
+            )
+
     # Build wide pivots for fast lookup + n.csv emission. Use pivot (not
     # pivot_table) so NaN-only groups remain in the index — matching legacy
     # behavior where bias columns appear even with no data.
@@ -237,15 +254,35 @@ def bar_plot(
                 ymax = float(vals.max()) + 0.10
             else:
                 ymin, ymax = 0.0, 1.05
+        # Reserve extra headroom when n_labels are drawn — vertical "n=NNN"
+        # text needs room above the tallest bar+errorbar.
+        if n_labels:
+            ymax = ymax + theme.n_label_headroom * (ymax - ymin)
         ylim = (ymin, ymax)
 
     # ── 5. Geometry ───────────────────────────────────────────────────────
+    # Auto-grow bias_spacing when any panel's cluster (n_bars × bar_w + gaps)
+    # would overflow theme.bias_spacing — keeps clusters from colliding when
+    # a panel has many training types or many method families.
     n_panels = len(panels)
-    bias_spacing = theme.bias_spacing
     bar_w = theme.bar_width
     cluster_gap = theme.cluster_gap
+
+    def _cluster_width(types: tuple[str, ...]) -> float:
+        families: dict[str, int] = {}
+        for t in types:
+            families.setdefault(training_type_info(t).method, 0)
+            families[training_type_info(t).method] += 1
+        n_bars = sum(families.values())
+        n_gaps = max(0, len(families) - 1)
+        return n_bars * bar_w + n_gaps * cluster_gap
+
+    max_cw = max((_cluster_width(p.training_types) for p in panels), default=0.0)
+    bias_spacing = max(theme.bias_spacing, max_cw + theme.cluster_pad)
+    spacing_ratio = bias_spacing / theme.bias_spacing
+
     fig_w = max(theme.figure_width_min,
-                theme.figure_width_per_bias * len(bias_order)
+                theme.figure_width_per_bias * len(bias_order) * spacing_ratio
                 + theme.figure_width_intercept)
     fig_h = theme.figure_height_per_panel * n_panels + theme.figure_height_intercept
     fig, axes = plt.subplots(n_panels, 1, figsize=(fig_w, fig_h),
@@ -325,7 +362,8 @@ def bar_plot(
                         text_y = val + (2 * err if pd.notna(err) and err > 0 else 0) \
                                  + 0.02 * (ylim[1] - ylim[0]) if ylim else val
                         ax.text(xp, text_y, f"n={int(n_val)}",
-                                ha="center", va="bottom", fontsize=6,
+                                ha="center", va="bottom",
+                                fontsize=theme.n_label_fontsize,
                                 rotation=90, zorder=4)
 
         # Axes formatting
@@ -361,8 +399,12 @@ def bar_plot(
             ax.axhline(y=0, color=theme.zero_line_color, linewidth=1, zorder=1)
 
     # ── 7. Layout + legend + save ─────────────────────────────────────────
-    fig.tight_layout(rect=[0, 0.0, 1, 0.96], pad=0.15, h_pad=1.4)
-    fig.legend(handles=legend_handles, loc="upper right",
+    # Lay out axes first to use the full figure top, then anchor the legend
+    # *above* the figure (y > 1.0) so it doesn't overlap panel titles. The
+    # `bbox_inches="tight"` on savefig crops the canvas back to include the
+    # legend.
+    fig.tight_layout(pad=0.15, h_pad=1.4)
+    fig.legend(handles=legend_handles, loc="lower right",
                bbox_to_anchor=(1.0, 1.0),
                ncol=len(legend_handles),
                frameon=False, fontsize=7,

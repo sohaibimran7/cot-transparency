@@ -224,21 +224,20 @@ Data generation steps with different scripts run in parallel. Args are passed th
 
 ## Model registry (IMPORTANT — always use for new models)
 
-**Always include `viz_registration`** when using a new model or training type that hasn't been used before. Without it, the analysis stage will fail because `visualize_results.py` won't recognize the model directory names.
+**Always include `viz_registration`** for a new training type. Otherwise plots/tables silently drop the run's eval logs (loader prints a warning naming the unrecognised directory).
 
-The config must register:
-1. The **model prefix** (e.g., `qwen3-`) — derived automatically from the model name
-2. Each **training type suffix** (e.g., `bct-sa`, `rlct-sa-ctrl`) — the part after the model prefix in the run name
+The block becomes a `[training_types.<key>]` entry in the registry at viz import time. The model prefix (e.g. `qwen3-`) is read from `experiments.toml`'s `[models.*]` blocks; only training-type suffixes need declaring here.
 
 ```yaml
 viz_registration:
-  dir_suffix: bct-sa          # matches run_name suffix after model prefix
+  dir_suffix: bct-sa          # matches the dir name after the model prefix
   display_name: "BCT SA"      # legend label in plots
-  color: "#4292c6"             # bar color
-  hatch: ""                    # bar pattern (use "//" for controls)
-  training_biases: [suggested_answer]  # which biases this was trained on
+  color: "#4292c6"            # bar color
+  control_color: "#9ecae1"    # if include_control: true; auto-spawns the ctrl variant
+  hatch: ""                   # bar pattern (use "//" for controls; auto for ctrl variant)
+  training_biases: [suggested_answer]  # biases this run trains on
 ```
 
-For experiments with `include_control: true`, you need **two** registry entries (main + ctrl). Use the experiment runner's auto-registration or manually add to `sycophancy_eval_inspect/model_registry.json`.
+For experiments with `include_control: true`, supply `control_color` — the registry auto-mints a `<dir_suffix>-ctrl` training_type with that color, hatch `//`, and `is_control: true`. No second block needed.
 
-**Tip**: Check existing entries in `model_registry.json` and `_DIR_TO_TRAINING_TYPE` in `visualize_results.py` before adding — the suffix may already be registered.
+**Tip**: existing training types are listed in `sycophancy_eval_inspect/experiments.toml` under `[training_types.*]`. Check there for an existing match before inventing a new `dir_suffix`.

@@ -3,8 +3,7 @@
 Replaces the dual hatched-vs-outlined style systems in the legacy code.
 A Theme is just a dataclass exposing:
   - apply()                 : install rcParams
-  - style_for(training_type): returns dict for `ax.bar(**style)`
-  - palette                 : raw color map (method × scale → hex)
+  - bar_style_for(tt)       : returns dict for `ax.bar(**style)`
 """
 from __future__ import annotations
 
@@ -17,7 +16,6 @@ from .registry import training_type_info
 @dataclass(frozen=True)
 class Theme:
     rcparams: dict
-    palette: dict[str, str]
     bar_style_for: Callable[[str], dict]
     ylabel_fontsize: float = 9.0
     panel_title_fontsize: float = 6.0
@@ -25,7 +23,12 @@ class Theme:
     ytick_label_fontsize: float = 7.0
     bias_spacing: float = 0.6
     bar_width: float = 0.13
-    cluster_gap: float = 0.025
+    cluster_gap: float = 0.05          # gap between method families inside a cluster
+    cluster_pad: float = 0.12          # gap between adjacent clusters when
+                                       # bias_spacing is auto-grown
+    n_label_fontsize: float = 5.0      # "n=NNN" text above each bar
+    n_label_headroom: float = 0.18     # extra ylim headroom when n_labels=True
+                                       # (fraction of data range)
     figure_width_intercept: float = 0.9
     figure_width_per_bias: float = 0.36
     figure_width_min: float = 3.4
@@ -114,7 +117,6 @@ def _publication_bar_style(training_type: str) -> dict:
 
 PUBLICATION_THEME = Theme(
     rcparams=PUBLICATION_RCPARAMS,
-    palette=PUBLICATION_PALETTE,
     bar_style_for=_publication_bar_style,
     ylabel_fontsize=7.5,
 )

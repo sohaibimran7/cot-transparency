@@ -124,27 +124,18 @@ def sanitize_model_name(model: str) -> str:
 def get_model_prefix(model: str) -> str:
     """Return the registered model prefix for a model name (e.g. 'gpt-oss-20b-').
 
-    Matches the longest registered prefix from the model registry, falling back
-    to the first hyphen-separated token. This matches the logic in
-    visualize_results.py so that base model eval directories end up in the
-    same group as trained checkpoints.
+    Matches the longest registered `dir_prefix` in the viz registry; falls back
+    to the first hyphen-separated token if nothing matches.
     """
+    from sycophancy_eval_inspect.viz.registry import REGISTRY
+
     sanitized = sanitize_model_name(model)
-    # Append "-" so that "gpt-oss-20b" matches the registered prefix "gpt-oss-20b-".
     sanitized_with_sep = sanitized + "-"
-    registry_path = _PROJECT_ROOT / "sycophancy_eval_inspect" / "model_registry.json"
-    prefixes: list[str] = []
-    if registry_path.exists():
-        try:
-            with open(registry_path) as f:
-                prefixes = json.load(f).get("model_prefixes", [])
-        except (json.JSONDecodeError, OSError):
-            pass
-    # Fallback built-in prefixes (keep in sync with visualize_results.py)
-    for p in ["llama-", "gpt-oss-120b-", "gpt-oss-20b-", "gpt-", "qwen3-"]:
-        if p not in prefixes:
-            prefixes.append(p)
-    for prefix in sorted(prefixes, key=len, reverse=True):
+    prefixes = sorted(
+        (info.dir_prefix for info in REGISTRY.models.values() if info.dir_prefix),
+        key=len, reverse=True,
+    )
+    for prefix in prefixes:
         if sanitized_with_sep.startswith(prefix):
             return prefix.rstrip("-")
     return sanitized.split("-")[0]
@@ -926,7 +917,7 @@ def build_analysis_cmd(config: dict, st: dict) -> list[str]:
     an = config.get("analysis", {})
     args = an.get("args", {})
 
-    cmd = [sys.executable, "-m", "sycophancy_eval_inspect.visualize_results"]
+    cmd = [sys.executable, "-m", "sycophancy_eval_inspect.viz.cli"]
 
     # Resolve log dir
     ev_args = config.get("evaluation", {}).get("args", {})
@@ -957,72 +948,6 @@ def build_analysis_cmd(config: dict, st: dict) -> list[str]:
         cmd += ["--variance-across", str(args["variance_across"])]
 
     return cmd
-
-
-# ---------------------------------------------------------------------------
-# Model registry integration
-# ---------------------------------------------------------------------------
-
-def _lighten_color(hex_color: str, factor: float = 0.4) -> str:
-    """Lighten a hex color by mixing with white."""
-    hex_color = hex_color.lstrip("#")
-    r, g, b = int(hex_color[:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
-    r = int(r + (255 - r) * factor)
-    g = int(g + (255 - g) * factor)
-    b = int(b + (255 - b) * factor)
-    return f"#{r:02x}{g:02x}{b:02x}"
-
-
-def update_model_registry(config: dict) -> None:
-    """Update model_registry.json with viz_registration from config."""
-    viz = config.get("viz_registration")
-    if not viz:
-        return
-
-    registry_path = _PROJECT_ROOT / "sycophancy_eval_inspect" / "model_registry.json"
-
-    if registry_path.exists():
-        with open(registry_path) as f:
-            registry = json.load(f)
-    else:
-        registry = {"model_prefixes": [], "models": {}}
-
-    # Ensure model prefix is registered
-    model_prefix = get_model_prefix(config["model"]) + "-"
-    if model_prefix not in registry.get("model_prefixes", []):
-        registry.setdefault("model_prefixes", []).append(model_prefix)
-
-    suffix = viz.get("dir_suffix")
-    if suffix:
-        training_type = viz.get("training_type", suffix.replace("-", "_"))
-        registry["models"][suffix] = {
-            "training_type": training_type,
-            "display_name": viz.get("display_name", training_type),
-            "color": viz.get("color", "#888888"),
-            "hatch": viz.get("hatch", ""),
-            "edgecolor": viz.get("edgecolor", "black"),
-            "training_biases": viz.get("training_biases", []),
-        }
-
-        # Auto-register control variant if include_control is set
-        tr = config.get("training", {})
-        if tr.get("include_control") or tr.get("control_only"):
-            ctrl_suffix = f"{suffix}-ctrl"
-            if ctrl_suffix not in registry["models"]:
-                ctrl_color = viz.get("control_color", _lighten_color(viz.get("color", "#888888")))
-                registry["models"][ctrl_suffix] = {
-                    "training_type": f"{training_type}_ctrl",
-                    "display_name": f"{viz.get('display_name', training_type)} Control",
-                    "color": ctrl_color,
-                    "hatch": "//",
-                    "edgecolor": "black",
-                    "training_biases": [],
-                }
-
-    with open(registry_path, "w") as f:
-        json.dump(registry, f, indent=2)
-
-    _print(f"Updated model registry: {registry_path}")
 
 
 # ---------------------------------------------------------------------------
@@ -2159,7 +2084,7 @@ def _build_combined_analysis_cmd(configs: list[dict]) -> list[str]:
             args = an
             break
 
-    cmd = [sys.executable, "-m", "sycophancy_eval_inspect.visualize_results"]
+    cmd = [sys.executable, "-m", "sycophancy_eval_inspect.viz.cli"]
     for ld in log_dirs:
         cmd += ["--log-dir", ld]
 
@@ -2331,10 +2256,6 @@ def main():
             _print(f"\n{'#'*60}")
             _print(f"  Combined Analysis ({len(configs)} experiments)")
             _print(f"{'#'*60}")
-
-        # Update model registry for all configs
-        for config in configs:
-            update_model_registry(config)
 
         cmd = _build_combined_analysis_cmd(configs)
         # Use first config for log directory (analysis is shared)

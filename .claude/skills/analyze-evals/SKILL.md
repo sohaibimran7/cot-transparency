@@ -26,28 +26,28 @@ Generate plots, BIR (Bias Influence Rate) tables, and summary statistics from sy
 
 ### Print BIR tables (Bias Influence Rate)
 ```bash
-python -m sycophancy_eval_inspect.visualize_results \
+python -m sycophancy_eval_inspect.viz.cli \
     --log-dir LOG_DIR \
     --bir
 ```
 
 ### Print BA tables (Bias Acknowledged)
 ```bash
-python -m sycophancy_eval_inspect.visualize_results \
+python -m sycophancy_eval_inspect.viz.cli \
     --log-dir LOG_DIR \
     --ba
 ```
 
 ### Print both BIR and BA tables
 ```bash
-python -m sycophancy_eval_inspect.visualize_results \
+python -m sycophancy_eval_inspect.viz.cli \
     --log-dir LOG_DIR \
     --bir --ba
 ```
 
 ### Generate plots (no tables)
 ```bash
-python -m sycophancy_eval_inspect.visualize_results \
+python -m sycophancy_eval_inspect.viz.cli \
     --log-dir LOG_DIR \
     --bir --plot --no-tables \
     --output-dir sycophancy_eval_inspect/plots/OUTPUT_NAME
@@ -55,7 +55,7 @@ python -m sycophancy_eval_inspect.visualize_results \
 
 ### Tables + plots together
 ```bash
-python -m sycophancy_eval_inspect.visualize_results \
+python -m sycophancy_eval_inspect.viz.cli \
     --log-dir LOG_DIR \
     --bir --ba --plot \
     --output-dir sycophancy_eval_inspect/plots/OUTPUT_NAME
@@ -63,21 +63,21 @@ python -m sycophancy_eval_inspect.visualize_results \
 
 ### Save tables to file
 ```bash
-python -m sycophancy_eval_inspect.visualize_results \
+python -m sycophancy_eval_inspect.viz.cli \
     --log-dir LOG_DIR \
     --bir --save sycophancy_eval_inspect/plots/OUTPUT_NAME/bir_tables
 ```
 
 ### Summary table only
 ```bash
-python -m sycophancy_eval_inspect.visualize_results \
+python -m sycophancy_eval_inspect.viz.cli \
     --log-dir LOG_DIR \
     --summary
 ```
 
 ### With filters
 ```bash
-python -m sycophancy_eval_inspect.visualize_results \
+python -m sycophancy_eval_inspect.viz.cli \
     --log-dir LOG_DIR \
     --bir \
     --model llama \
@@ -88,7 +88,7 @@ python -m sycophancy_eval_inspect.visualize_results \
 
 ### Multiple log directories
 ```bash
-python -m sycophancy_eval_inspect.visualize_results \
+python -m sycophancy_eval_inspect.viz.cli \
     --log-dir DIR1 --log-dir DIR2 \
     --bir --ba
 ```
@@ -134,13 +134,16 @@ python -m sycophancy_eval_inspect.visualize_results \
 
 ## Registering new models
 
-New model directories must be registered in `sycophancy_eval_inspect/visualize_results.py` before they appear in plots/tables. Update these four mappings:
-- `_DIR_TO_TRAINING_TYPE` — directory suffix -> internal key
-- `COLORS` — internal key -> hex color
-- `TRAINING_TYPE_ORDER` — column order list
-- `TRAINING_TYPE_NAMES` — internal key -> display name
+New model directories pick up styling from one of three places (loaded by
+`sycophancy_eval_inspect/viz/registry.py`):
+- `sycophancy_eval_inspect/experiments.toml` — preferred; full TrainingTypeInfo entry
+- `sycophancy_eval_inspect/model_registry.json` — legacy back-compat
+- `scripts/tinker_training/experiment_configs/*.yaml` — `viz_registration:` blocks
+  on individual experiment configs
 
-The visualizer strips model prefixes (`llama-`, `gpt-`) from directory names and looks up the remainder in `_DIR_TO_TRAINING_TYPE`. Unregistered directories are silently skipped.
+The visualizer strips model prefixes (`llama-`, `gpt-oss-20b-`, etc.) from
+directory names and looks up the remainder in `REGISTRY.dir_to_training_type`.
+Unregistered directories are silently skipped.
 
 ## Available metrics
 
@@ -156,4 +159,4 @@ Check `sycophancy_eval_inspect/logs/` for available eval runs.
 
 ## Script location
 
-`sycophancy_eval_inspect/visualize_results.py` (run as module: `python -m sycophancy_eval_inspect.visualize_results`)
+`sycophancy_eval_inspect/viz/cli.py` (run as module: `python -m sycophancy_eval_inspect.viz.cli`)

@@ -20,11 +20,23 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from sycophancy_eval_inspect.visualize_results import (
-    BIAS_DISPLAY_NAMES,
-    aggregate_samples,
-    compute_per_question_bir,
+from sycophancy_eval_inspect.viz import BIAS_DISPLAY_NAMES
+from sycophancy_eval_inspect.viz.aggregations import aggregate_samples
+from sycophancy_eval_inspect.viz.loaders import (
+    compute_per_question_bsr,
+    load_samples,
 )
+
+
+def compute_per_question_bir(log_dirs):
+    """Back-compat wrapper: load_samples → compute_per_question_bsr.
+
+    Legacy `compute_per_question_bir(log_dirs)` read eval logs directly. The
+    new pipeline splits that into (load_samples, compute_per_question_bsr);
+    this wrapper preserves the old call site.
+    """
+    samples = load_samples(log_dirs)
+    return compute_per_question_bsr(samples)
 
 MODEL_COLORS = {
     "llama": "#e41a1c",        # red
@@ -428,10 +440,31 @@ def compute_noise_floor(noise_dir: str):
     """
     from collections import defaultdict
     from inspect_ai.log import read_eval_log
-    from sycophancy_eval_inspect.visualize_results import (
-        _get_model_family_from_dir,
-        _iter_model_dirs,
-    )
+    from sycophancy_eval_inspect.viz.registry import REGISTRY
+
+    def _iter_model_dirs(log_dirs):
+        for log_dir in log_dirs:
+            log_path = Path(log_dir)
+            if not log_path.exists():
+                print(f"Warning: {log_dir} does not exist")
+                continue
+            if any(log_path.glob("*.eval")):
+                yield log_path, log_path.name
+            else:
+                for d in sorted(log_path.iterdir()):
+                    if d.is_dir():
+                        yield d, d.name
+
+    def _get_model_family_from_dir(dir_name):
+        lower = dir_name.lower()
+        prefixes = sorted(
+            (info.dir_prefix for info in REGISTRY.models.values() if info.dir_prefix),
+            key=len, reverse=True,
+        )
+        for prefix in prefixes:
+            if lower.startswith(prefix):
+                return prefix.rstrip("-")
+        return None
 
     second_unbiased = defaultdict(dict)  # (model_family, prompt_style, dataset) -> {hash: bmr}
     for model_dir, dir_name in _iter_model_dirs([noise_dir]):
@@ -669,7 +702,7 @@ def _make_floor_aware_aggregator(floor_lookup_with_se):
     Combines in quadrature: sqrt(cell_se² + floor_se²). Only applies to rows whose
     bias_type is not are_you_sure (unchanged for ays).
     """
-    from sycophancy_eval_inspect.visualize_results import aggregate_samples as _base_agg
+    from sycophancy_eval_inspect.viz.aggregations import aggregate_samples as _base_agg
 
     def _agg(df, metric, group_cols):
         out = _base_agg(df, metric, group_cols)
@@ -711,7 +744,7 @@ def plot_methods_combined_for_dataset(
     method_groups: list of (group_label, methods) where methods is
         [(label, df, color, tag), ...]. Groups are separated visually.
     """
-    from sycophancy_eval_inspect.visualize_results import aggregate_samples as std_agg
+    from sycophancy_eval_inspect.viz.aggregations import aggregate_samples as std_agg
 
     all_methods = [(label, df, color, tag)
                    for _, methods in method_groups for label, df, color, tag in methods]

@@ -1,15 +1,11 @@
 """Single source of truth for training types, biases, models.
 
-Loads from `experiments.toml` (preferred) and `model_registry.json` (legacy,
-back-compat). Frozen dataclasses; no module-level mutation.
-
-All callers should access state through `REGISTRY` rather than re-importing
-constants from `visualize_results.py`. The legacy module re-exports its dicts
-from this registry for back-compat with code that hasn't been migrated yet.
+Loads from `experiments.toml` for global config and from `viz_registration:`
+blocks in `scripts/tinker_training/experiment_configs/*.yaml` for
+per-experiment training types. Frozen dataclasses; no module-level mutation.
 """
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -84,12 +80,64 @@ def _classify_method(key: str) -> tuple[str, str, bool]:
     return "other", scale, is_control
 
 
-def _model_family_for_prefix(prefix: str) -> str:
-    """Strip trailing dash to get the model family key."""
-    return prefix.rstrip("-")
+def _register_yaml_viz(reg: Registry, vr: dict) -> None:
+    """Register a single `viz_registration:` block into `reg` in place.
+
+    Mints two training_type entries from one block: the trained variant
+    (keyed on `dir_suffix`) and an optional control (`{dir_suffix}-ctrl`)
+    when `control_color` is supplied. Both share `training_biases` from
+    the block; the control's `control_for` points back at the trained.
+    Skips silently when the trained key already exists in `reg`.
+    """
+    dir_suffix = vr.get("dir_suffix")
+    if not isinstance(dir_suffix, str) or not dir_suffix:
+        return
+    if dir_suffix in reg.training_types:
+        return  # explicit TOML/JSON entry takes precedence
+
+    method, scale, _ = _classify_method(dir_suffix)
+    biases = frozenset(vr.get("training_biases") or [])
+    reg.training_types[dir_suffix] = TrainingTypeInfo(
+        key=dir_suffix,
+        display_name=vr.get("display_name", dir_suffix),
+        color=vr.get("color", "#888888"),
+        hatch=vr.get("hatch", ""),
+        edgecolor=vr.get("edgecolor", "black"),
+        method=method,
+        data_scale=scale,
+        is_control=False,
+        training_biases=biases,
+        dir_aliases=(dir_suffix,),
+    )
+    reg.dir_to_training_type[dir_suffix] = dir_suffix
+    if dir_suffix not in reg.training_type_order:
+        reg.training_type_order.append(dir_suffix)
+
+    # Control variant: only created when YAML supplies a control_color,
+    # signalling the experiment runs a paired control.
+    ctrl_color = vr.get("control_color")
+    if ctrl_color:
+        ctrl_key = f"{dir_suffix}-ctrl"
+        if ctrl_key not in reg.training_types:
+            reg.training_types[ctrl_key] = TrainingTypeInfo(
+                key=ctrl_key,
+                display_name=f"{vr.get('display_name', dir_suffix)} Control",
+                color=ctrl_color,
+                hatch="",
+                edgecolor=vr.get("color", "black"),
+                method=method,
+                data_scale=scale,
+                is_control=True,
+                control_for=dir_suffix,
+                training_biases=frozenset(),  # controls don't carry trained biases
+                dir_aliases=(ctrl_key,),
+            )
+            reg.dir_to_training_type[ctrl_key] = ctrl_key
+            if ctrl_key not in reg.training_type_order:
+                reg.training_type_order.append(ctrl_key)
 
 
-def _build_registry(toml_path: Path, json_path: Path) -> Registry:
+def _build_registry(toml_path: Path) -> Registry:
     reg = Registry()
 
     # ── 1. Load experiments.toml — the new canonical source ─────────────────
@@ -136,41 +184,27 @@ def _build_registry(toml_path: Path, json_path: Path) -> Registry:
                                    .get("aggregates", []))
         reg.aggregate_names = dict(toml_data.get("aggregate_names") or {})
 
-    # ── 2. Merge legacy model_registry.json — extends with new entries ──────
-    if json_path.exists():
-        with open(json_path) as f:
-            data = json.load(f)
-        # Model prefixes → ModelInfo if not already known
-        for prefix in data.get("model_prefixes", []):
-            family = _model_family_for_prefix(prefix)
-            if family not in reg.models:
-                # Legacy: assume cot+no_cot for llama, no_cot otherwise.
-                styles = ("cot", "no_cot") if family == "llama" else ("no_cot",)
-                reg.models[family] = ModelInfo(
-                    key=family,
-                    display_name=family.upper(),
-                    dir_prefix=prefix,
-                    prompt_styles=styles,
-                )
-        for dir_alias, info in data.get("models", {}).items():
-            tt_key = info.get("training_type", dir_alias.replace("-", "_"))
-            reg.dir_to_training_type[dir_alias] = tt_key
-            if tt_key not in reg.training_types:
-                method, scale, is_control = _classify_method(tt_key)
-                reg.training_types[tt_key] = TrainingTypeInfo(
-                    key=tt_key,
-                    display_name=info.get("display_name", tt_key),
-                    color=info.get("color", "#888888"),
-                    hatch=info.get("hatch", ""),
-                    edgecolor=info.get("edgecolor", "black"),
-                    method=method,
-                    data_scale=scale,
-                    is_control=is_control,
-                    training_biases=frozenset(info.get("training_biases", [])),
-                    dir_aliases=(dir_alias,),
-                )
-            if tt_key not in reg.training_type_order:
-                reg.training_type_order.append(tt_key)
+    # ── 2. Scan experiment-config YAMLs for viz_registration blocks ─────────
+    # Each block self-describes a training run's display style. Registering
+    # new methods becomes "edit the experiment YAML"; no separate registry
+    # bookkeeping. Existing TOML entries win.
+    yaml_dir = _PKG_DIR.parent / "scripts" / "tinker_training" / "experiment_configs"
+    if yaml_dir.exists():
+        try:
+            import yaml  # PyYAML
+        except ImportError:
+            yaml = None
+        if yaml is not None:
+            for yml_path in sorted(yaml_dir.glob("*.yaml")):
+                try:
+                    with open(yml_path) as f:
+                        cfg = yaml.safe_load(f) or {}
+                except (yaml.YAMLError, OSError):
+                    continue
+                vr = cfg.get("viz_registration")
+                if not isinstance(vr, dict):
+                    continue
+                _register_yaml_viz(reg, vr)
 
     # ── 3. Auto-fill control_for from suffix as a convenience fallback ──────
     # Entries that already set control_for explicitly are left untouched. For
@@ -216,7 +250,4 @@ def model_info(key: str) -> ModelInfo:
 
 
 _PKG_DIR = Path(__file__).parent.parent
-REGISTRY = _build_registry(
-    toml_path=_PKG_DIR / "experiments.toml",
-    json_path=_PKG_DIR / "model_registry.json",
-)
+REGISTRY = _build_registry(toml_path=_PKG_DIR / "experiments.toml")

@@ -6,9 +6,10 @@
 # - [ordering]            — ordered list of training_types for x-axis sort
 # - [aggregate_names]     — display names for aggregate-mode groups
 #
-# Additional training types live in `model_registry.json` (legacy format) and
-# are merged at load time. Either source works; this TOML is the preferred
-# place for new entries.
+# Per-experiment training types are also auto-discovered from
+# `viz_registration:` blocks in `scripts/tinker_training/experiment_configs/*.yaml`.
+# This TOML is the place for global config (biases, models) and for legacy
+# entries that don't have a corresponding YAML.
 
 # ── Biases ────────────────────────────────────────────────────────────────
 [biases.suggested_answer]
@@ -48,9 +49,6 @@ display_name = "Are You Sure?"
 publication_label = "Are You\nSure?"
 
 # ── Models ────────────────────────────────────────────────────────────────
-# `prompt_styles` replaces the inline `["cot", "no_cot"] if mf == "llama" else ["no_cot"]`
-# rule that used to appear in 6 places.
-
 [models.llama]
 display_name = "Llama-3.1-8B"
 dir_prefix = "llama-"
@@ -71,11 +69,270 @@ display_name = "GPT-OSS-120B"
 dir_prefix = "gpt-oss-120b-"
 prompt_styles = ["no_cot"]
 
-# ── Training types: just the base. Everything else lives in model_registry.json. ──
+[models.qwen3]
+display_name = "QWEN3"
+dir_prefix = "qwen3-"
+prompt_styles = ["no_cot"]
+
+[models."qwen3-8b"]
+display_name = "QWEN3-8B"
+dir_prefix = "qwen3-8b-"
+prompt_styles = ["no_cot"]
+
+[models."qwen3-30b-a3b"]
+display_name = "QWEN3-30B-A3B"
+dir_prefix = "qwen3-30b-a3b-"
+prompt_styles = ["no_cot"]
+
+[models."qwen3.5-4b"]
+display_name = "QWEN3.5-4B"
+dir_prefix = "qwen3.5-4b-"
+prompt_styles = ["no_cot"]
+
+[models."kimi-k2.5"]
+display_name = "KIMI-K2.5"
+dir_prefix = "kimi-k2.5-"
+prompt_styles = ["no_cot"]
+
+# ── Training types ────────────────────────────────────────────────────────
 [training_types.base]
 display_name = "Base"
 color = "#969696"
 method = "base"
+
+[training_types.bct_sa]
+display_name = "BCT SA"
+color = "#4292c6"
+training_biases = ["suggested_answer"]
+dir_aliases = ["bct-sa"]
+
+[training_types.bct_sa_ctrl]
+display_name = "BCT SA Control"
+color = "#9ecae1"
+hatch = "//"
+is_control = true
+dir_aliases = ["bct-sa-ctrl"]
+
+[training_types.rlct_sa]
+display_name = "RLCT SA"
+color = "#41ab5d"
+training_biases = ["suggested_answer"]
+dir_aliases = ["rlct-sa"]
+
+[training_types.rlct_sa_ctrl]
+display_name = "RLCT SA Control"
+color = "#a1d99b"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-sa-ctrl"]
+
+[training_types.rlct_da_bs1]
+display_name = "RLCT DA bs1"
+color = "#4292c6"
+training_biases = ["distractor_argument"]
+dir_aliases = ["rlct-da-bs1"]
+
+[training_types.rlct_da_bs1_ctrl]
+display_name = "RLCT DA bs1 Control"
+color = "#8dbddc"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-bs1-ctrl"]
+
+[training_types.rlct_da_bs2]
+display_name = "RLCT DA bs2"
+color = "#6baed6"
+training_biases = ["distractor_argument"]
+dir_aliases = ["rlct-da-bs2"]
+
+[training_types.rlct_da_bs2_ctrl]
+display_name = "RLCT DA bs2 Control"
+color = "#a6cee6"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-bs2-ctrl"]
+
+[training_types.rlct_da_bs4]
+display_name = "RLCT DA bs4"
+color = "#9ecae1"
+training_biases = ["distractor_argument"]
+dir_aliases = ["rlct-da-bs4"]
+
+[training_types.rlct_da_bs4_ctrl]
+display_name = "RLCT DA bs4 Control"
+color = "#c4dfed"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-bs4-ctrl"]
+
+[training_types.rlct_da_bs8]
+display_name = "RLCT DA bs8"
+color = "#c6dbef"
+training_biases = ["distractor_argument"]
+dir_aliases = ["rlct-da-bs8"]
+
+[training_types.rlct_da_bs8_ctrl]
+display_name = "RLCT DA bs8 Control"
+color = "#dce9f5"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-bs8-ctrl"]
+
+[training_types.rlct_wfs_bs1]
+display_name = "RLCT WFS bs1"
+color = "#4292c6"
+training_biases = ["wrong_few_shot"]
+dir_aliases = ["rlct-wfs-bs1"]
+
+[training_types.rlct_wfs_bs1_ctrl]
+display_name = "RLCT WFS bs1 Control"
+color = "#8dbddc"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-wfs-bs1-ctrl"]
+
+[training_types.rlct_wfs_bs2]
+display_name = "RLCT WFS bs2"
+color = "#6baed6"
+training_biases = ["wrong_few_shot"]
+dir_aliases = ["rlct-wfs-bs2"]
+
+[training_types.rlct_wfs_bs2_ctrl]
+display_name = "RLCT WFS bs2 Control"
+color = "#a6cee6"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-wfs-bs2-ctrl"]
+
+[training_types.rlct_wfs_bs4]
+display_name = "RLCT WFS bs4"
+color = "#9ecae1"
+training_biases = ["wrong_few_shot"]
+dir_aliases = ["rlct-wfs-bs4"]
+
+[training_types.rlct_wfs_bs4_ctrl]
+display_name = "RLCT WFS bs4 Control"
+color = "#c4dfed"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-wfs-bs4-ctrl"]
+
+[training_types.rlct_wfs_bs8]
+display_name = "RLCT WFS bs8"
+color = "#c6dbef"
+training_biases = ["wrong_few_shot"]
+dir_aliases = ["rlct-wfs-bs8"]
+
+[training_types.rlct_wfs_bs8_ctrl]
+display_name = "RLCT WFS bs8 Control"
+color = "#dce9f5"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-wfs-bs8-ctrl"]
+
+[training_types.bct_sa_tqa_120b]
+display_name = "BCT"
+color = "#2171b5"
+training_biases = ["suggested_answer"]
+dir_aliases = ["bct_sa_tqa_120b", "gpt-bct-sa-tqa"]
+
+[training_types.bct_sa_tqa_120b_ctrl]
+display_name = "BCT Control"
+color = "#bdd7e7"
+hatch = "//"
+is_control = true
+dir_aliases = ["bct_sa_tqa_120b-ctrl", "gpt-bct-sa-tqa-ctrl"]
+
+[training_types.rlct_sa_tqa_120b]
+display_name = "RLCT"
+color = "#238b45"
+training_biases = ["suggested_answer"]
+dir_aliases = ["rlct_sa_tqa_120b", "gpt-rlct-sa-tqa"]
+
+[training_types.rlct_sa_tqa_120b_ctrl]
+display_name = "RLCT Control"
+color = "#bae4b3"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct_sa_tqa_120b-ctrl", "gpt-rlct-sa-tqa-ctrl"]
+
+[training_types.bct_da]
+display_name = "BCT (DA)"
+color = "#2171b5"
+training_biases = ["distractor_argument_g4"]
+dir_aliases = ["bct-da"]
+
+[training_types.bct_da_ctrl]
+display_name = "BCT (DA) Control"
+color = "#bdd7e7"
+hatch = "//"
+is_control = true
+dir_aliases = ["bct-da-ctrl"]
+
+[training_types.bct_da_wfs]
+display_name = "BCT (DA+WFS)"
+color = "#6baed6"
+training_biases = ["distractor_argument_g4", "wrong_few_shot"]
+dir_aliases = ["bct-da-wfs"]
+
+[training_types.bct_da_wfs_ctrl]
+display_name = "BCT (DA+WFS) Control"
+color = "#c6dbef"
+hatch = "//"
+is_control = true
+dir_aliases = ["bct-da-wfs-ctrl"]
+
+[training_types.rlct_da_aw0]
+display_name = "RLCT (DA, aw=0)"
+color = "#238b45"
+training_biases = ["distractor_argument_g4"]
+dir_aliases = ["rlct-da-aw0"]
+
+[training_types.rlct_da_aw0_ctrl]
+display_name = "RLCT (DA, aw=0) Control"
+color = "#bae4b3"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-aw0-ctrl"]
+
+[training_types.rlct_da_aw05]
+display_name = "RLCT (DA, aw=0.5)"
+color = "#74c476"
+training_biases = ["distractor_argument_g4"]
+dir_aliases = ["rlct-da-aw05"]
+
+[training_types.rlct_da_aw05_ctrl]
+display_name = "RLCT (DA, aw=0.5) Control"
+color = "#c7e9c0"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-aw05-ctrl"]
+
+[training_types.rlct_da_wfs_aw0]
+display_name = "RLCT (DA+WFS, aw=0)"
+color = "#31a354"
+training_biases = ["distractor_argument_g4", "wrong_few_shot"]
+dir_aliases = ["rlct-da-wfs-aw0"]
+
+[training_types.rlct_da_wfs_aw0_ctrl]
+display_name = "RLCT (DA+WFS, aw=0) Control"
+color = "#a1d99b"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-wfs-aw0-ctrl"]
+
+[training_types.rlct_da_wfs_aw05]
+display_name = "RLCT (DA+WFS, aw=0.5)"
+color = "#78c679"
+training_biases = ["distractor_argument_g4", "wrong_few_shot"]
+dir_aliases = ["rlct-da-wfs-aw05"]
+
+[training_types.rlct_da_wfs_aw05_ctrl]
+display_name = "RLCT (DA+WFS, aw=0.5) Control"
+color = "#d9f0a3"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-wfs-aw05-ctrl"]
 
 [ordering]
 training_types = [

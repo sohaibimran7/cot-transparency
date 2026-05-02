@@ -18,15 +18,56 @@ import pandas as pd
 from inspect_ai.analysis import SampleMessages, SampleScores, SampleSummary, samples_df
 
 
+_SEED_SUFFIX_RE = __import__("re").compile(r"-s(\d+)$")
+
+
+def _get_training_type_from_dir(dir_name: str) -> str | None:
+    """Extract training type from a directory name using REGISTRY.
+
+    Strips the model-family prefix, then tries (in order):
+      1. the full suffix as-is,
+      2. with `-s{N}` seed suffix stripped,
+      3. `_ctrl` combos with seed stripped.
+    Returns None if no registry alias matches.
+    """
+    from sycophancy_eval_inspect.viz.registry import REGISTRY
+
+    n = dir_name.lower()
+    prefixes = sorted(
+        (info.dir_prefix for info in REGISTRY.models.values() if info.dir_prefix),
+        key=len, reverse=True,
+    )
+    for p in prefixes:
+        if n.startswith(p):
+            n = n[len(p):]
+            break
+
+    direct = REGISTRY.dir_to_training_type.get(n)
+    if direct is not None:
+        return direct
+
+    m = _SEED_SUFFIX_RE.search(n)
+    if m:
+        stripped = n[: m.start()]
+        result = REGISTRY.dir_to_training_type.get(stripped)
+        if result is not None:
+            return result
+
+    if n.endswith("-ctrl"):
+        n_no_ctrl = n[:-5]
+        m2 = _SEED_SUFFIX_RE.search(n_no_ctrl)
+        if m2:
+            return REGISTRY.dir_to_training_type.get(n_no_ctrl[: m2.start()] + "-ctrl")
+
+    return None
+
+
 # Training type detection from log path
 def _get_training_type(log_path: str) -> str:
     """Extract training type from the log file path.
 
-    Delegates to visualize_results._get_training_type_from_dir for consistency.
-    Falls back to simple keyword matching if import fails.
+    Walks the path components and tries each as a registered model dir alias.
     """
-    from sycophancy_eval_inspect.visualize_results import _get_training_type_from_dir
-
     parts = Path(log_path).parts
     for part in parts:
         result = _get_training_type_from_dir(part)

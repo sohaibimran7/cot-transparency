@@ -670,12 +670,18 @@ class RLTrainer:
 
             # ── Prefetch queue ────────────────────────────────────────────
             # Pipeline: prefetch next step's sampling while current step's
-            # fwd_bwd runs on the server (~5-7s overlap).
-            max_prefetch = self.config.loop.refresh_policy_every_n_steps or len(batches)
+            # fwd_bwd runs on the server (~5-7s overlap). Cap the fill at the
+            # next refresh boundary so we never create tasks that would be
+            # cancelled by a refresh.
+            refresh_every = self.config.loop.refresh_policy_every_n_steps
+            max_prefetch = refresh_every or len(batches)
             prefetch_queue: deque[asyncio.Task] = deque()
 
             def _fill_prefetch_queue(from_batch: int) -> int:
-                while len(prefetch_queue) < max_prefetch and from_batch < len(batches):
+                cap = len(batches)
+                if refresh_every:
+                    cap = min(cap, ((global_step // refresh_every) + 1) * refresh_every)
+                while len(prefetch_queue) < max_prefetch and from_batch < cap:
                     prefetch_queue.append(asyncio.create_task(sample_batch(batches[from_batch])))
                     from_batch += 1
                 return from_batch

@@ -28,6 +28,42 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+# Dir-parsing + log-loading live in the lower-layer module (no matplotlib dep).
+# Imported here, and re-exported so existing callers
+# (plot_model_comparison, compare_responses) keep importing them from this module.
+try:
+    from sycophancy_eval_inspect.eval_log_loader import (
+        extract_bias_metrics,
+        iter_eval_samples,
+        iter_registry_models,
+    )
+    from sycophancy_eval_inspect.eval_log_loader import (  # noqa: F401  (re-exported)
+        _DIR_TO_TRAINING_TYPE,
+        _MODEL_PREFIXES,
+        _get_model_family_from_dir,
+        _get_seed_from_dir,
+        _get_training_type_from_dir,
+        _iter_model_dirs,
+        _strip_model_prefix,
+        _strip_seed_suffix,
+    )
+except ImportError:  # running as a bare script from inside the package dir
+    from eval_log_loader import (  # type: ignore
+        extract_bias_metrics,
+        iter_eval_samples,
+        iter_registry_models,
+    )
+    from eval_log_loader import (  # type: ignore  # noqa: F401  (re-exported)
+        _DIR_TO_TRAINING_TYPE,
+        _MODEL_PREFIXES,
+        _get_model_family_from_dir,
+        _get_seed_from_dir,
+        _get_training_type_from_dir,
+        _iter_model_dirs,
+        _strip_model_prefix,
+        _strip_seed_suffix,
+    )
+
 
 # ── Constants ──────────────────────────────────────────────────────────────
 
@@ -278,8 +314,6 @@ METRIC_DISPLAY = {
     "lenient_answer_parsed": "Parse Rate (Lenient)",
     "options_considered": "Options Considered (frac.)",
     "bias_acknowledged": "Bias Acknowledged",
-    "bir": "Total-BSR",
-    "lenient_bir": "Total-BSR (Lenient)",
     "pro_bsr": "Pro-BSR",
     "anti_bsr": "Anti-BSR",
     "net_bsr": "Net-BSR",
@@ -364,87 +398,19 @@ def aggregate_training_types(df: "pd.DataFrame") -> "pd.DataFrame":
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
-_DIR_TO_TRAINING_TYPE = {
-    "base": "base",
-    "control": "control",
-    "bct-control-mt-2k": "bct_control_mt_2k",
-    "rl-control-s50": "rlct_control_step50",
-    "bct-old-20k": "bct_old_20k",
-    "bct-mti-1k": "bct_mti_1k",
-    "bct-mti-4k": "bct_mti_4k",
-    "bct-mt-2k": "bct_mt_2k",
-    "bct-mt-b16-2k": "bct_mt_b16_2k",
-    "bct-mti-b16-4k": "bct_mti_b16_4k",
-    "bct-mti-bs16-4k": "bct_mti_b16_4k",
-    "bct-mti-r32-4k": None,  # Exclude r32
-    "bct-control-mt-2k": "bct_control_mt_2k",
-    "rl-control-step50": "rl_control_step50",
-    "control-mti-4k": "control",
-    "bct-mti-4k-100samples": "bct_mti_4k",
-    "control-mti-4k-100samples": "control",
-    "rlct-s50": "rlct_step50",
-    "rlct-s50-100samples": "rlct_step50",
-    "rlct-s100": "rlct_step100",
-    "rlct-s100-100samples": "rlct_step100",
-    "rlct-s200": "rlct_step200",
-    "rlct-s50-v2": "rlct_step50_v2",
-    "rlct-s25-r3": "rlct_step25_r3",
-    "rlct-s50-v3": "rlct_step50_v3",
-    "rlct-s50-v4": "rlct_step50_v4",
-    "rlct-s50-noempty": "rlct_s50_noempty",
-    "rlct-sa-g1-r1": "rlct_sa_g1_r1",
-    "rlct-sa-g16-r16": "rlct_sa_g16_r16",
-    "rlct-sa-g16-t16-r128": "rlct_sa_g16_t16_r128",
-    "rlct-sa-g16-r128": "rlct_sa_g16_r128",
-    "rlct-s50-v5": "rlct_step50_v5",
-    "rlct-s50-v6": "rlct_step50_v6",
-    "rlct-s50-v7": "rlct_step50_v7",
-    "rl-control-s50-100samples": "rlct_control_step50",
-    "rl-control-s100-100samples": "rlct_control_step100",
-    "vft-mt-1675": "vft_mt_1675",
-    "bct-da-4k": "bct_da_4k",
-    "bct-da-wfs-6k": "bct_da_wfs_6k",
-    "rlct-s50-re-eval": "rlct_s50_re_eval",
-    "rlct-s50-a": "rlct_s50_a",
-    "rlct-s50-b": "rlct_s50_b",
-    "rlct-da": "rlct_da",
-    "rlct-da-wfs": "rlct_da_wfs",
-    # Anchor ablation runs
-    "rlct-a0-r1": "rlct_a0_r1",
-    "rlct-a0-r2": "rlct_a0_r2",
-    "rlct-a0-ctrl": "rlct_a0_ctrl",
-    "rlct-a05-r1": "rlct_a05_r1",
-    "rlct-a05-r2": "rlct_a05_r2",
-    "rlct-a05-ctrl": "rlct_a05_ctrl",
-    "rlct-a1-ctrl": "rlct_a1_ctrl",
-    "base-tqa-659": "base",
-}
-
-
-# ── Model registry (extends hardcoded dicts with external entries) ─────────
-_REGISTRY_PATH = Path(__file__).parent / "model_registry.json"
-_MODEL_PREFIXES = ["llama-", "gpt-oss-120b-", "gpt-oss-20b-", "gpt-"]
+# Dir→training-type mapping, seed/prefix parsing, and the per-sample loaders all
+# live in eval_log_loader.py (imported at the top of this file). Only the
+# plotting/style registry merge stays here.
 
 
 def _load_model_registry() -> None:
-    """Load model_registry.json and merge entries into module-level dicts."""
-    global _MODEL_PREFIXES
-    if not _REGISTRY_PATH.exists():
-        return
-    with open(_REGISTRY_PATH) as f:
-        registry = json.load(f)
+    """Merge model_registry.json entries into this module's plotting/style dicts.
 
-    # Extend model prefixes (deduplicated, order preserved)
-    for p in registry.get("model_prefixes", []):
-        if p not in _MODEL_PREFIXES:
-            _MODEL_PREFIXES.append(p)
-
-    for suffix, entry in registry.get("models", {}).items():
-        tt = entry.get("training_type", suffix.replace("-", "_"))
-        # _DIR_TO_TRAINING_TYPE
-        if suffix not in _DIR_TO_TRAINING_TYPE:
-            _DIR_TO_TRAINING_TYPE[suffix] = tt
-        # STYLE_MAP
+    The dir-parsing half of the merge (model_prefixes + dir→training_type) is done
+    in eval_log_loader._load_registry_dirs(); here we only populate the style, name,
+    bias-type, and order dicts keyed by training_type.
+    """
+    for _suffix, tt, entry in iter_registry_models():
         if tt not in STYLE_MAP:
             STYLE_MAP[tt] = _style(
                 entry.get("color", "#888888"),
@@ -452,122 +418,15 @@ def _load_model_registry() -> None:
                 entry.get("edgecolor", "black"),
             )
             COLORS[tt] = STYLE_MAP[tt]["color"]
-        # TRAINING_TYPE_NAMES
         if tt not in TRAINING_TYPE_NAMES:
             TRAINING_TYPE_NAMES[tt] = entry.get("display_name", tt)
-        # TRAINING_BIAS_TYPES
         if tt not in TRAINING_BIAS_TYPES:
             TRAINING_BIAS_TYPES[tt] = set(entry.get("training_biases", []))
-        # TRAINING_TYPE_ORDER — append if missing
         if tt not in TRAINING_TYPE_ORDER:
             TRAINING_TYPE_ORDER.append(tt)
 
 
 _load_model_registry()
-
-
-_SEED_SUFFIX_RE = re.compile(r"-s(\d+)$")
-
-
-def _strip_seed_suffix(name: str) -> tuple[str, int | None]:
-    """Strip -s{N} seed suffix from a dir name component. Returns (stripped, seed_or_None)."""
-    m = _SEED_SUFFIX_RE.search(name)
-    if m:
-        return name[:m.start()], int(m.group(1))
-    return name, None
-
-
-def _strip_model_prefix(dir_name: str) -> str:
-    """Strip model prefix from directory name, returning the suffix."""
-    n = dir_name.lower()
-    for prefix in sorted(_MODEL_PREFIXES, key=len, reverse=True):
-        if n.startswith(prefix):
-            return n[len(prefix):]
-    return n
-
-
-def _get_training_type_from_dir(dir_name: str) -> str | None:
-    """Extract training type from directory name.
-
-    Expected naming: {model}-{suffix} where suffix is a key in _DIR_TO_TRAINING_TYPE.
-    Prefixes are loaded from model_registry.json so new models work automatically.
-    Handles seed suffixes (-s{N}) by stripping them before lookup, and
-    control+seed combos like bct-sa-s42-ctrl.
-    """
-    n = _strip_model_prefix(dir_name)
-
-    # 1. Try original name first (handles e.g. rlct-s50 = "step 50")
-    result = _DIR_TO_TRAINING_TYPE.get(n)
-    if result is not None:
-        return result
-
-    # 2. Try with seed suffix stripped (e.g. bct-sa-s42 -> bct-sa)
-    n_no_seed, _ = _strip_seed_suffix(n)
-    if n_no_seed != n:
-        result = _DIR_TO_TRAINING_TYPE.get(n_no_seed)
-        if result is not None:
-            return result
-
-    # 3. Handle control+seed (e.g. bct-sa-s42-ctrl -> bct-sa-ctrl)
-    if n.endswith("-ctrl"):
-        n_no_ctrl = n[:-5]
-        n_no_ctrl_no_seed, _ = _strip_seed_suffix(n_no_ctrl)
-        if n_no_ctrl_no_seed != n_no_ctrl:
-            return _DIR_TO_TRAINING_TYPE.get(n_no_ctrl_no_seed + "-ctrl")
-
-    return None
-
-
-def _get_seed_from_dir(dir_name: str) -> int | None:
-    """Extract seed from directory name's -s{N} suffix, if present.
-
-    Returns None if the full suffix (with -s{N}) is already a known training type
-    (collision guard: e.g. rlct-s50 means 'step 50', not 'seed 50').
-    """
-    n = _strip_model_prefix(dir_name)
-
-    # If the full name is already registered, it's not a seed variant
-    if n in _DIR_TO_TRAINING_TYPE:
-        return None
-
-    # Check for seed directly (e.g. bct-sa-s42)
-    _, seed = _strip_seed_suffix(n)
-    if seed is not None:
-        return seed
-
-    # Check for seed before -ctrl (e.g. bct-sa-s42-ctrl)
-    if n.endswith("-ctrl"):
-        _, seed = _strip_seed_suffix(n[:-5])
-        return seed
-
-    return None
-
-
-def _get_model_family_from_dir(dir_name: str) -> str | None:
-    """Extract model family from directory name.
-
-    Derives family from registered prefixes (e.g. 'llama-' -> 'llama').
-    """
-    lower = dir_name.lower()
-    for prefix in sorted(_MODEL_PREFIXES, key=len, reverse=True):
-        if lower.startswith(prefix):
-            return prefix.rstrip("-")
-    return None
-
-
-def _iter_model_dirs(log_dirs):
-    """Yield (model_dir_path, dir_name) for each model directory."""
-    for log_dir in log_dirs:
-        log_path = Path(log_dir)
-        if not log_path.exists():
-            print(f"Warning: {log_dir} does not exist")
-            continue
-        if any(log_path.glob("*.eval")):
-            yield log_path, log_path.name
-        else:
-            for d in sorted(log_path.iterdir()):
-                if d.is_dir():
-                    yield d, d.name
 
 
 # ── Data loading ───────────────────────────────────────────────────────────
@@ -581,98 +440,72 @@ def load_sample_data(
     Returns one row per successfully-parsed sample with columns from all scorers.
     Skips samples where the primary scorer's answer parsing failed.
     """
-    from inspect_ai.log import read_eval_log
-
-    if isinstance(log_dirs, (str, Path)):
-        log_dirs = [log_dirs]
-
     rows = []
-    for model_dir, dir_name in _iter_model_dirs(log_dirs):
-        training_type = _get_training_type_from_dir(dir_name)
-        model_family = _get_model_family_from_dir(dir_name)
-        if training_type is None or model_family is None:
+    for ctx in iter_eval_samples(log_dirs, dataset_filter):
+        if ctx.training_type is None or ctx.model_family is None:
             continue
-        seed = _get_seed_from_dir(dir_name)
+        sample = ctx.sample
+        if not sample.scores:
+            continue
 
-        for eval_file in sorted(model_dir.glob("*.eval")):
-            try:
-                log = read_eval_log(str(eval_file))
-            except Exception as e:
-                print(f"Warning: Could not read {eval_file}: {e}")
-                continue
+        row = {
+            "sample_id": sample.id,
+            "model": ctx.model,
+            "variant": ctx.variant if ctx.variant is not None else "",
+            "prompt_style": ctx.prompt_style,
+            "bias_type": ctx.bias_type,
+            "dataset": ctx.dataset,
+            "_source_dir": ctx.dir_name,
+            "model_family": ctx.model_family,
+            "training_type": ctx.training_type,
+            "seed": ctx.seed,
+        }
 
-            variant = log.eval.task_args.get("variant", "")
-            prompt_style = log.eval.task_args.get("prompt_style", "no_cot")
-            dataset_path = log.eval.task_args.get("dataset_path", "")
-            bias_type = Path(dataset_path).parent.name if dataset_path else "unknown"
-            dataset_stem = Path(dataset_path).stem if dataset_path else "unknown"
-            dataset = dataset_stem.replace(f"_{bias_type}", "")
+        # Extract values from each scorer
+        for scorer_name, key_map in SCORER_KEYS.items():
+            score = sample.scores.get(scorer_name)
+            if score and score.value:
+                for score_key, col_name in key_map.items():
+                    val = score.value.get(score_key)
+                    row[col_name] = val if val is not None else np.nan
+            else:
+                for col_name in key_map.values():
+                    row[col_name] = np.nan
 
-            if dataset_filter and dataset not in dataset_filter:
-                continue
+        # Backwards compat: old scorer used 'accuracy'/'bias_match_rate'
+        if np.isnan(row.get("correct", np.nan)):
+            score = sample.scores.get("mcq_bias_scorer")
+            if score and score.value:
+                if "accuracy" in score.value:
+                    row["correct"] = score.value["accuracy"]
+                if "bias_match_rate" in score.value:
+                    row["matches_bias"] = score.value["bias_match_rate"]
 
-            for sample in log.samples or []:
-                if not sample.scores:
-                    continue
+        # Determine parse success (new key or old metadata)
+        parsed = row.get("answer_parsed")
+        if parsed is None or np.isnan(parsed):
+            score = sample.scores.get("mcq_bias_scorer")
+            if score and score.metadata:
+                parsed = 1.0 if score.metadata.get("parse_success", True) else 0.0
+            else:
+                parsed = 1.0
+            row["answer_parsed"] = parsed
 
-                row = {
-                    "sample_id": sample.id,
-                    "model": log.eval.model,
-                    "variant": variant,
-                    "prompt_style": prompt_style,
-                    "bias_type": bias_type,
-                    "dataset": dataset,
-                    "_source_dir": dir_name,
-                    "model_family": model_family,
-                    "training_type": training_type,
-                    "seed": seed,
-                }
+        # Determine lenient parse success
+        lenient_parsed = row.get("lenient_answer_parsed")
+        if lenient_parsed is None or np.isnan(lenient_parsed):
+            lenient_parsed = 0.0
+            row["lenient_answer_parsed"] = lenient_parsed
 
-                # Extract values from each scorer
-                for scorer_name, key_map in SCORER_KEYS.items():
-                    score = sample.scores.get(scorer_name)
-                    if score and score.value:
-                        for score_key, col_name in key_map.items():
-                            val = score.value.get(score_key)
-                            row[col_name] = val if val is not None else np.nan
-                    else:
-                        for col_name in key_map.values():
-                            row[col_name] = np.nan
+        # NaN-out metrics where the corresponding parser failed
+        if row["answer_parsed"] == 0:
+            row["correct"] = np.nan
+            row["matches_bias"] = np.nan
+        if lenient_parsed == 0:
+            row["lenient_correct"] = np.nan
+            row["lenient_matches_bias"] = np.nan
 
-                # Backwards compat: old scorer used 'accuracy'/'bias_match_rate'
-                if np.isnan(row.get("correct", np.nan)):
-                    score = sample.scores.get("mcq_bias_scorer")
-                    if score and score.value:
-                        if "accuracy" in score.value:
-                            row["correct"] = score.value["accuracy"]
-                        if "bias_match_rate" in score.value:
-                            row["matches_bias"] = score.value["bias_match_rate"]
-
-                # Determine parse success (new key or old metadata)
-                parsed = row.get("answer_parsed")
-                if parsed is None or np.isnan(parsed):
-                    score = sample.scores.get("mcq_bias_scorer")
-                    if score and score.metadata:
-                        parsed = 1.0 if score.metadata.get("parse_success", True) else 0.0
-                    else:
-                        parsed = 1.0
-                    row["answer_parsed"] = parsed
-
-                # Determine lenient parse success
-                lenient_parsed = row.get("lenient_answer_parsed")
-                if lenient_parsed is None or np.isnan(lenient_parsed):
-                    lenient_parsed = 0.0
-                    row["lenient_answer_parsed"] = lenient_parsed
-
-                # NaN-out metrics where the corresponding parser failed
-                if row["answer_parsed"] == 0:
-                    row["correct"] = np.nan
-                    row["matches_bias"] = np.nan
-                if lenient_parsed == 0:
-                    row["lenient_correct"] = np.nan
-                    row["lenient_matches_bias"] = np.nan
-
-                rows.append(row)
+        rows.append(row)
 
     df = pd.DataFrame(rows)
     n_dirs = len(set(r["_source_dir"] for r in rows)) if rows else 0
@@ -1671,9 +1504,9 @@ def compute_per_question_bir(
 
     Returns DataFrame with columns: model, training_type, model_family,
     prompt_style, hash, dataset, bias_type, biased_bmr, unbiased_bmr,
-    pro_bsr, anti_bsr, net_bsr, total_bsr (= legacy `bir`),
+    pro_bsr, anti_bsr, net_bsr, total_bsr,
     biased_lenient_bmr, unbiased_lenient_bmr,
-    lenient_pro_bsr, lenient_anti_bsr, lenient_net_bsr, lenient_total_bsr (= legacy `lenient_bir`),
+    lenient_pro_bsr, lenient_anti_bsr, lenient_net_bsr, lenient_total_bsr,
     bias_acknowledged.
 
     Decomposition (per question, BMR ∈ {0, 1}):
@@ -1684,84 +1517,31 @@ def compute_per_question_bir(
     """
     from collections import defaultdict
 
-    from inspect_ai.log import read_eval_log
-
-    if isinstance(log_dirs, (str, Path)):
-        log_dirs = [log_dirs]
-
     results = defaultdict(lambda: {"biased": {}, "unbiased": {}})
 
-    for model_dir, dir_name in _iter_model_dirs(log_dirs):
-        training_type = _get_training_type_from_dir(dir_name)
-        model_family = _get_model_family_from_dir(dir_name)
-        if training_type is None:
+    for ctx in iter_eval_samples(log_dirs, dataset_filter):
+        if ctx.training_type is None:
             continue
-        seed = _get_seed_from_dir(dir_name)
 
-        for log_file in sorted(model_dir.glob("*.eval")):
-            try:
-                log = read_eval_log(str(log_file))
-            except Exception:
-                continue
+        metrics = extract_bias_metrics(ctx.sample)
+        if metrics is None:
+            continue
 
-            variant = log.eval.task_args.get("variant")
-            prompt_style = log.eval.task_args.get("prompt_style", "no_cot")
-            dataset_path = log.eval.task_args.get("dataset_path", "")
-            bias_type = Path(dataset_path).parent.name
-            original_dataset = Path(dataset_path).stem.replace(f"_{bias_type}", "")
+        # Skip only if BOTH parsers failed
+        if not metrics.strict_parsed and not metrics.lenient_parsed:
+            continue
 
-            if dataset_filter and original_dataset not in dataset_filter:
-                continue
+        key = (ctx.dir_name, ctx.training_type, ctx.model_family, ctx.prompt_style,
+               ctx.sample.id, ctx.dataset, ctx.seed)
 
-            for sample in log.samples or []:
-                if not sample.scores:
-                    continue
-                score = sample.scores.get("mcq_bias_scorer")
-                if not score or not score.value:
-                    continue
-
-                # Check strict parse success
-                strict_parsed = score.value.get("answer_parsed")
-                if strict_parsed is None:
-                    strict_parsed = 1.0 if (score.metadata or {}).get("parse_success", True) else 0.0
-
-                # Check lenient parse success
-                l_score = sample.scores.get("mcq_bias_scorer_fallback")
-                lenient_parsed = 0.0
-                if l_score and l_score.value:
-                    lenient_parsed = l_score.value.get("lenient_answer_parsed", 0.0)
-
-                # Skip only if BOTH parsers failed
-                if not strict_parsed and not lenient_parsed:
-                    continue
-
-                # Strict BMR (NaN if strict parse failed)
-                if strict_parsed:
-                    bmr = score.value.get("matches_bias", score.value.get("bias_match_rate", np.nan))
-                else:
-                    bmr = np.nan
-
-                # Lenient BMR (NaN if lenient parse failed)
-                if lenient_parsed and l_score and l_score.value:
-                    l_bmr = l_score.value.get("lenient_matches_bias", np.nan)
-                else:
-                    l_bmr = np.nan
-
-                # Bias acknowledged
-                ba_score = sample.scores.get("bias_acknowledged_scorer")
-                bias_ack = ba_score.value.get("bias_acknowledged", np.nan) if (ba_score and ba_score.value) else np.nan
-
-                key = (dir_name, training_type, model_family, prompt_style,
-                       sample.id, original_dataset, seed)
-
-                if variant == "biased":
-                    results[key]["biased"][bias_type] = {
-                        "bmr": bmr, "l_bmr": l_bmr, "ba": bias_ack,
-                    }
-                else:
-                    # Store per source bias_type so are_you_sure ("NOT X" semantics)
-                    # doesn't overwrite letter-based unbiased results.
-                    results[key]["unbiased"][bias_type] = {"bmr": bmr, "l_bmr": l_bmr}
+        if ctx.variant == "biased":
+            results[key]["biased"][ctx.bias_type] = {
+                "bmr": metrics.bmr, "l_bmr": metrics.l_bmr, "ba": metrics.bias_ack,
+            }
+        else:
+            # Store per source bias_type so are_you_sure ("NOT X" semantics)
+            # doesn't overwrite letter-based unbiased results.
+            results[key]["unbiased"][ctx.bias_type] = {"bmr": metrics.bmr, "l_bmr": metrics.l_bmr}
 
     # Build BRR DataFrame
     bir_data = []
@@ -1822,14 +1602,12 @@ def compute_per_question_bir(
                 "anti_bsr": anti,
                 "net_bsr": net,
                 "total_bsr": total,
-                "bir": total,  # alias: legacy Total-BSR column name
                 "biased_lenient_bmr": bd["l_bmr"],
                 "unbiased_lenient_bmr": ub["l_bmr"],
                 "lenient_pro_bsr": l_pro,
                 "lenient_anti_bsr": l_anti,
                 "lenient_net_bsr": l_net,
                 "lenient_total_bsr": l_total,
-                "lenient_bir": l_total,  # alias
                 "bias_acknowledged": bd["ba"],
             })
 
@@ -1840,9 +1618,60 @@ def compute_per_question_bir(
 compute_per_question_bsr = compute_per_question_bir
 
 
+def collapse_to_population_bir(bir_df: pd.DataFrame, signed: bool = False) -> pd.DataFrame:
+    """Collapse per-question rows into population-level BIR.
+
+    The gap is computed on raw per-question BMR rates, so sampling noise cancels in
+    expectation (unlike the per-question Total-BSR, which counts every flip):
+        signed=False (default): bir = |mean(biased_bmr) - mean(unbiased_bmr)|
+        signed=True:            bir =  mean(biased_bmr) - mean(unbiased_bmr)   (net; can be < 0)
+    For are_you_sure, bir = mean(biased_bmr) (switching rate, paper convention) in both modes.
+
+    Returns one row per (model, training_type, model_family, prompt_style, dataset,
+    bias_type, seed) group, with a Wald SE on the gap for downstream error bars.
+    Per-question CI underestimates the switching variance at the population level.
+    """
+    if bir_df.empty:
+        return pd.DataFrame()
+    group_cols = [
+        "model", "training_type", "model_family", "prompt_style",
+        "dataset", "bias_type", "seed",
+    ]
+    rows = []
+    for key, g in bir_df.groupby(group_cols, dropna=False):
+        bt = key[group_cols.index("bias_type")]
+        biased_valid = g["biased_bmr"].dropna()
+        unbiased_valid = g["unbiased_bmr"].dropna()
+        if len(biased_valid) == 0:
+            continue
+
+        if bt == "are_you_sure":
+            gap = float(biased_valid.mean())
+            n = int(len(biased_valid))
+            var = biased_valid.var(ddof=1) if n > 1 else 0.0
+            se = float(np.sqrt(var / n)) if n > 1 else 0.0
+        else:
+            if len(unbiased_valid) == 0:
+                continue
+            m_b = float(biased_valid.mean())
+            m_u = float(unbiased_valid.mean())
+            gap = (m_b - m_u) if signed else abs(m_b - m_u)
+            nb, nu = len(biased_valid), len(unbiased_valid)
+            vb = biased_valid.var(ddof=1) if nb > 1 else 0.0
+            vu = unbiased_valid.var(ddof=1) if nu > 1 else 0.0
+            se = float(np.sqrt(vb / nb + vu / nu))
+            n = min(nb, nu)
+
+        rec = {col: val for col, val in zip(group_cols, key)}
+        rec.update({"bir": gap, "bir_se": se, "n_valid": n})
+        rows.append(rec)
+
+    return pd.DataFrame(rows)
+
+
 def filter_to_common_questions(
     bir_df: pd.DataFrame,
-    metric_col: str = "bir",
+    metric_col: str = "total_bsr",
 ) -> pd.DataFrame:
     """Filter BIR DataFrame to only questions answered by ALL training types.
 
@@ -1887,7 +1716,7 @@ def compute_bir_table(
     bir_df: pd.DataFrame,
     model_family: str,
     prompt_style: str | None = None,
-    metric_col: str = "bir",
+    metric_col: str = "total_bsr",
     baseline: str = "base",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Aggregate per-question BRR into a pivot table (bias_type × training_type).
@@ -1930,7 +1759,7 @@ def print_bir_table(
     bir_df: pd.DataFrame,
     model_family: str,
     prompt_style: str | None = None,
-    metric_col: str = "bir",
+    metric_col: str = "total_bsr",
     label: str = "",
     show_n: bool = True,
     baseline: str = "base",
@@ -2123,9 +1952,9 @@ def save_bir_tables(
     # Fall back to default variants if none provided
     if table_variants is None:
         table_variants = [
-            ("lenient_bir", None, "BIR"),
-            ("lenient_bir", lambda df: df["bias_acknowledged"] == 0.0, "Unverbalised"),
-            ("lenient_bir", lambda df: df["bias_acknowledged"] == 1.0, "Verbalised"),
+            ("lenient_total_bsr", None, "BIR"),
+            ("lenient_total_bsr", lambda df: df["bias_acknowledged"] == 0.0, "Unverbalised"),
+            ("lenient_total_bsr", lambda df: df["bias_acknowledged"] == 1.0, "Verbalised"),
         ]
 
     all_rows = []
@@ -2305,7 +2134,7 @@ def main():
                 for mf in _var_models:
                     _styles = args.prompt_style or (["cot", "no_cot"] if mf == "llama" else ["no_cot"])
                     for ps in _styles:
-                        for metric_col in ["bir", "bias_acknowledged"]:
+                        for metric_col in ["total_bsr", "bias_acknowledged"]:
                             plot_variance_across(
                                 bir_df, metric_col, split, mf,
                                 prompt_style=ps,
@@ -2329,9 +2158,9 @@ def main():
         if args.bir:
             bir_configs = []
             if args.bir_parser in ("strict", "both"):
-                bir_configs.append(("bir", "" if args.bir_parser != "both" else " (Strict)"))
+                bir_configs.append(("total_bsr", "" if args.bir_parser != "both" else " (Strict)"))
             if args.bir_parser in ("lenient", "both"):
-                bir_configs.append(("lenient_bir", "" if args.bir_parser != "both" else " (Lenient)"))
+                bir_configs.append(("lenient_total_bsr", "" if args.bir_parser != "both" else " (Lenient)"))
 
             bir_variants = []
             for bir_col, bir_suffix in bir_configs:
@@ -2392,7 +2221,7 @@ def main():
         # ── Common-questions variant (same questions across all models) ──
         if args.common_questions:
             # Use the primary BIR metric column for determining common questions
-            primary_metric = "lenient_bir" if args.bir_parser == "lenient" else "bir"
+            primary_metric = "lenient_total_bsr" if args.bir_parser == "lenient" else "total_bsr"
             cq_df = filter_to_common_questions(bir_df, metric_col=primary_metric)
             n_orig = len(bir_df)
             n_cq = len(cq_df)

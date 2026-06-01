@@ -628,6 +628,36 @@
       "training_biases": [
         "suggested_answer"
       ]
+    },
+    "rlct-sa-grpo": {
+      "training_type": "rlct_sa_grpo",
+      "display_name": "GRPO",
+      "color": "#ff7f0e",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-sa-shrink": {
+      "training_type": "rlct_sa_shrink",
+      "display_name": "Shrink",
+      "color": "#1f77b4",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-sa-shrink-pop": {
+      "training_type": "rlct_sa_shrink_pop",
+      "display_name": "Shrink+Pop",
+      "color": "#2ca02c",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
     }
   }
 }

@@ -1,14 +1,23 @@
 """Paper-style figure for the shrinkage RLCT experiment.
 
-Numbers are the eval results from logs/shrinkage_exp (Llama-3.1-8B, cot, TruthfulQA,
-limit 200, 5 biases; trained on MMLU suggested_answer). Hardcoded here so the figure
-is reproducible without re-reading .eval files. See RESULTS.md for provenance.
+Eval results from logs/shrinkage_exp (Llama-3.1-8B, cot, TruthfulQA, limit 200,
+5 biases; trained on MMLU suggested_answer). BIR numbers are computed LIVE from the
+.eval logs via extract_bir3.compute_shrinkage_bir() — net population BIR
+(mean biased - mean unbiased, per-question matched). Requires logs/shrinkage_exp present.
+See RESULTS.md for provenance.
 """
+import sys
+from pathlib import Path
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-from pathlib import Path
+
+# extract_bir3 is a sibling script; put its dir on the path so the import resolves
+# regardless of the caller's cwd / invocation style.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from extract_bir3 import BIASES, compute_shrinkage_bir, heldout_avg
 
 OUT = Path("sycophancy_eval_inspect/plots/shrinkage_exp")
 OUT.mkdir(parents=True, exist_ok=True)
@@ -18,15 +27,23 @@ colors = {"Base": "#999999", "GRPO": "#ff7f0e", "Shrink": "#1f77b4", "Shrink+Pop
 mc = [colors[m] for m in models]
 
 # --- BIR by bias type (trained: Sugg. Answer; rest held-out) ---
-# Verified from .eval logs via scripts/tinker_training/extract_bir3.py
-# (BIR = mean matches_bias[biased] - mean matches_bias[unbiased]).
+# Single source of truth: computed from .eval logs via the same functions the
+# extract_bir3 table prints (incl. heldout_avg), so figure and table can never disagree.
 biases = ["Sugg.\nAnswer*", "Wrong\nFS", "Argument", "Fact", "Squares", "Held-out\nAvg"]
-bir = {
-    "Base":       [0.251, 0.299, 0.013, 0.144, 0.263, 0.180],
-    "GRPO":       [-0.013, 0.094, -0.014, 0.026, 0.100, 0.051],
-    "Shrink":     [0.071, 0.167, -0.012, 0.048, 0.103, 0.077],
-    "Shrink+Pop": [0.089, 0.154, -0.001, 0.117, 0.183, 0.113],
-}
+_bir, _ub = compute_shrinkage_bir()
+_SHORT = {"Base": "base", "GRPO": "grpo", "Shrink": "shrink", "Shrink+Pop": "shrink_pop"}
+
+
+def _row(short):
+    row = _bir[short]
+    # Missing (model, bias) cells come back as None; use NaN so matplotlib renders a gap
+    # instead of crashing, mirroring the table's "NA".
+    per_bias = [row[b] if row.get(b) is not None else np.nan for b in BIASES]  # canonical order
+    ho = heldout_avg(row)
+    return per_bias + [ho if ho is not None else np.nan]                       # + held-out avg column
+
+
+bir = {label: _row(short) for label, short in _SHORT.items()}
 # --- capability / stability ---
 accuracy = {"Base": 0.438, "GRPO": 0.288, "Shrink": 0.449, "Shrink+Pop": 0.457}
 kl_base  = {"Base": 0.0,   "GRPO": 0.101, "Shrink": 0.020, "Shrink+Pop": 0.0078}

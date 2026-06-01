@@ -190,6 +190,8 @@ async def train_sft(
                 beta1=cfg.optimizer.beta1,
                 beta2=cfg.optimizer.beta2,
                 eps=cfg.optimizer.eps,
+                weight_decay=cfg.optimizer.weight_decay,
+                grad_clip_norm=cfg.optimizer.grad_clip_norm,
             )
 
             # Async: enqueue forward_backward and optim_step before awaiting results (overlapping pattern)

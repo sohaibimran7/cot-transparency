@@ -136,13 +136,14 @@ class _OpenAISampler:
         self.model, self.max_tokens, self.temperature = model, max_tokens, temperature
 
     async def sample(self, messages: list[dict], n: int) -> list[str]:
-        async def one():
-            try:
-                r = await self.client.chat.completions.create(model=self.model, messages=messages)
-                return r.choices[0].message.content or ""
-            except Exception:  # noqa: BLE001
-                return ""
-        return list(await asyncio.gather(*[one() for _ in range(n)]))
+        try:
+            r = await self.client.chat.completions.create(
+                model=self.model, messages=messages, n=n,
+                max_tokens=self.max_tokens, temperature=self.temperature,
+            )
+            return [c.message.content or "" for c in r.choices]
+        except Exception:  # noqa: BLE001
+            return [""] * n
 
 
 class _TinkerSampler:

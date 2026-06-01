@@ -156,7 +156,7 @@ class TrainingLoopConfig(BaseModel):
     """Training loop config."""
     batch_size: int = 1
     gradient_accumulation_steps: int = 1
-    refresh_policy_every_n_steps: int = 10
+    refresh_policy_every_n_steps: int = 1  # 1 = fully on-policy (cookbook contract); all configs set this explicitly
     n_epochs: int = 1
 
 
@@ -180,7 +180,7 @@ class RLConfig(BaseModel):
     checkpoint: CheckpointConfig = CheckpointConfig()
     kl_coef: float = 0.05
     kl_discount_factor: float = 0.0
-    loss_fn: Literal["ppo", "reinforce"] = "ppo"
+    loss_fn: Literal["ppo", "importance_sampling"] = "ppo"  # SDK LossFnType; "reinforce" is NOT valid (would crash forward_backward)
     anchor_weight: float = 0.5
     anchor_model: Literal["base", "initial_policy"] = "base"
     # Advantage construction:
@@ -810,6 +810,8 @@ class RLTrainer:
             beta1=self.config.optimizer.beta1,
             beta2=self.config.optimizer.beta2,
             eps=self.config.optimizer.eps,
+            weight_decay=self.config.optimizer.weight_decay,
+            grad_clip_norm=self.config.optimizer.grad_clip_norm,
         )
         global_step = 0
         accumulated_grads = 0

@@ -217,9 +217,10 @@ def main():
     print(f"Hyperparams: lr={args.lr or 'auto'}, batch={args.batch_size}, "
           f"epochs={args.epochs}, lora_rank={args.lora_rank}{seed_str}")
     print(f"Steps: {n_steps}, checkpoints: ~{n_ckpts} intermediate + 1 final")
-    print(f"Final checkpoint: always saves full state (for resuming)")
     if args.save_state:
-        print(f"Intermediate checkpoints: also saving full state")
+        print(f"Checkpoints: intermediate + final save full state (resumable)")
+    else:
+        print(f"Final checkpoint: sampler weights only (pass --save-state for a resumable full-state checkpoint)")
     if args.resume_from:
         print(f"Resuming from: {args.resume_from}")
 

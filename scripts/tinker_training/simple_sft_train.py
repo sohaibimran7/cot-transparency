@@ -27,7 +27,7 @@ import tinker
 from tinker import types
 from tinker_cookbook import renderers, model_info
 from tinker_cookbook.tokenizer_utils import get_tokenizer
-from tinker_cookbook.supervised.common import datum_from_tokens_weights, compute_mean_nll
+from tinker_cookbook.supervised.common import datum_from_model_input_weights, compute_mean_nll
 from tqdm import tqdm
 
 
@@ -50,8 +50,8 @@ def get_renderer_for_model(model: str):
 def create_datum(sample: dict, renderer, max_length: int | None = None) -> types.Datum:
     """Convert a sample to Tinker Datum format using cookbook helper."""
     messages = sample["messages"]
-    tokens, weights = renderer.build_supervised_example(messages)
-    return datum_from_tokens_weights(tokens, weights, max_length)
+    model_input, weights = renderer.build_supervised_example(messages)
+    return datum_from_model_input_weights(model_input, weights, max_length)
 
 
 def train(

@@ -147,10 +147,9 @@ def debug_datum_construction(tokens: list, weights: list, tokenizer):
     print("="*60)
 
     import torch
-    from tinker_cookbook.supervised.common import datum_from_tokens_weights
+    from tinker_cookbook.supervised.common import datum_from_model_input_weights
 
-    # Convert to torch for cookbook helper
-    tokens_tensor = torch.tensor(tokens)
+    # Convert weights to torch for cookbook helper
     weights_tensor = torch.tensor(weights, dtype=torch.float32)
 
     # Our WRONG manual construction (what simple_sft_train.py does)
@@ -168,7 +167,8 @@ def debug_datum_construction(tokens: list, weights: list, tokenizer):
 
     # Cookbook CORRECT construction
     print("\n--- COOKBOOK'S CONSTRUCTION (CORRECT) ---")
-    correct_datum = datum_from_tokens_weights(tokens_tensor, weights_tensor, max_length=None)
+    correct_datum = datum_from_model_input_weights(
+        types.ModelInput.from_ints(tokens=tokens), weights_tensor, max_length=None)
 
     # Extract data from correct datum
     correct_input = correct_datum.model_input
@@ -355,15 +355,15 @@ def main():
     datum = debug_datum_construction(tokens, weights, tokenizer)
 
     # Create batch of data using CORRECT cookbook method
-    from tinker_cookbook.supervised.common import datum_from_tokens_weights
+    from tinker_cookbook.supervised.common import datum_from_model_input_weights
 
     batch_data = []
     for sample in samples:
         model_input, weights = renderer.build_supervised_example(sample["messages"])
-        d = datum_from_tokens_weights(model_input, weights, max_length=None)
+        d = datum_from_model_input_weights(model_input, weights, max_length=None)
         batch_data.append(d)
 
-    print(f"\nCreated batch using cookbook's datum_from_tokens_weights (correct shifting)")
+    print(f"\nCreated batch using cookbook's datum_from_model_input_weights (correct shifting)")
 
     # Create training client
     print("\n" + "="*60)

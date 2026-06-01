@@ -24,6 +24,7 @@ nltk
 seaborn
 statsmodels
 streamlit
+gradio>=4.44
 datasets
 wandb
 tinker-cookbook>=0.2.1

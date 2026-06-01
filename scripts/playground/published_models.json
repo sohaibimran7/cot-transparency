@@ -1,0 +1,402 @@
+[
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 base",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": null,
+    "run": null,
+    "seed": null,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 base",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": null,
+    "run": null,
+    "seed": null,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_llama_lravg_lr1e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://1414c7a9-34f9-55e5-acb0-698207bd6cb7:train:0/sampler_weights/bct_da_llama_lravg_lr1e4_llama-bct-da-lravg-lr1e4-s42",
+    "run": "bct_da_llama_lravg_lr1e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_llama_lravg_lr1e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://f6b93afe-8235-5caf-922f-94e14f7538f9:train:0/sampler_weights/bct_da_llama_lravg_lr1e4_llama-bct-da-lravg-lr1e4-s42-ctrl",
+    "run": "bct_da_llama_lravg_lr1e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_llama_lravg_lr2_86e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://f0952a69-f206-5a7e-9a68-4a617184c59d:train:0/sampler_weights/bct_da_llama_lravg_lr2_86e4_llama-bct-da-lravg-lr2_86e4-s42",
+    "run": "bct_da_llama_lravg_lr2_86e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_llama_lravg_lr2_86e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://d93afb4f-bdb4-5c94-a665-c06524af68f0:train:0/sampler_weights/bct_da_llama_lravg_lr2_86e4_llama-bct-da-lravg-lr2_86e4-s42-ctrl",
+    "run": "bct_da_llama_lravg_lr2_86e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_llama_lravg_lr5e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://60ae3e5e-e2d8-57f9-b03e-cbd8b66a713b:train:0/sampler_weights/bct_da_llama_lravg_lr5e4_llama-bct-da-lravg-lr5e4-s42",
+    "run": "bct_da_llama_lravg_lr5e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_llama_lravg_lr5e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://b0264141-e247-513e-b0e1-83c200ed740a:train:0/sampler_weights/bct_da_llama_lravg_lr5e4_llama-bct-da-lravg-lr5e4-s42-ctrl",
+    "run": "bct_da_llama_lravg_lr5e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_wfs_llama_lravg_lr1e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://8b3bba22-e154-583f-9c0f-60bd55c9ce0f:train:0/sampler_weights/bct_da_wfs_llama_lravg_lr1e4_llama-bct-da-wfs-lravg-lr1e4-s42",
+    "run": "bct_da_wfs_llama_lravg_lr1e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_wfs_llama_lravg_lr1e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://45c9c250-6098-57bd-9d15-16f6a8647da0:train:0/sampler_weights/bct_da_wfs_llama_lravg_lr1e4_llama-bct-da-wfs-lravg-lr1e4-s42-ctrl",
+    "run": "bct_da_wfs_llama_lravg_lr1e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_wfs_llama_lravg_lr2_86e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://ad8a9e96-4715-5594-9ff6-e77c0631cf52:train:0/sampler_weights/bct_da_wfs_llama_lravg_lr2_86e4_llama-bct-da-wfs-lravg-lr2_86e4-s42",
+    "run": "bct_da_wfs_llama_lravg_lr2_86e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_wfs_llama_lravg_lr2_86e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://5cb84c83-9f60-5769-b900-61298e3f7a41:train:0/sampler_weights/bct_da_wfs_llama_lravg_lr2_86e4_llama-bct-da-wfs-lravg-lr2_86e4-s42-ctrl",
+    "run": "bct_da_wfs_llama_lravg_lr2_86e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_wfs_llama_lravg_lr5e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://fdc640cc-cc89-5a70-804f-3a8dc954eede:train:0/sampler_weights/bct_da_wfs_llama_lravg_lr5e4_llama-bct-da-wfs-lravg-lr5e4-s42",
+    "run": "bct_da_wfs_llama_lravg_lr5e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 bct_da_wfs_llama_lravg_lr5e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://5104975f-c33f-5ec9-bd15-e5fa37faf30f:train:0/sampler_weights/bct_da_wfs_llama_lravg_lr5e4_llama-bct-da-wfs-lravg-lr5e4-s42-ctrl",
+    "run": "bct_da_wfs_llama_lravg_lr5e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_aw0_llama_r128b4_lr1e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://021db390-2b40-583a-8d6b-f0532492f20d:train:0/sampler_weights/rlct_da_aw0_llama_r128b4_lr1e4_llama-rlct-da-aw0-r128b4-lr1e4-s42",
+    "run": "rlct_da_aw0_llama_r128b4_lr1e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_aw0_llama_r128b4_lr1e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://ac501483-97b5-5c8b-bf59-27b37c2a7b7d:train:0/sampler_weights/rlct_da_aw0_llama_r128b4_lr1e4_llama-rlct-da-aw0-r128b4-lr1e4-s42-ctrl",
+    "run": "rlct_da_aw0_llama_r128b4_lr1e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_aw0_llama_r128b4_lr2_86e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://3d6c0f81-ec34-5499-b417-aaec0d3fe7fb:train:0/sampler_weights/rlct_da_aw0_llama_r128b4_lr2_86e4_llama-rlct-da-aw0-r128b4-lr2_86e4-s42",
+    "run": "rlct_da_aw0_llama_r128b4_lr2_86e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_aw0_llama_r128b4_lr2_86e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://c46fd12c-1e96-5944-b615-6f0db43e8e29:train:0/sampler_weights/rlct_da_aw0_llama_r128b4_lr2_86e4_llama-rlct-da-aw0-r128b4-lr2_86e4-s42-ctrl",
+    "run": "rlct_da_aw0_llama_r128b4_lr2_86e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_aw0_llama_r128b4_lr5e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://0994bb1f-1341-5b9c-877b-8c0da7dd547a:train:0/sampler_weights/rlct_da_aw0_llama_r128b4_lr5e4_llama-rlct-da-aw0-r128b4-lr5e4-s42",
+    "run": "rlct_da_aw0_llama_r128b4_lr5e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_aw0_llama_r128b4_lr5e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://13884408-9d6b-5e55-9102-8f71f89dcbba:train:0/sampler_weights/rlct_da_aw0_llama_r128b4_lr5e4_llama-rlct-da-aw0-r128b4-lr5e4-s42-ctrl",
+    "run": "rlct_da_aw0_llama_r128b4_lr5e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_wfs_aw0_llama_r128b4_lr1e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://dc267f6a-621c-5fc2-8857-9e04dc9023e8:train:0/sampler_weights/rlct_da_wfs_aw0_llama_r128b4_lr1e4_llama-rlct-da-wfs-aw0-r128b4-lr1e4-s42",
+    "run": "rlct_da_wfs_aw0_llama_r128b4_lr1e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_wfs_aw0_llama_r128b4_lr1e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://1823d40a-dd94-5113-ae30-7f80d156093b:train:0/sampler_weights/rlct_da_wfs_aw0_llama_r128b4_lr1e4_llama-rlct-da-wfs-aw0-r128b4-lr1e4-s42-ctrl",
+    "run": "rlct_da_wfs_aw0_llama_r128b4_lr1e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_wfs_aw0_llama_r128b4_lr2_86e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://463ed593-9e8f-545e-94d9-0f9136bd8d0f:train:0/sampler_weights/rlct_da_wfs_aw0_llama_r128b4_lr2_86e4_llama-rlct-da-wfs-aw0-r128b4-lr2_86e4-s42",
+    "run": "rlct_da_wfs_aw0_llama_r128b4_lr2_86e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_wfs_aw0_llama_r128b4_lr2_86e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://8f00c547-bc9e-5a83-b064-50782e3f9abb:train:0/sampler_weights/rlct_da_wfs_aw0_llama_r128b4_lr2_86e4_llama-rlct-da-wfs-aw0-r128b4-lr2_86e4-s42-ctrl",
+    "run": "rlct_da_wfs_aw0_llama_r128b4_lr2_86e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_wfs_aw0_llama_r128b4_lr5e4 \u00b7 s42",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://54c8d6ac-9077-583e-90b6-e66882e8fb86:train:0/sampler_weights/rlct_da_wfs_aw0_llama_r128b4_lr5e4_llama-rlct-da-wfs-aw0-r128b4-lr5e4-s42",
+    "run": "rlct_da_wfs_aw0_llama_r128b4_lr5e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "Llama-3.1-8B-Instruct \u00b7 rlct_da_wfs_aw0_llama_r128b4_lr5e4 \u00b7 s42 [ctrl]",
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "checkpoint": "tinker://98d8012b-1270-53dd-8d7f-384eeb33c57a:train:0/sampler_weights/rlct_da_wfs_aw0_llama_r128b4_lr5e4_llama-rlct-da-wfs-aw0-r128b4-lr5e4-s42-ctrl",
+    "run": "rlct_da_wfs_aw0_llama_r128b4_lr5e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_20b_lravg_lr1e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://bba23db4-0c8b-50af-8089-a3595a15c3ea:train:0/sampler_weights/bct_da_20b_lravg_lr1e4_gpt-oss-20b-bct-da-lravg-lr1e4-s42",
+    "run": "bct_da_20b_lravg_lr1e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_20b_lravg_lr1e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://27b1d7ab-9298-5a12-8d9d-3cde56a69957:train:0/sampler_weights/bct_da_20b_lravg_lr1e4_gpt-oss-20b-bct-da-lravg-lr1e4-s42-ctrl",
+    "run": "bct_da_20b_lravg_lr1e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_20b_lravg_lr2_86e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://2da00cc4-1ed4-5578-b657-ad14464c75aa:train:0/sampler_weights/bct_da_20b_lravg_lr2_86e4_gpt-oss-20b-bct-da-lravg-lr2_86e4-s42",
+    "run": "bct_da_20b_lravg_lr2_86e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_20b_lravg_lr2_86e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://36c7627d-3ce5-5ef4-b270-42a61c42862e:train:0/sampler_weights/bct_da_20b_lravg_lr2_86e4_gpt-oss-20b-bct-da-lravg-lr2_86e4-s42-ctrl",
+    "run": "bct_da_20b_lravg_lr2_86e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_20b_lravg_lr5e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://02d4a94d-88ee-5e49-9693-06e9b8530815:train:0/sampler_weights/bct_da_20b_lravg_lr5e4_gpt-oss-20b-bct-da-lravg-lr5e4-s42",
+    "run": "bct_da_20b_lravg_lr5e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_20b_lravg_lr5e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://13680d26-2430-59af-9d63-9d755ba9ffcb:train:0/sampler_weights/bct_da_20b_lravg_lr5e4_gpt-oss-20b-bct-da-lravg-lr5e4-s42-ctrl",
+    "run": "bct_da_20b_lravg_lr5e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_wfs_20b_lravg_lr1e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://3372d1ae-a069-5a53-94a0-54438cf74fc6:train:0/sampler_weights/bct_da_wfs_20b_lravg_lr1e4_gpt-oss-20b-bct-da-wfs-lravg-lr1e4-s42",
+    "run": "bct_da_wfs_20b_lravg_lr1e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_wfs_20b_lravg_lr1e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://44ea96f2-539d-5155-a9fb-6ba949a1628f:train:0/sampler_weights/bct_da_wfs_20b_lravg_lr1e4_gpt-oss-20b-bct-da-wfs-lravg-lr1e4-s42-ctrl",
+    "run": "bct_da_wfs_20b_lravg_lr1e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_wfs_20b_lravg_lr2_86e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://e15748b5-cfc4-528a-a9c6-b574023ecb79:train:0/sampler_weights/bct_da_wfs_20b_lravg_lr2_86e4_gpt-oss-20b-bct-da-wfs-lravg-lr2_86e4-s42",
+    "run": "bct_da_wfs_20b_lravg_lr2_86e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_wfs_20b_lravg_lr2_86e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://6a2a45d6-c344-5f0c-85cb-90165f9b9f1d:train:0/sampler_weights/bct_da_wfs_20b_lravg_lr2_86e4_gpt-oss-20b-bct-da-wfs-lravg-lr2_86e4-s42-ctrl",
+    "run": "bct_da_wfs_20b_lravg_lr2_86e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_wfs_20b_lravg_lr5e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://1c507ff1-51af-53fa-9827-955238e28734:train:0/sampler_weights/bct_da_wfs_20b_lravg_lr5e4_gpt-oss-20b-bct-da-wfs-lravg-lr5e4-s42",
+    "run": "bct_da_wfs_20b_lravg_lr5e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 bct_da_wfs_20b_lravg_lr5e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://75ead9f3-d559-5e0a-99d8-bcfd2d7331f2:train:0/sampler_weights/bct_da_wfs_20b_lravg_lr5e4_gpt-oss-20b-bct-da-wfs-lravg-lr5e4-s42-ctrl",
+    "run": "bct_da_wfs_20b_lravg_lr5e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_aw0_20b_r128b4_lr1e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://1439a1db-c058-51c0-9846-d491564aaf85:train:0/sampler_weights/rlct_da_aw0_20b_r128b4_lr1e4_gpt-oss-20b-rlct-da-aw0-r128b4-lr1e4-s42",
+    "run": "rlct_da_aw0_20b_r128b4_lr1e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_aw0_20b_r128b4_lr1e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://b2c8c730-9583-5089-9c11-b43a617baefe:train:0/sampler_weights/rlct_da_aw0_20b_r128b4_lr1e4_gpt-oss-20b-rlct-da-aw0-r128b4-lr1e4-s42-ctrl",
+    "run": "rlct_da_aw0_20b_r128b4_lr1e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_aw0_20b_r128b4_lr2_86e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://9660aaa5-69aa-5b31-b9e2-1a2e1dc979c1:train:0/sampler_weights/rlct_da_aw0_20b_r128b4_lr2_86e4_gpt-oss-20b-rlct-da-aw0-r128b4-lr2_86e4-s42",
+    "run": "rlct_da_aw0_20b_r128b4_lr2_86e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_aw0_20b_r128b4_lr2_86e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://e727f280-2c33-5053-a0d4-30cdc382db92:train:0/sampler_weights/rlct_da_aw0_20b_r128b4_lr2_86e4_gpt-oss-20b-rlct-da-aw0-r128b4-lr2_86e4-s42-ctrl",
+    "run": "rlct_da_aw0_20b_r128b4_lr2_86e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_aw0_20b_r128b4_lr5e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://5b4473e9-94d8-5903-bd4c-90e2c6fb863d:train:0/sampler_weights/rlct_da_aw0_20b_r128b4_lr5e4_gpt-oss-20b-rlct-da-aw0-r128b4-lr5e4-s42",
+    "run": "rlct_da_aw0_20b_r128b4_lr5e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_aw0_20b_r128b4_lr5e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://934a537d-9fde-5c12-97f1-39f789fade52:train:0/sampler_weights/rlct_da_aw0_20b_r128b4_lr5e4_gpt-oss-20b-rlct-da-aw0-r128b4-lr5e4-s42-ctrl",
+    "run": "rlct_da_aw0_20b_r128b4_lr5e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_wfs_aw0_20b_r128b4_lr1e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://35c46940-23e1-594e-b3c7-1d195b3ceb94:train:0/sampler_weights/rlct_da_wfs_aw0_20b_r128b4_lr1e4_gpt-oss-20b-rlct-da-wfs-aw0-r128b4-lr1e4-s42",
+    "run": "rlct_da_wfs_aw0_20b_r128b4_lr1e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_wfs_aw0_20b_r128b4_lr1e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://1311802a-f9e3-55c4-9de0-24b7fe9ca469:train:0/sampler_weights/rlct_da_wfs_aw0_20b_r128b4_lr1e4_gpt-oss-20b-rlct-da-wfs-aw0-r128b4-lr1e4-s42-ctrl",
+    "run": "rlct_da_wfs_aw0_20b_r128b4_lr1e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_wfs_aw0_20b_r128b4_lr2_86e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://2724b2c6-6487-5d27-9eec-3b9188e0cb46:train:0/sampler_weights/rlct_da_wfs_aw0_20b_r128b4_lr2_86e4_gpt-oss-20b-rlct-da-wfs-aw0-r128b4-lr2_86e4-s42",
+    "run": "rlct_da_wfs_aw0_20b_r128b4_lr2_86e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_wfs_aw0_20b_r128b4_lr2_86e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://6b3705fd-a673-5f49-a7a8-b1291a8b63eb:train:0/sampler_weights/rlct_da_wfs_aw0_20b_r128b4_lr2_86e4_gpt-oss-20b-rlct-da-wfs-aw0-r128b4-lr2_86e4-s42-ctrl",
+    "run": "rlct_da_wfs_aw0_20b_r128b4_lr2_86e4",
+    "seed": 42,
+    "is_control": true
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_wfs_aw0_20b_r128b4_lr5e4 \u00b7 s42",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://51e97637-f29a-5428-81bd-20f2b866bc8c:train:0/sampler_weights/rlct_da_wfs_aw0_20b_r128b4_lr5e4_gpt-oss-20b-rlct-da-wfs-aw0-r128b4-lr5e4-s42",
+    "run": "rlct_da_wfs_aw0_20b_r128b4_lr5e4",
+    "seed": 42,
+    "is_control": false
+  },
+  {
+    "label": "gpt-oss-20b \u00b7 rlct_da_wfs_aw0_20b_r128b4_lr5e4 \u00b7 s42 [ctrl]",
+    "model": "openai/gpt-oss-20b",
+    "checkpoint": "tinker://17231f87-76fa-5fd2-9b6f-20c11cf3f1ad:train:0/sampler_weights/rlct_da_wfs_aw0_20b_r128b4_lr5e4_gpt-oss-20b-rlct-da-wfs-aw0-r128b4-lr5e4-s42-ctrl",
+    "run": "rlct_da_wfs_aw0_20b_r128b4_lr5e4",
+    "seed": 42,
+    "is_control": true
+  }
+]

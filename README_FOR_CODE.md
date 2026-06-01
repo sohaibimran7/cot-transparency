@@ -1,3 +1,10 @@
+> ⚠️ **Legacy document.** The setup below (`pyenv` + `pip` + `stage_one.py` +
+> `text-davinci-003`) describes the original `cot_transparency` stage_one pipeline and is
+> **out of date** for the current Tinker / eval-awareness workflow.
+> **For setup, use [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) (the `uv` flow).**
+> **For where things live and how to run them, see [`.claude/CLAUDE.md`](.claude/CLAUDE.md).**
+> The sections below are kept only for the legacy stage_one experiment flow.
+
 ## Installation for python scripts
 
 Install python environment, requires python >= 3.11.4

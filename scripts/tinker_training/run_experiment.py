@@ -644,6 +644,7 @@ def build_training_cmd(
             "n_anchor_rollouts", "temperature", "max_new_tokens",
             "n_epochs", "batch_size", "gradient_accumulation_steps",
             "refresh_every", "checkpoint_every", "prompt_style",
+            "advantage_estimator", "shrinkage_mode", "shrinkage_z", "shrinkage_normalizer",
         ):
             if key in args:
                 cmd += [f"--{key.replace('_', '-')}", str(args[key])]

@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 import tinker
 from tinker import types
 from tinker_cookbook import renderers, model_info
+from tinker_cookbook.renderers.base import get_text_content
 from tinker_cookbook.tokenizer_utils import get_tokenizer
 from pydantic import BaseModel
 
@@ -25,6 +26,24 @@ def get_renderer_for_model(model: str):
     tokenizer = get_tokenizer(model)
     renderer_name = model_info.get_recommended_renderer_name(model)
     return renderers.get_renderer(renderer_name, tokenizer), tokenizer
+
+
+def _parse_response_text(parsed_msg, tokenizer, tokens) -> str:
+    """Extract assistant text from a parsed response message.
+
+    gpt-oss returns structured list content (channel-tagged Thinking/Text parts);
+    Llama returns a plain string. ``get_text_content`` handles both (concatenating
+    the Text parts, stripping thinking). A plain ``parsed_msg["content"]`` returns
+    the raw list for gpt-oss, so any downstream string op (``.strip()``, regex,
+    JSON) breaks. Falls back to decoding raw tokens when parsing fails.
+    """
+    if not parsed_msg:
+        return tokenizer.decode(tokens)
+    try:
+        return get_text_content(parsed_msg) or ""
+    except Exception:  # noqa: BLE001
+        c = parsed_msg.get("content", "")
+        return c if isinstance(c, str) else tokenizer.decode(tokens)
 
 
 class SamplingConfig(BaseModel):
@@ -135,7 +154,7 @@ class TinkerSamplingClient:
             tokens = list(seq.tokens)
             # Use renderer to parse response
             parsed_msg, _ = self.renderer.parse_response(tokens)
-            text = parsed_msg.get("content", "") if parsed_msg else self.tokenizer.decode(tokens)
+            text = _parse_response_text(parsed_msg, self.tokenizer, tokens)
             logprobs = list(seq.logprobs) if include_logprobs and seq.logprobs else None
 
             samples.append(SamplingResult(

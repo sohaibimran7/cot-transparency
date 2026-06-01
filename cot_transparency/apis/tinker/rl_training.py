@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict, deque
+import inspect
 import json
 import logging
 import random
@@ -85,6 +86,33 @@ class _SafeFileWrapper:
 
     def __getattr__(self, name):
         return getattr(self._fp, name)
+
+
+def _is_async_callable(fn: Callable) -> bool:
+    """True if ``fn`` (a function or a callable object) is a coroutine callable.
+
+    Detects both ``async def`` functions and callable instances whose ``__call__``
+    is ``async`` (e.g. a judge object). Lets ``trait_classifier`` be sync or async.
+    """
+    if inspect.iscoroutinefunction(fn):
+        return True
+    call = getattr(fn, "__call__", None)
+    return call is not None and inspect.iscoroutinefunction(call)
+
+
+async def _classify_traits(fn: Callable, raw: list, datapoint: dict) -> list[float]:
+    """Run a (sync or async) classifier over sampled rollouts, returning floats.
+
+    ``raw`` holds the sampler's ``(tokens, logprobs, full_text, answer_text)`` tuples.
+    Async classifiers (e.g. an LLM judge for eval-awareness misalignment) are awaited
+    concurrently so network judges don't serialize the rollout loop; sync ones (e.g. an
+    answer parser) are called inline.
+    """
+    if _is_async_callable(fn):
+        values = await asyncio.gather(*[fn(answer_text, datapoint) for _, _, _, answer_text in raw])
+    else:
+        values = [fn(answer_text, datapoint) for _, _, _, answer_text in raw]
+    return [float(v) for v in values]
 
 
 def _resolve_indices(indices: list[int] | str, n_total: int) -> list[int]:
@@ -155,6 +183,28 @@ class RLConfig(BaseModel):
     loss_fn: Literal["ppo", "reinforce"] = "ppo"
     anchor_weight: float = 0.5
     anchor_model: Literal["base", "initial_policy"] = "base"
+    # Advantage construction:
+    #   "grpo_normalized" — standardize each population to unit variance. With one
+    #     datapoint/perturbation per step this divides out (p_hat - p_ref) entirely,
+    #     so only the sign of the gap survives (chases sampling noise near convergence).
+    #   "shrinkage" — keep the gap magnitude but shrink it toward 0 by its sampling
+    #     SNR, then standardize only the per-rollout Bernoulli noise (trait std). The
+    #     signal tapers to ~0 once the gap is within statistical error.
+    advantage_estimator: Literal["grpo_normalized", "shrinkage"] = "grpo_normalized"
+    shrinkage_mode: Literal["soft", "hard"] = "soft"
+    shrinkage_z: float = 2.0   # half-weight (soft) / cutoff (hard) at |gap| = z·SE; z=0 => no floor (full faithful gap)
+    # How to scale the shrinkage advantage (advantage_estimator="shrinkage" only):
+    #   "trait_std" — divide by per-rollout Bernoulli std sqrt(p(1-p)+floor). Makes
+    #     |adv| ~ GRPO-scale for LR transfer, but adds an arbitrary var_floor and (empirically)
+    #     leaves |adv| ~10x smaller than GRPO anyway.
+    #   "none" — bare estimator A = -shrunk_gap * (T - p_hat), no division. Magnitude
+    #     vanishes naturally as p->0; the faithful rate-matching policy gradient.
+    shrinkage_normalizer: Literal["trait_std", "none"] = "trait_std"
+    # Optional benign-helpfulness GRPO term mixed into the gradient: rewards COMPLETING
+    # benign tasks (helpfulness ∈ [0,1], 1=helped), so the model can't satisfy the
+    # consistency objective by refusing everything (the refuse-all reward hack). 0 = off.
+    helpfulness_weight: float = 0.0
+    n_helpfulness_rollouts: int = 16
     log_base_dir: str = "logs"
 
 
@@ -195,6 +245,7 @@ class BatchItem:
     train_rollouts: list[Rollout]
     anchor_rollouts: list[Rollout]
     p_hat: dict[int, float]         # Per-perturbation trait rates (training)
+    p_hat_counts: dict[int, int]    # Per-perturbation parsed rollout counts (for gap SE)
     p_ref: float                    # Reference perturbation rate
     p_ref_init: float | None        # Initial (base/anchor) reference rate
     n_total: int                    # Total raw rollouts
@@ -216,20 +267,34 @@ class ConsistencyReward:
     Anchor reward is computed separately on reference perturbation rollouts.
     """
 
-    def compute_rewards(self, rollouts: list[Rollout], p_hat: dict[int, float], p_ref: float) -> list[float]:
+    def compute_rewards(self, rollouts: list[Rollout], p_hat: dict[int, float], p_ref: float,
+                        gaps: Optional[dict[int, float]] = None) -> list[float]:
         """Consistency-only rewards for training perturbation rollouts.
 
-        r = -(p_hat[pert] - p_ref) * (trait - p_hat[pert])
+        r = -gap[pert] * (trait - p_hat[pert])
+
+        ``gaps`` lets the caller substitute a transformed gap (e.g. shrinkage-corrected)
+        per perturbation. When None, the raw gap (p_hat[pert] - p_ref) is used.
         """
-        return [-(p_hat[r.perturbation_idx] - p_ref) * (r.trait_value - p_hat[r.perturbation_idx])
+        if gaps is None:
+            gaps = {pert: rate - p_ref for pert, rate in p_hat.items()}
+        return [-gaps[r.perturbation_idx] * (r.trait_value - p_hat[r.perturbation_idx])
                 for r in rollouts]
 
-    def compute_anchor_rewards(self, ref_rollouts: list[Rollout], p_ref: float, p_ref_initial: float) -> list[float]:
+    def compute_anchor_rewards(self, ref_rollouts: list[Rollout], p_ref: float, p_ref_initial: Optional[float],
+                               gap: Optional[float] = None) -> list[float]:
         """Anchor rewards for reference perturbation rollouts.
 
-        r = -(p_ref - p_ref_initial) * (trait - p_ref)
+        r = -gap * (trait - p_ref), gap = (p_ref - p_ref_initial) by default.
+
+        ``gap`` lets the caller substitute a transformed gap. Returns zeros when no
+        anchor target is available (p_ref_initial is None and no gap supplied).
         """
-        return [-(p_ref - p_ref_initial) * (r.trait_value - p_ref)
+        if gap is None:
+            if p_ref_initial is None:
+                return [0.0] * len(ref_rollouts)
+            gap = p_ref - p_ref_initial
+        return [-gap * (r.trait_value - p_ref)
                 for r in ref_rollouts]
 
 
@@ -252,6 +317,7 @@ class RLTrainer:
         self.anchor_sampling_client: tinker.SamplingClient | None = None
         self.renderer: Any = None
         self.tokenizer: Any = None
+        self._shrink_metrics: dict[str, float] = {}
 
     def setup(self) -> None:
         """Initialize clients and renderer."""
@@ -355,14 +421,16 @@ class RLTrainer:
 
             raw = await self._sample_from_client(client, prompt, n_rollouts_per[idx])
 
+            trait_values = await _classify_traits(trait_classifier, raw, datapoint)
+
             rollouts = []
-            for tokens, logprobs, full_text, answer_text in raw:
+            for (tokens, logprobs, full_text, answer_text), trait_value in zip(raw, trait_values):
                 parsed_ok = answer_parser(answer_text) is not None if answer_parser else True
                 rollouts.append(Rollout(
                     tokens=tokens,
                     logprobs=logprobs,
                     text=full_text,
-                    trait_value=float(trait_classifier(answer_text, datapoint)),
+                    trait_value=trait_value,
                     perturbation_idx=idx,
                     parsed_successfully=parsed_ok,
                     prompt=prompt,
@@ -417,6 +485,54 @@ class RLTrainer:
             return max(valid)
         raise ValueError(f"Unknown aggregation: {agg}")
 
+    @staticmethod
+    def _trait_std(p: float, var_floor: float = 0.01) -> float:
+        """Per-rollout Bernoulli std, used to standardize trait noise (NOT the gap).
+
+        Dividing the shrinkage reward by this — rather than by the full reward std —
+        normalizes only the per-rollout noise and leaves the gap magnitude intact, so
+        |advantage| ~ |shrunk gap| (comparable scale to grpo's unit advantages).
+        """
+        return (p * (1.0 - p) + var_floor) ** 0.5
+
+    @staticmethod
+    def _gap_se(p1: float, n1: int, p2: float, n2: int, pseudocount: float = 1.0) -> float:
+        """Standard error of the gap (p1 - p2) under independent binomial sampling.
+
+        Uses a Laplace/Beta(pseudocount, pseudocount) smoothing of each proportion so the
+        boundary (p=0 or p=1) is NOT treated as zero uncertainty. The raw normal-approx
+        variance p(1-p)/n collapses to 0 when an observed rate is exactly 0 (common for
+        p_ref in sycophancy: 0/N ref rollouts pick the biased option), which would make a
+        tiny empirical gap look infinitely significant. The rule of three says 0/n carries
+        uncertainty ~3/n, not 0. Smoothing recovers that; interior proportions are ~unchanged.
+        """
+        def _var(p: float, n: int) -> float:
+            n_eff = max(n, 1)
+            n_smooth = n_eff + 2.0 * pseudocount
+            p_smooth = (p * n_eff + pseudocount) / n_smooth   # shrink toward 0.5
+            return p_smooth * (1.0 - p_smooth) / n_smooth
+        return (_var(p1, n1) + _var(p2, n2)) ** 0.5
+
+    def _shrink_gap(self, d: float, se: float) -> float:
+        """Shrink an empirical gap toward 0 by its sampling SNR = (d/se)^2.
+
+        soft: d * snr / (snr + z^2)     — smooth, half-weight at |d| = z·SE
+        hard: d * max(0, 1 - z^2/snr)   — positive-part gate, zero below |d| = z·SE
+
+        Larger sampling budget → smaller SE → less shrinkage (you trust smaller gaps).
+        """
+        if d == 0.0:
+            return 0.0
+        if se <= 0.0:
+            return d
+        snr = (d * d) / (se * se)
+        z2 = self.config.shrinkage_z ** 2
+        if self.config.shrinkage_mode == "hard":
+            factor = max(0.0, 1.0 - z2 / snr)
+        else:
+            factor = snr / (snr + z2)
+        return d * factor
+
     def _normalize_advantages(self, rewards: list[float]) -> list[float]:
         if not rewards:
             return rewards
@@ -447,6 +563,43 @@ class RLTrainer:
         assert len(datums) == 1, f"Expected 1 datum, got {len(datums)}" #change for multi-turn
         return datums[0]
 
+    async def _collect_helpfulness_datums(self, dps: list[dict]) -> tuple[list, float]:
+        """GRPO datums rewarding the policy for COMPLETING benign tasks.
+
+        For each benign datapoint, sample n_helpfulness_rollouts on its prompt, score
+        helpfulness ∈ [0,1] (1 = helped, 0 = refused) via self._help_cls, and form a
+        per-prompt GRPO advantage (standardised within the prompt). Scaled by
+        config.helpfulness_weight. This penalises drifting toward refuse-everything,
+        which is the degenerate equaliser of the pure consistency objective.
+
+        Prompts are sampled and judged concurrently. Returns (datums, mean_score).
+        """
+        weight = self.config.helpfulness_weight
+        n = self.config.n_helpfulness_rollouts
+
+        async def one(dp: dict) -> tuple[list, list[float]]:
+            messages = self._help_fn(dp)["messages"]
+            prompt = self.renderer.build_generation_prompt(messages)
+            raw = await self._sample_from_client(self.sampling_client, prompt, n)
+            scores = await _classify_traits(self._help_cls, raw, dp)
+            adv = self._normalize_advantages(scores)  # per-prompt GRPO baseline
+            datums = [
+                self._create_rl_datum(
+                    prompt,
+                    Rollout(tokens=tokens, logprobs=logprobs, text=full_text,
+                            trait_value=0.0, perturbation_idx=0, parsed_successfully=True, prompt=prompt),
+                    weight * a,
+                )
+                for (tokens, logprobs, full_text, _ans), a in zip(raw, adv)
+            ]
+            return datums, scores
+
+        results = await asyncio.gather(*[one(dp) for dp in dps])
+        datums = [d for ds, _ in results for d in ds]
+        all_scores = [s for _, scores in results for s in scores]
+        mean_score = (sum(all_scores) / len(all_scores)) if all_scores else 0.0
+        return datums, mean_score
+
     def _build_training_batch(
         self,
         batch_items: list[BatchItem],
@@ -457,29 +610,64 @@ class RLTrainer:
         or None if the batch should be skipped (empty/zero advantages).
         """
         anchor_weight = self.config.anchor_weight
+        use_shrinkage = self.config.advantage_estimator == "shrinkage"
 
         # Consistency: training perturbation rollouts
-        consistency_rewards, consistency_data = [], []
+        consistency_rewards, consistency_data, consistency_div = [], [], []
+        raw_gap_abs, shrunk_gap_abs, gap_n = 0.0, 0.0, 0
         for item in batch_items:
-            rewards = self.reward_function.compute_rewards(item.train_rollouts, item.p_hat, item.p_ref)
+            gaps = None
+            if use_shrinkage:
+                gaps = {}
+                for pert, rate in item.p_hat.items():
+                    raw = rate - item.p_ref
+                    se = self._gap_se(rate, item.p_hat_counts.get(pert, 0), item.p_ref, item.n_ref_parsed)
+                    gaps[pert] = self._shrink_gap(raw, se)
+                    raw_gap_abs += abs(raw); shrunk_gap_abs += abs(gaps[pert]); gap_n += 1
+            rewards = self.reward_function.compute_rewards(item.train_rollouts, item.p_hat, item.p_ref, gaps=gaps)
             consistency_rewards.extend(rewards)
             for rollout in item.train_rollouts:
                 consistency_data.append((rollout.prompt, rollout))
+                consistency_div.append(self._trait_std(item.p_hat.get(rollout.perturbation_idx, 0.0)))
 
         # Anchor: reference perturbation rollouts
-        anchor_rewards, anchor_data = [], []
+        anchor_rewards, anchor_data, anchor_div = [], [], []
         if anchor_weight > 0:
             for item in batch_items:
-                rewards = self.reward_function.compute_anchor_rewards(item.anchor_rollouts, item.p_ref, item.p_ref_init)
+                anchor_gap = None
+                if use_shrinkage and item.p_ref_init is not None:
+                    raw = item.p_ref - item.p_ref_init
+                    se = self._gap_se(item.p_ref, item.n_ref_parsed, item.p_ref_init, item.n_ref_parsed)
+                    anchor_gap = self._shrink_gap(raw, se)
+                rewards = self.reward_function.compute_anchor_rewards(
+                    item.anchor_rollouts, item.p_ref, item.p_ref_init, gap=anchor_gap)
                 anchor_rewards.extend(rewards)
                 for rollout in item.anchor_rollouts:
                     anchor_data.append((rollout.prompt, rollout))
+                    anchor_div.append(self._trait_std(item.p_ref))
 
-        # Normalize each population separately, then scale by weight
-        consistency_adv = self._normalize_advantages(consistency_rewards)
-        anchor_adv = self._normalize_advantages(anchor_rewards)
+        # Form advantages. grpo_normalized: standardize each population to unit variance
+        # (drops gap magnitude). shrinkage: keep the shrunk-gap magnitude, standardize
+        # only the per-rollout Bernoulli noise by trait std.
+        if use_shrinkage:
+            if self.config.shrinkage_normalizer == "none":
+                consistency_adv = list(consistency_rewards)
+                anchor_adv = list(anchor_rewards)
+            else:
+                consistency_adv = [r / d for r, d in zip(consistency_rewards, consistency_div)]
+                anchor_adv = [r / d for r, d in zip(anchor_rewards, anchor_div)]
+        else:
+            consistency_adv = self._normalize_advantages(consistency_rewards)
+            anchor_adv = self._normalize_advantages(anchor_rewards)
         consistency_adv = [a * (1 - anchor_weight) for a in consistency_adv]
         anchor_adv = [a * anchor_weight for a in anchor_adv]
+
+        self._shrink_metrics = (
+            {"train/gap_raw_abs_mean": raw_gap_abs / gap_n,
+             "train/gap_shrunk_abs_mean": shrunk_gap_abs / gap_n,
+             "train/gap_shrink_factor": (shrunk_gap_abs / raw_gap_abs) if raw_gap_abs > 1e-9 else 0.0}
+            if use_shrinkage and gap_n > 0 else {}
+        )
 
         all_rewards = consistency_rewards + anchor_rewards
         policy_grad_data = consistency_data + anchor_data
@@ -499,10 +687,24 @@ class RLTrainer:
         trait_classifier: Callable[[str, dict], float],
         initial_reference_rates: Optional[dict[int, float]] = None,
         answer_parser: Optional[Callable[[str], Optional[str]]] = None,
+        helpfulness_datapoints: Optional[Sequence[dict]] = None,
+        helpfulness_perturbation_fn: Optional[Callable[[dict], dict]] = None,
+        helpfulness_classifier: Optional[Callable[[str, dict], float]] = None,
     ) -> str:
-        """Run RL consistency training. Returns final checkpoint path."""
+        """Run RL consistency training. Returns final checkpoint path.
+
+        If ``helpfulness_weight > 0`` and ``helpfulness_datapoints`` are given, a benign
+        GRPO term (reward = ``helpfulness_classifier`` ∈ [0,1]) is mixed into every step's
+        gradient — the anti-refuse-all signal.
+        """
         if self.training_client is None:
             self.setup()
+
+        # Helpfulness term state (anti refuse-all). Cycled through across steps.
+        self._help_dps = list(helpfulness_datapoints) if helpfulness_datapoints else []
+        self._help_fn = helpfulness_perturbation_fn
+        self._help_cls = helpfulness_classifier
+        self._help_idx = 0
 
         log_dir = Path(build_log_dir(
             self.config.log_base_dir,
@@ -657,6 +859,7 @@ class RLTrainer:
                     train_rollouts=result.train_rollouts,
                     anchor_rollouts=result.anchor_rollouts,
                     p_hat=p_hat,
+                    p_hat_counts=training_counts,
                     p_ref=p_ref,
                     p_ref_init=p_ref_init,
                     n_total=result.n_total,
@@ -746,6 +949,15 @@ class RLTrainer:
 
                 grad_datums, consistency_rewards, anchor_rewards, advantages, policy_grad_data = batch_result
                 all_rewards = consistency_rewards + anchor_rewards
+
+                # ── Benign-helpfulness GRPO term (anti refuse-all) ────────────
+                if self.config.helpfulness_weight > 0 and self._help_dps:
+                    k = max(1, self.config.loop.batch_size)
+                    hdps = [self._help_dps[(self._help_idx + j) % len(self._help_dps)] for j in range(k)]
+                    self._help_idx += k
+                    help_datums, help_mean = await self._collect_helpfulness_datums(hdps)
+                    grad_datums = grad_datums + help_datums
+                    logger.log_metrics({"train/helpfulness_mean": help_mean}, step=global_step + 1)
 
                 # KL penalty
                 kl_penalty_metrics = {}
@@ -925,6 +1137,7 @@ class RLTrainer:
             step_metrics[f"train/reward_pert{pert_idx}_trait{trait_key}_count"] = len(rewards)
 
         step_metrics.update(kl_sample_train_metrics)
+        step_metrics.update(self._shrink_metrics)
         for k, v in kl_penalty_metrics.items():
             step_metrics[f"train/{k}"] = v
 

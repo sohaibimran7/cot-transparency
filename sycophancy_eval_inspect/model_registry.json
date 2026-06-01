@@ -618,6 +618,16 @@
       "training_biases": [
         "suggested_answer"
       ]
+    },
+    "rlct-sa-bare-z0-v2": {
+      "training_type": "rlct_sa_bare_z0_v2",
+      "display_name": "RLCT SA (Bare z0)",
+      "color": "#08519c",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
     }
   }
 }

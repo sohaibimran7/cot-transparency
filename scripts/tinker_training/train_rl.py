@@ -139,6 +139,15 @@ def main():
     parser.add_argument("--anchor-weight", type=float, default=0.5, help="Anchor weight (alpha): 0=pure consistency, 1=pure anchor, 0.5=equal")
     parser.add_argument("--anchor-model", default="base", choices=["base", "initial_policy"], help="Model for anchor reference rate: 'base' (frozen base) or 'initial_policy' (policy at init, incl. resumed ckpt)")
     parser.add_argument("--loss-fn", default="ppo", choices=["ppo", "reinforce"])
+    parser.add_argument("--advantage-estimator", default="grpo_normalized", choices=["grpo_normalized", "shrinkage"],
+                        help="Advantage construction: 'grpo_normalized' (std-normalize; drops gap magnitude, keeps only its sign) "
+                             "or 'shrinkage' (keep gap magnitude, shrunk toward 0 by its sampling SNR; tapers to ~0 within statistical error)")
+    parser.add_argument("--shrinkage-mode", default="soft", choices=["soft", "hard"],
+                        help="Shrinkage shape (advantage-estimator=shrinkage only): 'soft' smooth taper, 'hard' significance gate")
+    parser.add_argument("--shrinkage-z", type=float, default=2.0,
+                        help="Shrinkage scale in SEs: half-weight (soft) / cutoff (hard) at |gap| = z·SE; z=0 = no floor (full faithful gap)")
+    parser.add_argument("--shrinkage-normalizer", default="trait_std", choices=["trait_std", "none"],
+                        help="Shrinkage advantage scaling: 'trait_std' (divide by sqrt(p(1-p)+floor)) or 'none' (bare A=-gap*(T-p))")
 
     # === Sampling ===
     parser.add_argument("--n-ref-rollouts", type=int, default=128, help="Rollouts for reference rate estimation")
@@ -223,6 +232,10 @@ def main():
         loss_fn=args.loss_fn,
         anchor_weight=args.anchor_weight,
         anchor_model=args.anchor_model,
+        advantage_estimator=args.advantage_estimator,
+        shrinkage_mode=args.shrinkage_mode,
+        shrinkage_z=args.shrinkage_z,
+        shrinkage_normalizer=args.shrinkage_normalizer,
         log_base_dir="logs",
     )
 
@@ -251,6 +264,9 @@ def main():
     print(f"  KL coef:            {args.kl_coef}")
     print(f"  Anchor weight:      {args.anchor_weight}")
     print(f"  Anchor model:       {args.anchor_model}")
+    _adv_desc = args.advantage_estimator + (
+        f" ({args.shrinkage_mode}, z={args.shrinkage_z}, norm={args.shrinkage_normalizer})" if args.advantage_estimator == "shrinkage" else "")
+    print(f"  Advantage est.:     {_adv_desc}")
     print(f"  Loss fn:            {args.loss_fn}")
     if args.resume_from:
         print(f"  Resume from:        {args.resume_from}")

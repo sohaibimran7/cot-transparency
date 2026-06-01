@@ -33,7 +33,7 @@ from typing import Any, Optional
 import tinker
 from tqdm import tqdm
 
-from cot_transparency.apis.tinker.inference import TinkerSamplingClient, SamplingConfig
+from cot_transparency.apis.tinker.inference import TinkerSamplingClient, SamplingConfig, _parse_response_text
 
 # Type alias for message dicts
 MessageDict = dict[str, str]
@@ -140,7 +140,7 @@ def sample_batch(
             if result.sequences:
                 tokens = list(result.sequences[0].tokens)
                 parsed_msg, _ = client.renderer.parse_response(tokens)
-                text = parsed_msg.get("content", "") if parsed_msg else client.tokenizer.decode(tokens)
+                text = _parse_response_text(parsed_msg, client.tokenizer, tokens)
                 completions.append(text)
             else:
                 completions.append("")

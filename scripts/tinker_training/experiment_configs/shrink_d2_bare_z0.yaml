@@ -1,0 +1,55 @@
+# Shrinkage experiment — Config D2: BARE estimator quick check (relaunch)
+# Supersedes shrink_d_bare_z0 (killed: Tinker connection stalled to ~916s/it + step-18
+# degeneration). Connection verified healthy at relaunch. LR lowered 2.8e-3 -> 1e-3
+# (~3.5x base auto 2.86e-4, within ~2x of the paper's top LR 5e-4): the bare advantages
+# were small (mean|A|~0.09, effective step ~2.5e-4), so the failure was mostly network +
+# mild over-correction, not a giant-step blowup. 1e-3 is conservative insurance.
+# Tests faithful magnitude-preserving estimator at batch=1 (where GRPO sign-collapsed).
+
+name: shrink-d2-bare-z0
+model: meta-llama/Llama-3.1-8B-Instruct
+
+training:
+  method: rl
+  include_control: false
+  args:
+    experiment_name: rlct_shrinkage
+    run_name: llama-rlct-sa-bare-z0-v2
+    bias_types: suggested_answer
+    datasets: mmlu
+    n_datapoints: 128
+    lr: 1.0e-3
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.0
+    loss_fn: ppo
+    advantage_estimator: shrinkage
+    shrinkage_normalizer: none
+    shrinkage_z: 0.0
+    n_ref_rollouts: 64
+    n_train_rollouts: 64
+    n_consistency_rollouts: 16
+    refresh_every: 1
+    batch_size: 1
+    checkpoint_every: 64
+
+evaluation:
+  include_base: false
+  args:
+    bias_types: "suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares"
+    datasets: truthfulqa
+    prompt_styles: cot
+    limit: 200
+    log_dir: sycophancy_eval_inspect/logs/shrinkage_exp
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+
+viz_registration:
+  dir_suffix: rlct-sa-bare-z0-v2
+  display_name: "RLCT SA (Bare z0)"
+  color: "#08519c"
+  training_biases: [suggested_answer]

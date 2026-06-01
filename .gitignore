@@ -19,19 +19,33 @@ htmlcov
 experiments
 notebooks
 /data/
-
+paper/
 
 .env
 wandb
 cache/
 claude/
+.claude/worktrees/
+.claude/scheduled_tasks.lock
+
+# Canonical generated artifact outputs. Keep docs/scripts tracked; keep run
+# payloads and generated catalogs local unless intentionally promoted.
+/artifacts/runs/
+/artifacts/legacy/
+/artifacts/migration/
+/artifacts/catalog.jsonl
+/artifacts/catalog.md
 
 *.jsonl
 !dataset_dumps/test/**/*.jsonl
 
 # Logs and plots (large/generated), except eval results we want to keep
 /logs/
+/logs
 /plots/
+/plots
+/experiments
+/wandb
 *archive*/
 _archive*/
 sycophancy_eval_inspect/logs/*
@@ -43,3 +57,10 @@ sycophancy_eval_inspect/logs/*
 !sycophancy_eval_inspect/logs/llama_base_tqa_659samples/
 sycophancy_eval_inspect/plots/*
 !sycophancy_eval_inspect/plots/cot_100samples/
+# eval suites — paper suites tracked explicitly; ignore all others
+/artifacts/eval_suites/*
+!/artifacts/eval_suites/consistency_hle_20b/
+!/artifacts/eval_suites/consistency_hle_llama/
+
+# eval_suites _archive subdirs: keep locally, don't commit
+/artifacts/eval_suites/**/_archive/

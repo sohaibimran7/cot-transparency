@@ -2,3 +2,5 @@
 dataset/**/*.jsonl filter=lfs diff=lfs merge=lfs -text
 data/**/*.jsonl filter=lfs diff=lfs merge=lfs -text
 *.eval filter=lfs diff=lfs merge=lfs -text
+# eval_suites paper logs: bypass LFS, store as plain blobs
+artifacts/eval_suites/**/*.eval !filter !diff !merge -text

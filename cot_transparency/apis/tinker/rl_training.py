@@ -159,6 +159,7 @@ class TrainingLoopConfig(BaseModel):
     gradient_accumulation_steps: int = 1
     refresh_policy_every_n_steps: int = 1  # 1 = fully on-policy (cookbook contract); all configs set this explicitly
     n_epochs: int = 1
+    normalize: Literal["pooled", "per_item"] = "pooled"  # advantage standardization: whole batch vs per-item group
 
 
 class GenerationConfig(BaseModel):
@@ -661,6 +662,22 @@ class RLTrainer:
             return [0.0] * len(rewards)
         return [(r - mean_r) / std_r for r in rewards]
 
+    def _normalize_grouped(self, rewards: list[float], slices: list[tuple[int, int]]) -> list[float]:
+        """Unit-variance standardization, pooled over the whole batch or per-item (per group).
+
+        per_item: each item's rollouts are standardized on their own, so the per-item gap (a
+        constant within the group) cancels — leaving sign(gap)·standardized(trait−p_hat); the SNR
+        gate is then the sole magnitude signal and no single big-gap item dominates the batch.
+        An item with zero within-group variance (e.g. all rollouts refuse) correctly gets 0.
+        pooled: standardize the whole list together → gap magnitude becomes cross-item weighting.
+        """
+        if self.config.loop.normalize != "per_item":
+            return self._normalize_advantages(rewards)
+        adv = list(rewards)
+        for s, e in slices:
+            adv[s:e] = self._normalize_advantages(rewards[s:e])
+        return adv
+
     def _create_rl_datum(self, prompt_input: types.ModelInput, rollout: Rollout, advantage: float) -> types.Datum:
         """Create RL datum using cookbook's trajectory_to_data for proper token shifting."""
         action = TokensWithLogprobs(
@@ -777,6 +794,7 @@ class RLTrainer:
         # Consistency: training perturbation rollouts
         consistency_rewards, consistency_data, consistency_div = [], [], []
         consistency_snr = []   # snr_scaling: per-rollout shrink factor gating the unit-var advantage (1.0 otherwise)
+        consistency_slices = []   # (start, end) per item, for per-item (per-group) normalization
         raw_gap_abs, shrunk_gap_abs, gap_n = 0.0, 0.0, 0
         for item in batch_items:
             gaps = None
@@ -816,7 +834,9 @@ class RLTrainer:
                 raw_gap_abs += abs(raw); shrunk_gap_abs += abs(g); gap_n += 1
             rewards = self.reward_function.compute_rewards(
                 item.train_rollouts, item.p_hat, item.p_ref, gaps=gaps, baseline=baseline)
+            slice_start = len(consistency_rewards)
             consistency_rewards.extend(rewards)
+            consistency_slices.append((slice_start, len(consistency_rewards)))
             for rollout in item.train_rollouts:
                 consistency_data.append((rollout.prompt, rollout))
                 p_for_div = div_p if div_p is not None else item.p_hat.get(rollout.perturbation_idx, 0.0)
@@ -826,6 +846,7 @@ class RLTrainer:
         # Anchor: reference perturbation rollouts
         anchor_rewards, anchor_data, anchor_div = [], [], []
         anchor_snr = []
+        anchor_slices = []
         if anchor_weight > 0:
             for item in batch_items:
                 anchor_gap = None
@@ -844,7 +865,9 @@ class RLTrainer:
                         anchor_gap = self._snr_scale_gap(raw, se)
                 rewards = self.reward_function.compute_anchor_rewards(
                     item.anchor_rollouts, item.p_ref, item.p_ref_init, gap=anchor_gap)
+                a_start = len(anchor_rewards)
                 anchor_rewards.extend(rewards)
+                anchor_slices.append((a_start, len(anchor_rewards)))
                 for rollout in item.anchor_rollouts:
                     anchor_data.append((rollout.prompt, rollout))
                     anchor_div.append(self._trait_std(item.p_ref))
@@ -865,8 +888,8 @@ class RLTrainer:
                 consistency_adv = [r / d for r, d in zip(consistency_rewards, consistency_div)]
                 anchor_adv = [r / d for r, d in zip(anchor_rewards, anchor_div)]
         else:
-            consistency_adv = self._normalize_advantages(consistency_rewards)
-            anchor_adv = self._normalize_advantages(anchor_rewards)
+            consistency_adv = self._normalize_grouped(consistency_rewards, consistency_slices)
+            anchor_adv = self._normalize_grouped(anchor_rewards, anchor_slices)
             if use_snr:  # gate the unit-variance advantage by the per-rollout SNR shrink factor
                 consistency_adv = [f * a for f, a in zip(consistency_snr, consistency_adv)]
                 anchor_adv = [f * a for f, a in zip(anchor_snr, anchor_adv)]

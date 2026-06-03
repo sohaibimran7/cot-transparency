@@ -160,6 +160,7 @@ def run_rl(args) -> None:
             gradient_accumulation_steps=args.gradient_accumulation_steps,
             refresh_policy_every_n_steps=args.refresh_every,
             n_epochs=args.n_epochs,
+            normalize=args.normalize,
         ),
         generation=GenerationConfig(max_new_tokens=args.max_new_tokens, temperature=args.temperature),
         checkpoint=CheckpointConfig(save_every_n_steps=args.checkpoint_every, save_state=args.save_state),
@@ -367,6 +368,8 @@ def main():
     rl.add_argument("--batch-size", type=int, default=1)
     rl.add_argument("--gradient-accumulation-steps", type=int, default=1)
     rl.add_argument("--refresh-every", type=int, default=1)
+    rl.add_argument("--normalize", default="pooled", choices=["pooled", "per_item"],
+                    help="advantage unit-variance standardization: pooled (whole batch) or per_item (per-group)")
     rl.add_argument("--checkpoint-every", type=int, default=50)
     rl.add_argument("--save-state", action="store_true")
     rl.add_argument("--resume-from", default=None)

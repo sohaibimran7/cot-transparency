@@ -1,6 +1,6 @@
 # Project Instructions
 
-This is a map, not a manual — it points to where things live. Keep it short.
+Single entry-point doc for this repo: guardrails, setup, and a map of where things live.
 (`AGENTS.md` is a symlink to this file.)
 
 ## Training & Eval Runs (hard rule)
@@ -16,9 +16,27 @@ RLCT = RL), plus an Inspect-AI **sycophancy eval** stack. Core metric: **BIR / b
 rate** (how much a bias cue flips the model's answer).
 
 ## Environment
-- Setup, the `uv` flow, and gotchas (grugstream, inspect-ai, the harmless `conda`
-  message): **`docs/ENVIRONMENT.md`**.
-- Run with the project venv: `.venv/bin/python` or `uv run`.
+Uses **`uv`** (not the legacy `pyenv`/`pip` flow — see the legacy section at the bottom).
+Run things with `uv run <cmd>` or activate the venv (`source .venv/bin/activate`); the venv
+is Python 3.12 (3.11+ works). `requirements.txt` is the dependency source of truth — **no
+`uv.lock`** is checked in.
+
+```bash
+uv venv                                                        # 1. create the venv
+grep -v '^grugstream' requirements.txt | uv pip install -r /dev/stdin  # 2. deps, EXCLUDING grugstream
+uv pip install inspect-ai                                      # 3. inspect-ai is NOT in requirements.txt
+uv run python -c "import nltk; nltk.download('punkt')"         # 4. one-time NLTK data (some formatters)
+```
+
+- **grugstream**: in `requirements.txt` but must be excluded (step 2) — it fails to
+  resolve/build here and nothing in the active Tinker/eval path imports it.
+- **inspect-ai**: the `sycophancy_eval_inspect/` stack needs it, but it's installed
+  separately (step 3), not pinned in `requirements.txt`.
+- **`zsh: command not found: conda`** printed before shell commands is harmless (a stale
+  conda init in the shell, not from this repo) — ignore it.
+- **API keys**: put credentials in a `.env` at the repo root (loaded via `python-dotenv`):
+  `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and the Tinker API key. `.env` is gitignored —
+  never commit it.
 
 ## How to run things — use the skills (don't reinvent)
 - `/run-experiment` — end-to-end pipeline from a YAML in `scripts/tinker_training/experiment_configs/`.
@@ -53,11 +71,12 @@ rate** (how much a bias cue flips the model's answer).
 - The shrinkage figure/table use **per-question matched net** BIR; the methodology change
   and its result impact are documented in **`docs/bir-methodology-change.md`**.
 
-## Tests
+## Tests & lint
 ```bash
-pytest            # offline subset (default)
-pytest -m tinker  # live-Tinker tests
+pytest            # offline subset (default; excludes network/gpu/tinker markers)
+pytest -m tinker  # tests needing the live Tinker service / a checkpoint
 pytest -m ""      # everything
+make check        # black + ruff + pyright via pre-commit (.pre-commit-config.yaml)
 ```
 Mark live-API / GPU / Tinker tests with `@pytest.mark.{network,gpu,tinker}` so the default
 loop stays fast and offline. Markers are defined in `pyproject.toml`.

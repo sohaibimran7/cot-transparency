@@ -188,24 +188,21 @@ class RLConfig(BaseModel):
     #   "grpo_normalized" — standardize each population to unit variance. With one
     #     datapoint/perturbation per step this divides out (p_hat - p_ref) entirely,
     #     so only the sign of the gap survives (chases sampling noise near convergence).
-    #   "snr_scaling" — keep the gap magnitude but scale it toward 0 by its sampling
-    #     SNR, then standardize only the per-rollout Bernoulli noise (trait std). The
-    #     signal tapers to ~0 once the gap is within statistical error. (Still GRPO; just
-    #     a different advantage scaling than grpo_normalized — not a replacement for it.)
+    #   "snr_scaling" — the SAME unit-variance GRPO advantage, multiplied per item by the SNR
+    #     shrink factor snr/(snr+z^2) ∈ [0,1] (snr=(gap/SE)^2). Full GRPO step when the gap
+    #     clears sampling noise, tapering to 0 within it. Keeps GRPO's scale-stability (LR
+    #     transfers, batch-invariant) AND adds anti-overshoot — strictly = grpo × confidence-gate.
     #   "matched_pair" — pool the cued rate across the WHOLE cue family for an item into
     #     one gap (p_hat_pool - p_ref) and score every cued rollout against the neutral
     #     reference p_ref (the matched control), not its own per-cue mean. Lets each cue
     #     use ~1-2 rollouts: cue diversity (not per-cue depth) de-biases the per-item gap.
-    #     Reuses the SNR SE taper (snr_z; z=0 => faithful gap).
+    #     Keeps the shrunk gap magnitude (snr_normalizer below); z=0 => faithful gap.
     advantage_estimator: Literal["grpo_normalized", "snr_scaling", "matched_pair"] = "grpo_normalized"
     snr_mode: Literal["soft", "hard"] = "soft"
-    snr_z: float = 2.0   # half-weight (soft) / cutoff (hard) at |gap| = z·SE; z=0 => no floor (full faithful gap)
-    # How to scale the SNR-scaling advantage (advantage_estimator="snr_scaling" only):
-    #   "trait_std" — divide by per-rollout Bernoulli std sqrt(p(1-p)+floor). Makes
-    #     |adv| ~ GRPO-scale for LR transfer, but adds an arbitrary var_floor and (empirically)
-    #     leaves |adv| ~10x smaller than GRPO anyway.
-    #   "none" — bare estimator A = -shrunk_gap * (T - p_hat), no division. Magnitude
-    #     vanishes naturally as p->0; the faithful rate-matching policy gradient.
+    snr_z: float = 2.0   # half-weight (soft) / cutoff (hard) at |gap| = z·SE; z=0 => gate≡1 (faithful GRPO)
+    # snr_normalizer applies to matched_pair only (snr_scaling now uses unit-variance normalization):
+    #   "trait_std" — divide the score by per-rollout Bernoulli std sqrt(p(1-p)+floor).
+    #   "none" — bare A = -shrunk_gap * (T - p_hat), no division.
     snr_normalizer: Literal["trait_std", "none"] = "trait_std"
     # Non-answer handling during rollout collection (the answer-parse-failure / hedge case):
     #   "discard"  — unparsed (or logprob-less) rollouts are dropped from BOTH the rate
@@ -637,6 +634,23 @@ class RLTrainer:
             factor = snr / (snr + z2)
         return d * factor
 
+    def _snr_shrink_factor(self, d: float, se: float) -> float:
+        """The SNR gate in [0,1] such that _snr_scale_gap(d, se) == d * factor.
+
+        snr_scaling multiplies the unit-variance GRPO advantage by this per-item factor:
+        ~1 when the gap clears sampling noise (full GRPO step), tapering to 0 within it
+        (anti-overshoot). z=0 => factor 1 (faithful GRPO).
+        """
+        if d == 0.0:
+            return 0.0
+        if se <= 0.0:
+            return 1.0
+        snr = (d * d) / (se * se)
+        z2 = self.config.snr_z ** 2
+        if self.config.snr_mode == "hard":
+            return max(0.0, 1.0 - z2 / snr)
+        return snr / (snr + z2)
+
     def _normalize_advantages(self, rewards: list[float]) -> list[float]:
         if not rewards:
             return rewards
@@ -762,18 +776,25 @@ class RLTrainer:
 
         # Consistency: training perturbation rollouts
         consistency_rewards, consistency_data, consistency_div = [], [], []
+        consistency_snr = []   # snr_scaling: per-rollout shrink factor gating the unit-var advantage (1.0 otherwise)
         raw_gap_abs, shrunk_gap_abs, gap_n = 0.0, 0.0, 0
         for item in batch_items:
             gaps = None
             baseline = None        # matched_pair: centre the score on p_ref, not per-cue p_hat
             div_p = None           # matched_pair: per-rollout trait-std argument (pooled rate)
+            snr_f = {}             # snr_scaling: per-perturbation shrink factor (applied after normalization)
             if use_snr:
+                # snr_scaling = unit-variance GRPO advantage × SNR gate. Build the reward with the
+                # RAW gap (same as grpo) so normalization sees the real signal; the gate (in [0,1])
+                # is applied per item AFTER unit-variance normalization, below.
                 gaps = {}
                 for pert, rate in item.p_hat.items():
                     raw = rate - item.p_ref
                     se = self._gap_se(rate, item.p_hat_counts.get(pert, 0), item.p_ref, item.n_ref_parsed)
-                    gaps[pert] = self._snr_scale_gap(raw, se)
-                    raw_gap_abs += abs(raw); shrunk_gap_abs += abs(gaps[pert]); gap_n += 1
+                    f = self._snr_shrink_factor(raw, se)
+                    gaps[pert] = raw
+                    snr_f[pert] = f
+                    raw_gap_abs += abs(raw); shrunk_gap_abs += abs(raw * f); gap_n += 1
             elif use_matched and item.p_hat:
                 # Pool the cued rate across the whole cue family into ONE gap vs p_ref, and
                 # score every cued rollout against the neutral control p_ref. Cue diversity
@@ -800,12 +821,15 @@ class RLTrainer:
                 consistency_data.append((rollout.prompt, rollout))
                 p_for_div = div_p if div_p is not None else item.p_hat.get(rollout.perturbation_idx, 0.0)
                 consistency_div.append(self._trait_std(p_for_div))
+                consistency_snr.append(snr_f.get(rollout.perturbation_idx, 1.0))
 
         # Anchor: reference perturbation rollouts
         anchor_rewards, anchor_data, anchor_div = [], [], []
+        anchor_snr = []
         if anchor_weight > 0:
             for item in batch_items:
                 anchor_gap = None
+                anchor_f = 1.0
                 if (use_snr or use_matched) and item.p_ref_init is not None:
                     raw = item.p_ref - item.p_ref_init
                     # p_ref_init was sampled with its OWN parsed count (step-0 policy or the
@@ -813,18 +837,27 @@ class RLTrainer:
                     # fall back to the configured budget when unavailable.
                     n_init = item.n_ref_init_parsed or self.config.reference_rate.n_rollouts
                     se = self._gap_se(item.p_ref, item.n_ref_parsed, item.p_ref_init, n_init)
-                    anchor_gap = self._snr_scale_gap(raw, se)
+                    if use_snr:
+                        anchor_f = self._snr_shrink_factor(raw, se)  # gate applied after normalization
+                        anchor_gap = raw
+                    else:  # matched_pair: keep the shrunk gap in the reward (div path below)
+                        anchor_gap = self._snr_scale_gap(raw, se)
                 rewards = self.reward_function.compute_anchor_rewards(
                     item.anchor_rollouts, item.p_ref, item.p_ref_init, gap=anchor_gap)
                 anchor_rewards.extend(rewards)
                 for rollout in item.anchor_rollouts:
                     anchor_data.append((rollout.prompt, rollout))
                     anchor_div.append(self._trait_std(item.p_ref))
+                    anchor_snr.append(anchor_f)
 
-        # Form advantages. grpo_normalized: standardize each population to unit variance
-        # (drops gap magnitude). snr_scaling / matched_pair: keep the (pooled) gap magnitude,
-        # standardize only the per-rollout Bernoulli noise by trait std.
-        if use_snr or use_matched:
+        # Form advantages.
+        #  - grpo_normalized: standardize each population to unit variance (drops gap magnitude).
+        #  - snr_scaling: the SAME unit-variance base, then gate each rollout by its item's SNR
+        #    shrink factor in [0,1] — full GRPO step when the gap clears sampling noise, tapering
+        #    to 0 within it. Scale-stable (LR transfers, batch-invariant) AND anti-overshoot.
+        #  - matched_pair: keep the (pooled) gap magnitude, dividing only the per-rollout Bernoulli
+        #    noise by trait std (snr_normalizer; "none" = bare, no division).
+        if use_matched:
             if self.config.snr_normalizer == "none":
                 consistency_adv = list(consistency_rewards)
                 anchor_adv = list(anchor_rewards)
@@ -834,6 +867,9 @@ class RLTrainer:
         else:
             consistency_adv = self._normalize_advantages(consistency_rewards)
             anchor_adv = self._normalize_advantages(anchor_rewards)
+            if use_snr:  # gate the unit-variance advantage by the per-rollout SNR shrink factor
+                consistency_adv = [f * a for f, a in zip(consistency_snr, consistency_adv)]
+                anchor_adv = [f * a for f, a in zip(anchor_snr, anchor_adv)]
         consistency_adv = [a * (1 - anchor_weight) for a in consistency_adv]
         anchor_adv = [a * anchor_weight for a in anchor_adv]
 

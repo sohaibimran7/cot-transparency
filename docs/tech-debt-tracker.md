@@ -8,14 +8,14 @@ by symbol name. Effort S/M/L, Payoff low/med/high.
 
 These were in the approved refactor plan but deferred (see `.claude/plans/`):
 
-- **D — eval_awareness sampling/IO duplication.** Tinker token-parse logic
-  reimplemented 4× (`scripts/eval_awareness/run_eval.py` `_resp_text`, `train_evalaware.py`
-  `_text`, `overrefusal_eval.py`, `build_alpaca_interleave.py`) — should use
-  `TinkerSamplingClient.sample()/.sample_text()` (`cot_transparency/apis/tinker/inference.py`).
-  Samplers belong in a shared `cot_transparency/eval_awareness/samplers.py` (calibrate.py
-  imports a private `_TinkerSampler` from run_eval via a `sys.path` hack). JSONL/EAB-baseline
-  loaders duplicated ~6× → `eval_awareness/io.py`. **Effort M, Payoff high.** *(Held: files
-  under active edit.)*
+- **D — eval_awareness sampling/IO duplication.** *Partly done (2026-06-03):* the shared
+  `cot_transparency/eval_awareness/samplers.py` (`TinkerSampler`) now exists and is adopted by
+  6 scripts (`calibrate.py`, `overrefusal_eval.py`, `run_eval.py`, `ifeval_gap.py`,
+  `show_refusals.py`, `show_am_transcripts.py`) — the old "`calibrate.py` imports a private
+  `_TinkerSampler` from `run_eval` via a `sys.path` hack" is resolved. **Residual:**
+  `train_evalaware.py` still rolls its own `_text` token-parse on the *training* path (should use
+  the shared sampler / `TinkerSamplingClient`), and JSONL/EAB-baseline loaders are still
+  duplicated ~6× → `eval_awareness/io.py`. **Effort S (was M), Payoff med.**
 - **H — installable package.** No `[project]` table in `pyproject.toml`; 17 `sys.path.insert`
   hacks stand in for it. Add the table + `uv pip install -e .` and remove the hacks.
   **Effort M, Payoff high (compounding).** *(Held: highest blast radius.)*
@@ -58,9 +58,18 @@ These were in the approved refactor plan but deferred (see `.claude/plans/`):
 - **`judge.py`** (`cot_transparency/eval_awareness/`): 4 near-identical yes/no judges + 3
   identical `make_*` factory closures → one `_yes_no_judge()` + one `_bind()` factory.
   **Effort S, Payoff low-med.**
+- **eval-awareness batch drivers** (`scripts/eval_awareness/*.sh`): the train→calibrate→overrefusal
+  scaffold (`run_one()`) is copy-pasted in `run_battery8.sh` + `run_lr_kl_batch.sh`, and the
+  calibrate wrapper (`geval()`) in `run_crossfactor_sweep.sh` + `run_f6_generalization.sh` — 4
+  drivers sharing the same `$PY calibrate.py … | grep gap` / `overrefusal_eval.py` plumbing.
+  Extract a sourced `_eval_lib.sh` with `run_one`/`geval`. Also `_prepend`/`_prepend_wrapper`
+  (message-wrapping) is duplicated `build_f6_wrapper_eval.py` ↔ `train_evalaware.py`.
+  **Effort S, Payoff low-med.**
 
-### Known failing tests (as of 2026-06-01, unrelated to the BIR/loader refactor)
-Failing in committed code (`f3ccf72` shrinkage scaffolding), worth a look:
-`tests/test_rl_training.py` (`RateEstimationConfig` validation, `BatchItem.p_hat_counts`),
-`tests/test_rl_pipelining.py`, `tests/test_eval_pipeline.py`, `tests/test_trace_info.py`,
-`tests/test_trace_splitting.py`, `tests/test_prompt_sensitivity_analysis.py`.
+### Known failing tests (re-verified 2026-06-03)
+Most of the 2026-06-01 list now passes (the rl-training fixes landed): `test_rl_training.py`,
+`test_rl_pipelining.py`, `test_trace_info.py`, `test_trace_splitting.py` are **green**. Remaining
+failures, both in legacy `cot_transparency` (unrelated to eval-awareness):
+- `tests/test_eval_pipeline.py::test_ba_scorer_template_exists[are_you_sure]`
+- `tests/test_prompt_sensitivity_analysis.py::{test_fleiss_kappa_on_total_disagreement,
+  test_fleiss_kappa_on_total_greement}` (DataFrame shape mismatch, 4×4 vs 4×5).

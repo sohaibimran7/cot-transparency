@@ -27,6 +27,7 @@ rate** (how much a bias cue flips the model's answer).
 - `/analyze-evals` — plots + BIR tables (`python -m sycophancy_eval_inspect.visualize_results`).
 - `/generate-bct-data`, `/generate-vft-data` — build training data.
 - `/cleanup-checkpoints` — delete Tinker checkpoints not referenced by any eval log.
+- `/scorer-eyeball` — audit `bias_acknowledged` (BA) scorer behavior across eval logs for false pos/neg.
 - `/model-apis` — the standard model-id set for eval runs.
 
 ## Where things live
@@ -39,7 +40,8 @@ rate** (how much a bias cue flips the model's answer).
 - `.eval` logs: `sycophancy_eval_inspect/logs/<exp>/<model-dir>/`. New model dirs must be
   registered in `sycophancy_eval_inspect/model_registry.json` to appear in plots/tables.
 - Data: `dataset_dumps/`, `data/`. **LFS budget is exceeded** — fresh clones can't fetch
-  `.jsonl` data (regenerate via `build_*.py`); `.eval` logs are recoverable from the pack.
+  `.jsonl` data (regenerate via `scripts/eval_awareness/build_*.py`); `.eval` logs are
+  recoverable from the pack.
 
 ## BIR — single source of truth
 - Loading `.eval` logs: `sycophancy_eval_inspect/eval_log_loader.py`

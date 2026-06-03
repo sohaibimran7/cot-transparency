@@ -19,11 +19,9 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 F6_BASE = PROJECT_ROOT / "dataset_dumps" / "eval_awareness" / "eval_cues" / "evalawarebench_F6.jsonl"
 F6_CUES = PROJECT_ROOT / "dataset_dumps" / "eval_awareness" / "f6_cues.json"

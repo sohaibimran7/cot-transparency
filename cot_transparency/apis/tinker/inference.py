@@ -311,11 +311,6 @@ def sample_from_tinker(
 
 
 if __name__ == "__main__":
-    # Add project root to path for direct execution
-    import sys
-    from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
     # Example usage
     from cot_transparency.data_models.messages import StrictChatMessage, StrictMessageRole
 

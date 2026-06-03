@@ -30,12 +30,10 @@ import asyncio
 import csv
 import io
 import json
-import sys
 import urllib.request
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 from dotenv import load_dotenv
 load_dotenv(PROJECT_ROOT / ".env")

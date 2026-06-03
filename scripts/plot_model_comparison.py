@@ -11,14 +11,12 @@ Two BIR aggregation methods:
 For `are_you_sure`: both methods return biased_bmr (switching rate, paper convention).
 """
 import argparse
-import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sycophancy_eval_inspect.visualize_results import (
     BIAS_DISPLAY_NAMES,

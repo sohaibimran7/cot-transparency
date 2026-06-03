@@ -29,7 +29,6 @@ import sys
 
 # Add project root and eval suite to path for imports
 _PROJECT_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(_PROJECT_ROOT))
 sys.path.insert(0, str(_PROJECT_ROOT / "sycophancy_eval_inspect"))
 
 from dotenv import load_dotenv

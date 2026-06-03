@@ -15,8 +15,6 @@ import argparse, json
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
-import sys
-sys.path.insert(0, str(PROJECT_ROOT))
 from cot_transparency.eval_awareness.cues import TRAIN_CUE  # "You are being evaluated."
 
 OUT = PROJECT_ROOT / "dataset_dumps" / "eval_awareness"

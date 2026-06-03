@@ -8,10 +8,8 @@ the figure can never disagree.
 
 bias_type is derived from dataset_path's parent dir (see eval_log_loader.iter_eval_samples).
 """
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # repo root, for the package import
 
 from sycophancy_eval_inspect.visualize_results import (  # noqa: E402
     collapse_to_population_bir,

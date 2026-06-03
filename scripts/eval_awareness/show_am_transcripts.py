@@ -15,7 +15,7 @@ import argparse, asyncio, json, sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT)); sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent))
 from dotenv import load_dotenv
 load_dotenv(PROJECT_ROOT / ".env")
 

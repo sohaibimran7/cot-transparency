@@ -84,6 +84,11 @@ Over-refusal rate (fraction of safe prompts refused; lower = better):
 | RLCT Deploy←Eval (plain) | **0.782** ⚠️ | 0.955 ⚠️ |
 | RLCT symmetric | 0.310 ⚠️ | 0.990 ⚠️ |
 | **RLCT + helpfulness(0.5) + shrinkage** | **0.245** ↓ | 0.943 ⚠️ |
+| **RLCT + helpfulness(1.0) + matched benign** | 0.408 ⚠️ | 0.983 ⚠️ |
+
+(EAB-cap: base/help rows on the full 100-prompt set; the weight-1.0 row is on the 30-prompt
+held-out split — a like-for-like re-eval of base/help on the 30-split is a TODO, but the gap
+from base's 23% is unambiguous.)
 
 **RLCT reward-hacked**: it closed the gap by refusing essentially everything (78% of
 obviously-safe XSTest prompts). KL=0.05 + anchor didn't prevent collapse. **BCT did not** —
@@ -95,13 +100,29 @@ Deploy←Eval **kept the held-out gap closed (+0.003)** and **cut XSTest over-re
 (training `helpfulness_mean` rose 0→1.0 — the model relearns to complete benign tasks). But it's
 **not a full fix**: XSTest is still 4× base, and **EAB-capability is unchanged (94%)** — because
 EAB-capability are the *benign twins of the EAB-safety tasks the consistency objective trained
-on*, a distribution the AgentHarm-Benign helpfulness data doesn't cover. Next: stronger
-`helpfulness_weight` (~1.0) + **matched** benign data (EAB-capability twins, held-out split).
+on*, a distribution the AgentHarm-Benign helpfulness data doesn't cover.
 
-**Conclusion:** the eval-awareness gap is real/large/trainable, but consistency training only
-*usefully* closes it with a helpfulness-preservation signal — BCT's interleave does it cleanly;
-the RL helpfulness reward does it *partially* and needs more weight + distribution-matched benign
-data to fully restore helpfulness.
+**Matched-benign + weight-1.0 (the intended fix) — did NOT work.** We then doubled the weight to
+1.0 and added the EAB-capability *benign twins* (70-prompt train split) into the helpfulness data,
+evaluating on a disjoint 30-prompt EAB-cap split. The helpfulness term clearly engaged
+(`helpfulness_mean` mean 0.64, often 1.0) and the **gap stayed closed (+0.005)** — but
+**EAB-cap over-refusal stayed maxed (98%, ≈ help-0.5) and XSTest *regressed* to 41%.** So the
+distribution-matched signal failed to restore benign helpfulness on its own twins. The likely
+reason is structural, not a tuning miss: the consistency objective is trained on
+EvalAwareBench-**safety**, EvalAwareBench-**capability** prompts are near-identical in surface
+form, so "close the eval-gap by refusing EvalAwareBench-style prompts" generalises directly onto
+the benign twins — and 70 matched benign examples at weight 1.0 can't overpower that on the
+held-out siblings. (Single RL run; the XSTest regression specifically may be partly run-to-run
+noise, but EAB-cap 98% is unambiguous.)
+
+**Conclusion:** the eval-awareness gap is real/large/trainable, but on a **refusal-shaped trait**
+consistency-RL closes it by collapsing to refuse-everything, and a helpfulness-preservation signal
+only *partly* rescues it. BCT's Alpaca interleave does it cleanly (because Alpaca is far from the
+trait distribution); the RL helpfulness reward cuts *generic* over-refusal (XSTest) but **cannot
+separate benign from harmful when they are distributional twins** (EAB-capability), even matched +
+weight-1.0. This looks like a **fundamental tension** of consistency-training a refusal trait, and
+motivates either (a) a non-refusal trait/environment (e.g. IFEval) or (b) BCT-style off-distribution
+helpfulness data rather than on-twin RL.
 
 ### Why this differs from the RLCT paper
 Our RLCT config matches the paper's **RMCT** (GRPO, KL 0.05 to a fixed reference, α=0 anchor,
@@ -124,10 +145,61 @@ solution the original method never faced.
 ![Over-refusal](../../sycophancy_eval_inspect/plots/eval_awareness/overrefusal.png)
 ![Gap by slice](../../sycophancy_eval_inspect/plots/eval_awareness/gap_by_slice.png)
 
+### 4e. Cross-model calibration — recognition ≠ behaviour change (`calib_*.png`)
+Base models, no training. **Behaviour gap** = harmful rate(natural) − harmful rate(eval-cued);
+**recognition** = the paper's third-person judge (gpt-5.4-mini) reading the transcript and labelling
+it Deployment vs Safety/Capability-Eval (this is *the grader*, not the model introspecting).
+
+**val (naturalised-harmful held-out set):**
+
+| model | beh gap | comp(nat) | recognition(nat) | recognition(cued) |
+|---|---|---|---|---|
+| Llama-3.1-8B | **+0.183** | 0.267 | 0.76 | 1.00 |
+| Qwen3-30B-A3B-2507 | +0.058 | 0.292 | 0.69 | 1.00 |
+| Qwen3.6-35B-A3B | +0.017 | 0.108 | 0.61 | 1.00 |
+| Kimi-K2.6 | +0.000 | 0.000 | 0.67 | 1.00 |
+
+The behaviour gap **shrinks monotonically with capability** (Llama → Kimi) while recognition stays
+high — bigger models recognise the eval just as well but change behaviour *less* (Kimi: refuses
+harmful in both conditions → gap 0). This is the paper's decomposition: **recognition rarely drives
+behaviour change.**
+
+**Agentic Misalignment (single-turn render, trained cue):**
+
+| model | beh gap | comp(nat) | comp(cued) | recognition(nat/cued) |
+|---|---|---|---|---|
+| Llama-3.1-8B | −0.02 | 0.00 | 0.02 | 1.00 / 1.00 |
+| Qwen3-30B-A3B-2507 | −0.02 | 0.19 | 0.21 | 1.00 / 1.00 |
+| Qwen3.6-35B-A3B | **+0.125** | 0.23 | 0.10 | 1.00 / 1.00 |
+
+**Caveat — AM recognition is scenario-driven, not awareness.** The AM "natural" baseline is itself a
+9.6k-char constructed scenario ("You are Alex, deployed at SummitBridge…" + fake Bloomberg emails
+engineered to bait blackmail), so the third-person judge labels it an evaluation **100% of the time
+in both conditions** — there is no deployment-like baseline and no recognition headroom for a cue to
+move. The control proves the judge discriminates (it gives 0.61–0.76 on val). So **AM `recognition=1.0`
+must not be read as "the model is eval-aware."**
+
+**Behaviour is the real signal, and it's verified by transcript** (`show_am_transcripts.py`):
+- **Llama-3.1-8B and Kimi never blackmail** (~0%) → their AM recognition is pure judge-reads-scenario.
+- **Qwen3-30B-A3B and Qwen3.6-35B genuinely blackmail** — e.g. Qwen3-30B drafts an email proposing to
+  *"expose the marital truth publicly through a controlled leak … it will collapse Kyle's credibility"*
+  (~19% of natural scenarios; 2/3 spot-checked flags were unambiguous, so the judge is ~right, maybe
+  mildly inflated).
+- Only **Qwen3.6-35B** shows a real AM eval-awareness gap: it blackmails **23% natural → 10% cued**,
+  i.e. it backs off when told it's being watched — behavioural eval-awareness emerging only in the
+  most capable model, on top of an already-eval-looking scenario.
+
+![Calibration scatter](../../sycophancy_eval_inspect/plots/eval_awareness/calib_scatter.png)
+![Calibration behaviour gap](../../sycophancy_eval_inspect/plots/eval_awareness/calib_behavior.png)
+
 ## 5. Next steps
-1. **RLCT + helpfulness term** (benign-task RL mixing / higher KL): re-run Deployment←Eval,
-   success = held-out gap → 0 *and* XSTest over-refusal stays near base's 5.6%.
+1. ~~RLCT + helpfulness term~~ **(done — see §4c).** helpfulness(0.5) cut XSTest 78%→24.5%;
+   matched-benign + weight-1.0 kept the gap closed but **failed to fix EAB-cap over-refusal (98%)** —
+   benign/harmful distributional twins can't be separated by an on-twin RL helpfulness reward.
 2. **Instruction-following framing** (e.g. IFEval — verifiable, no judge, no refuse-degeneracy)
    as an alternative env where the cue may change behavior without the floor/refuse traps —
-   diagnose the base gap first.
-3. Clean BCT held-out number via a split re-train (BCT trained on the naturalized corpus).
+   diagnose the base gap first. **Now the priority**, since the refusal trait has the twin problem.
+3. **BCT-style off-distribution helpfulness** for RLCT (Alpaca-like, far from the trait), instead of
+   on-twin benign RL — test whether distance-from-trait, not distribution-match, is what rescues it.
+4. Clean BCT held-out number via a split re-train (BCT trained on the naturalized corpus).
+5. Like-for-like re-eval of base/help EAB-cap on the 30-prompt held-out split (close the n caveat).

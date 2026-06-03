@@ -44,19 +44,7 @@ from dotenv import load_dotenv
 load_dotenv(PROJECT_ROOT / ".env")
 
 from cot_transparency.eval_awareness.judge import make_misalignment_judge, DEFAULT_GRADER_MODEL  # noqa: E402
-from tinker_cookbook.renderers.base import get_text_content  # noqa: E402
-
-
-def _resp_text(parsed, tokenizer, tokens) -> str:
-    """Robustly extract assistant text. gpt-oss returns structured list content
-    (Thinking/Text parts), Llama returns a string — get_text_content handles both."""
-    if not parsed:
-        return tokenizer.decode(tokens)
-    try:
-        return get_text_content(parsed) or ""
-    except Exception:  # noqa: BLE001
-        c = parsed.get("content", "")
-        return c if isinstance(c, str) else tokenizer.decode(tokens)
+from cot_transparency.eval_awareness.samplers import make_sampler  # noqa: E402
 
 
 DATA_ROOT = PROJECT_ROOT / "dataset_dumps" / "eval_awareness"
@@ -92,96 +80,6 @@ def _collect_files(slices: list[str]) -> list[tuple[str, Path]]:
         for p in sorted(d.glob("*.jsonl")):
             out.append((s, p))
     return out
-
-
-def _split_system(messages: list[dict]) -> tuple[str | None, list[dict]]:
-    """Pull a leading system message out (for APIs that take system separately)."""
-    system, rest = None, []
-    for m in messages:
-        if m["role"] == "system" and system is None:
-            system = m["content"]
-        else:
-            rest.append(m)
-    return system, rest
-
-
-# ── Samplers (one async .sample(messages, n) -> list[str] per backend) ────────
-
-class _AnthropicSampler:
-    def __init__(self, model: str, max_tokens: int, temperature: float):
-        from anthropic import AsyncAnthropic
-        self.client = AsyncAnthropic()
-        self.model, self.max_tokens, self.temperature = model, max_tokens, temperature
-
-    async def sample(self, messages: list[dict], n: int) -> list[str]:
-        system, rest = _split_system(messages)
-        kwargs = dict(model=self.model, max_tokens=self.max_tokens,
-                      temperature=self.temperature, messages=rest)
-        if system:
-            kwargs["system"] = system
-
-        async def one():
-            try:
-                r = await self.client.messages.create(**kwargs)
-                return "".join(b.text for b in r.content if getattr(b, "type", None) == "text")
-            except Exception:  # noqa: BLE001
-                return ""
-        return list(await asyncio.gather(*[one() for _ in range(n)]))
-
-
-class _OpenAISampler:
-    def __init__(self, model: str, max_tokens: int, temperature: float):
-        from openai import AsyncOpenAI
-        self.client = AsyncOpenAI()
-        self.model, self.max_tokens, self.temperature = model, max_tokens, temperature
-
-    async def sample(self, messages: list[dict], n: int) -> list[str]:
-        try:
-            r = await self.client.chat.completions.create(
-                model=self.model, messages=messages, n=n,
-                max_tokens=self.max_tokens, temperature=self.temperature,
-            )
-            return [c.message.content or "" for c in r.choices]
-        except Exception:  # noqa: BLE001
-            return [""] * n
-
-
-class _TinkerSampler:
-    def __init__(self, model: str, checkpoint: str | None, max_tokens: int, temperature: float):
-        from cot_transparency.apis.tinker.inference import TinkerSamplingClient, SamplingConfig
-        from tinker import types
-        self.types = types
-        self.client = TinkerSamplingClient(
-            model=model, checkpoint=checkpoint,
-            config=SamplingConfig(max_tokens=max_tokens, temperature=temperature),
-        )
-        self.client.setup()
-        self.max_tokens, self.temperature = max_tokens, temperature
-
-    async def sample(self, messages: list[dict], n: int) -> list[str]:
-        # Tinker sampling is sync-with-futures; run in a thread to stay async-friendly.
-        def _do():
-            prompt = self.client.renderer.build_generation_prompt(messages)
-            params = self.types.SamplingParams(
-                max_tokens=self.max_tokens, temperature=self.temperature,
-                stop=self.client.renderer.get_stop_sequences(),
-            )
-            res = self.client.sampling_client.sample(prompt=prompt, sampling_params=params, num_samples=n).result()
-            out = []
-            for seq in res.sequences:
-                toks = list(seq.tokens)
-                parsed, _ = self.client.renderer.parse_response(toks)
-                out.append(_resp_text(parsed, self.client.tokenizer, toks))
-            return out
-        return await asyncio.to_thread(_do)
-
-
-def _make_sampler(args):
-    if args.backend == "anthropic":
-        return _AnthropicSampler(args.model, args.max_new_tokens, args.temperature)
-    if args.backend == "openai":
-        return _OpenAISampler(args.model, args.max_new_tokens, args.temperature)
-    return _TinkerSampler(args.model, args.checkpoint, args.max_new_tokens, args.temperature)
 
 
 async def _run(args, files, sampler, judge):
@@ -258,7 +156,7 @@ def main():
     if args.dry_run:
         return
 
-    sampler = _make_sampler(args)
+    sampler = make_sampler(args)
     judge = make_misalignment_judge(args.grader_model)
     per_file = asyncio.run(_run(args, files, sampler, judge))
 

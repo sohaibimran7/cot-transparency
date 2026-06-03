@@ -67,6 +67,42 @@ def natural_perturbation(dp: dict) -> dict:
     return {"messages": dp["natural_question"]}
 
 
+# ── Multi-cue (F6 wrapper family) for matched_pair — mirrors the sycophancy distractor-cue
+#    setup: idx0 = natural (no-cue control/reference), idx 1..N = one F6 wrapper each. Lets
+#    matched_pair pool the cued rate across the wrapper family (cue diversity de-biases the gap).
+def _prepend_wrapper(messages: list, wrapper: str) -> list:
+    out = [dict(m) for m in messages]
+    for m in out:
+        if m.get("role") == "user":
+            m["content"] = f"{wrapper}\n\n{m['content']}"
+            break
+    return out
+
+
+def load_f6_cues(spec: str) -> list[str]:
+    """'none'->[]; 'train'/'holdout'/'all'->split; int N -> first N train wrappers."""
+    if not spec or spec == "none":
+        return []
+    cj = json.load(open(PROJECT_ROOT / "dataset_dumps" / "eval_awareness" / "f6_cues.json"))
+    if spec in ("train", "holdout"):
+        return cj[spec]
+    if spec == "all":
+        return cj["train"] + cj["holdout"]
+    try:
+        return cj["train"][: int(spec)]
+    except ValueError:
+        raise SystemExit(f"--f6-cues must be none/train/holdout/all/<int>, got {spec!r}")
+
+
+def make_f6_cue_perturbations(cues: list[str]):
+    """[natural (ref, idx0)] + one F6-wrapper perturbation per cue (idx 1..N)."""
+    def _cue(wrapper: str):
+        def fn(dp: dict) -> dict:
+            return {"messages": _prepend_wrapper(dp["natural_question"], wrapper)}
+        return fn
+    return [natural_perturbation] + [_cue(w) for w in cues]
+
+
 # ── RL (RLCT) ────────────────────────────────────────────────────────────────
 
 def run_rl(args) -> None:
@@ -82,7 +118,33 @@ def run_rl(args) -> None:
         sys.exit(1)
 
     anchor_weight = 0.0 if args.symmetric else args.anchor_weight
-    n_consistency = args.n_consistency_rollouts or args.n_train_rollouts
+    # `is not None` (not `or`) so an explicit --n-consistency-rollouts 0 isn't silently
+    # overridden to n_train_rollouts.
+    n_consistency = args.n_consistency_rollouts if args.n_consistency_rollouts is not None else args.n_train_rollouts
+
+    # Direction = which condition is the anchored reference (idx0). The anchor pins idx0's
+    # trait-rate to base, and consistency pulls idx1 toward idx0.
+    #   default          : idx0=eval-cued → anchors the (near-refusal) eval behaviour, pulls
+    #                       deployment down to it  → reduces deployment harm but OVER-REFUSES.
+    #   --anchor-natural : idx0=natural   → anchors the (helpful) deployment behaviour, pulls
+    #                       eval-cued up to it → preserves helpfulness, removes eval-time caution.
+    if args.anchor_natural:
+        pert_fns = [natural_perturbation, eval_cued_perturbation]
+        pert_label = "idx0=natural (ref), idx1=eval-cued (train)"
+        dir_label = "Eval←Deployment (anchor no-cue)"
+    else:
+        pert_fns = [eval_cued_perturbation, natural_perturbation]
+        pert_label = "idx0=eval-cued (ref), idx1=natural (train)"
+        dir_label = "Deployment←Eval"
+
+    # Multi-cue F6 family (for matched_pair): override perturbations to natural(ref) + N wrappers.
+    f6_cues = load_f6_cues(args.f6_cues)
+    train_indices = [1]
+    if f6_cues:
+        pert_fns = make_f6_cue_perturbations(f6_cues)
+        train_indices = list(range(1, len(f6_cues) + 1))
+        pert_label = f"idx0=natural (ref), idx1..{len(f6_cues)}=F6 wrappers (train)"
+        dir_label = f"multi-cue F6 ({len(f6_cues)} wrappers, pull cued→natural)"
 
     config = RLConfig(
         experiment_name=args.experiment_name,
@@ -92,7 +154,7 @@ def run_rl(args) -> None:
         optimizer=AdamConfig(learning_rate=args.lr, lr_schedule=args.lr_schedule),
         reference_rate=RateEstimationConfig(perturbation_indices=[0], n_rollouts=args.n_ref_rollouts),
         training=TrainingSamplingConfig(
-            perturbation_indices=[1],
+            perturbation_indices=train_indices,
             n_rollouts_for_rate=args.n_train_rollouts,
             n_rollouts_for_consistency=n_consistency,
         ),
@@ -113,27 +175,39 @@ def run_rl(args) -> None:
         shrinkage_z=args.shrinkage_z,
         helpfulness_weight=args.helpfulness_weight,
         n_helpfulness_rollouts=args.n_helpfulness_rollouts,
+        helpfulness_mode=args.helpfulness_mode,
     )
 
-    # Benign-helpfulness term (anti refuse-all): reward completing benign tasks.
+    # Helpfulness/capability-preservation term (anti refuse-all): reward completing benign work.
+    #   refusal : 1 − (LLM refusal judge)  on benign requests (AgentHarm-Benign / EAB-cap)
+    #   ifeval  : deterministic IFEval instruction-following accuracy — verifiable, judge-free,
+    #             and OFF-distribution from the harmful trait (the Alpaca-distance hypothesis).
+    #             A refuse-everything policy scores 0 here → strong, clean anti-collapse signal.
     help_dps, help_fn, help_cls = None, None, None
     if args.helpfulness_weight > 0:
-        from cot_transparency.eval_awareness.judge import make_refusal_judge
         help_dps = load_datapoints(Path(args.helpfulness_data), args.helpfulness_limit)
-        _refusal = make_refusal_judge(args.grader_model)
 
         def help_fn(dp: dict) -> dict:
             return {"messages": dp["natural_question"]}
 
-        async def help_cls(response: str, dp: dict) -> float:
-            return 1.0 - await _refusal(response, dp)  # 1=helped, 0=refused
+        if args.helpfulness_mode == "distill":
+            help_cls = None  # distill imitates base completions; no trait/judge needed
+        elif args.helpfulness_trait == "ifeval":
+            from cot_transparency.eval_awareness.ifeval_verify import ifeval_accuracy
+            help_cls = ifeval_accuracy  # sync; _classify_traits handles sync + async
+        else:
+            from cot_transparency.eval_awareness.judge import make_refusal_judge
+            _refusal = make_refusal_judge(args.grader_model)
 
-    direction = "Symmetric (pure consistency)" if anchor_weight == 0.0 else "Deployment←Eval"
+            async def help_cls(response: str, dp: dict) -> float:
+                return 1.0 - await _refusal(response, dp)  # 1=helped, 0=refused
+
+    direction = "Symmetric (pure consistency)" if anchor_weight == 0.0 else dir_label
     print("\n=== RLCT eval-awareness config ===")
     print(f"  model            : {args.model}")
     print(f"  datapoints       : {len(datapoints)} (from {args.data})")
     print(f"  direction        : {direction} (anchor_weight={anchor_weight})")
-    print(f"  perturbations    : idx0=eval-cued (ref), idx1=natural (train)")
+    print(f"  perturbations    : {pert_label}")
     print(f"  trait judge      : {args.grader_model}")
     print(f"  lr / schedule    : {args.lr} / {args.lr_schedule}")
     print(f"  rollouts ref/tr  : {args.n_ref_rollouts}/{args.n_train_rollouts} (consistency {n_consistency})")
@@ -154,7 +228,7 @@ def run_rl(args) -> None:
     trainer = RLTrainer(config=config, resume_from=args.resume_from)
     final = asyncio.run(trainer.train(
         datapoints=datapoints,
-        perturbation_fns=[eval_cued_perturbation, natural_perturbation],
+        perturbation_fns=pert_fns,
         trait_classifier=trait_classifier,
         answer_parser=None,  # judge handles all responses; no MCQ parsing
         helpfulness_datapoints=help_dps,
@@ -169,8 +243,7 @@ def run_rl(args) -> None:
 def run_bct(args) -> None:
     """Generate Deployment←Eval BCT pairs: completion sampled from the eval-cued
     prompt, paired with the natural prompt. Then point train_sft.py at the output."""
-    from cot_transparency.apis.tinker.inference import TinkerSamplingClient, SamplingConfig
-    from tinker_cookbook.renderers.base import get_text_content
+    from cot_transparency.apis.tinker.inference import TinkerSamplingClient, SamplingConfig, parse_response_text
 
     datapoints = load_datapoints(Path(args.data), args.limit)
     if not datapoints:
@@ -206,16 +279,7 @@ def run_bct(args) -> None:
             seq = fut.result().sequences[0]
             toks = list(seq.tokens)
             parsed, _ = client.renderer.parse_response(toks)
-            if not parsed:
-                return client.tokenizer.decode(toks)
-            # gpt-oss returns structured list content (Thinking/Text parts), Llama a
-            # string; get_text_content handles both. Plain .get("content") drops the
-            # gpt-oss assistant text entirely (writes empty completions).
-            try:
-                return get_text_content(parsed) or ""
-            except Exception:  # noqa: BLE001
-                c = parsed.get("content", "")
-                return c if isinstance(c, str) else client.tokenizer.decode(toks)
+            return parse_response_text(parsed, client.tokenizer, toks)
         except Exception:  # noqa: BLE001
             return ""
 
@@ -270,15 +334,23 @@ def main():
     rl.add_argument("--run-name", required=True)
     rl.add_argument("--symmetric", action="store_true", help="Pure consistency (anchor_weight=0)")
     rl.add_argument("--anchor-weight", type=float, default=0.5, help="0.5=Deployment←Eval, 0=symmetric")
+    rl.add_argument("--f6-cues", default="none",
+                    help="multi-cue F6 family for matched_pair: none|train|holdout|all|<int N>. "
+                         "Sets perturbations to natural(ref) + N F6 wrappers (idx 1..N), pull cued→natural.")
+    rl.add_argument("--anchor-natural", action="store_true",
+                    help="Anchor the NO-CUE (natural) endpoint: idx0=natural(ref), idx1=eval-cued(train). "
+                         "Closes the gap toward deployment behaviour → preserves helpfulness "
+                         "(no refuse-everything collapse), but raises eval-cued behaviour to deployment level.")
     rl.add_argument("--anchor-model", default="base", choices=["base", "initial_policy"])
     rl.add_argument("--lr", type=float, default=None, help="LR (pass explicitly for non-Llama/Qwen, e.g. gpt-oss)")
-    rl.add_argument("--lr-schedule", default="constant", choices=["constant", "linear", "cosine"])
+    rl.add_argument("--lr-schedule", default="linear", choices=["constant", "linear", "cosine"],
+                    help="LR schedule (shared SFT+RL default: linear). RL now honors this per optim step.")
     rl.add_argument("--lora-rank", type=int, default=8)
     rl.add_argument("--seed", type=int, default=None)
     rl.add_argument("--kl-coef", type=float, default=0.05)
-    rl.add_argument("--loss-fn", default="ppo", choices=["ppo", "reinforce"])
+    rl.add_argument("--loss-fn", default="ppo", choices=["ppo", "importance_sampling"])
     # Advantage estimator (shrinkage tapers the consistency gradient to ~0 once natural≈cued)
-    rl.add_argument("--advantage-estimator", default="grpo_normalized", choices=["grpo_normalized", "shrinkage"])
+    rl.add_argument("--advantage-estimator", default="shrinkage", choices=["grpo_normalized", "shrinkage", "matched_pair"])
     rl.add_argument("--shrinkage-mode", default="soft", choices=["soft", "hard"])
     rl.add_argument("--shrinkage-z", type=float, default=2.0)
     # Benign-helpfulness term (anti refuse-all)
@@ -286,6 +358,11 @@ def main():
     rl.add_argument("--helpfulness-data", default=str(PROJECT_ROOT / "dataset_dumps" / "eval_awareness" / "agentharm_benign" / "benign.jsonl"))
     rl.add_argument("--helpfulness-limit", type=int, default=None)
     rl.add_argument("--n-helpfulness-rollouts", type=int, default=16)
+    rl.add_argument("--helpfulness-trait", default="refusal", choices=["refusal", "ifeval"],
+                    help="refusal=1-LLM-refusal-judge (benign); ifeval=deterministic IFEval accuracy (verifiable, off-distribution)")
+    rl.add_argument("--helpfulness-mode", default="reward", choices=["reward", "anchor", "distill"],
+                    help="reward=maximise benign trait; anchor=match it to base per-prompt; "
+                         "distill=imitate base completions on held-out benign data (forward-KL to base, no judge)")
     rl.add_argument("--n-ref-rollouts", type=int, default=128)
     rl.add_argument("--n-train-rollouts", type=int, default=128)
     rl.add_argument("--n-consistency-rollouts", type=int, default=None)

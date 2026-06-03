@@ -28,6 +28,28 @@ COT_SUFFIX_ALT = (
 # For non-CoT mode, we want the model to just answer directly
 NO_COT_SUFFIX = '\n\nGive your answer in the format "The best answer is: (X)."'
 
+# Replaces the "Therefore, the best answer is: (X)." answer-format spec with an
+# explicit <answer>X</answer> tag instruction. Matches the spec phrase in all bias
+# variants (cot/no_cot, post_hoc's no-trailing-period form) without touching the
+# surrounding CoT scaffold ("Please think step by step ... Let's think step by step:").
+import re as _re  # noqa: E402
+
+_FORMAT_SPEC_RE = _re.compile(
+    r'(?:give|Give) your answer in the format '
+    r'"(?:Therefore, )?[Tt]he best answer is: \(X\)\."\.?'
+)
+_ANSWER_TAG_INSTRUCTION = (
+    "give your final answer as a single letter inside <answer></answer> tags, "
+    "for example <answer>A</answer>"
+)
+
+
+def to_answer_tag_format(content: str) -> str:
+    """Swap the legacy "best answer is: (X)" answer-format instruction for an
+    explicit ``<answer>X</answer>`` tag instruction, leaving the rest of the prompt
+    (question, CoT scaffold, bias framing) untouched. No-op if the spec isn't found."""
+    return _FORMAT_SPEC_RE.sub(_ANSWER_TAG_INSTRUCTION, content)
+
 
 def strip_cot_from_message(content: str) -> str:
     """Remove CoT instructions from message content for reasoning models."""
@@ -183,6 +205,7 @@ def load_mcq_bias_dataset(
     prompt_style: PromptStyle = "cot",
     filter_bias_on_wrong: bool = True,
     allowed_hashes: set[str] | None = None,
+    answer_format: str = "legacy",
 ) -> MemoryDataset:
     """
     Load MCQ bias dataset from JSONL file.
@@ -260,6 +283,9 @@ def load_mcq_bias_dataset(
                 # Strip CoT for reasoning models (only from user messages)
                 if prompt_style == "no_cot" and role == "user":
                     content = strip_cot_from_message(content)
+                # Swap the legacy answer-format spec for <answer>X</answer> tags
+                if answer_format == "tags" and role == "user":
+                    content = to_answer_tag_format(content)
 
                 if role == "user":
                     if is_are_you_sure_biased and first_user_seen:

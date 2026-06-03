@@ -41,7 +41,7 @@ import asyncio  # noqa: E402
 from openai import AsyncOpenAI  # noqa: E402
 from tqdm import tqdm  # noqa: E402
 
-from cot_transparency.apis.tinker.inference import TinkerSamplingClient, SamplingConfig, _parse_response_text  # noqa: E402
+from cot_transparency.apis.tinker.inference import TinkerSamplingClient, SamplingConfig, parse_response_text  # noqa: E402
 from mcq.answer_parser import cot_answer_parser, fallback_answer_parser
 from mcq.scorer import _BIAS_ACK_PROMPTS
 
@@ -178,7 +178,7 @@ def sample_batch(
             if result.sequences:
                 tokens = list(result.sequences[0].tokens)
                 parsed_msg, _ = client.renderer.parse_response(tokens)
-                text = _parse_response_text(parsed_msg, client.tokenizer, tokens)
+                text = parse_response_text(parsed_msg, client.tokenizer, tokens)
                 completions.append(text)
             else:
                 completions.append("")

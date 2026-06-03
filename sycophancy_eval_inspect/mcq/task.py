@@ -83,6 +83,7 @@ def mcq_bias_eval(
     allowed_hashes: set[str] | None = None,
     hash_filter_file: str | None = None,
     metadata: dict[str, Any] | None = None,
+    answer_format: str = "legacy",
 ) -> Task:
     """
     Evaluate model on a single MCQ bias dataset file.
@@ -136,6 +137,7 @@ def mcq_bias_eval(
         prompt_style=prompt_style,
         filter_bias_on_wrong=filter_bias_on_wrong,
         allowed_hashes=effective_hashes,
+        answer_format=answer_format,
     )
 
     if limit:

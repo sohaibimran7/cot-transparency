@@ -28,7 +28,7 @@ def get_renderer_for_model(model: str):
     return renderers.get_renderer(renderer_name, tokenizer), tokenizer
 
 
-def _parse_response_text(parsed_msg, tokenizer, tokens) -> str:
+def parse_response_text(parsed_msg, tokenizer, tokens) -> str:
     """Extract assistant text from a parsed response message.
 
     gpt-oss returns structured list content (channel-tagged Thinking/Text parts);
@@ -44,6 +44,22 @@ def _parse_response_text(parsed_msg, tokenizer, tokens) -> str:
     except Exception:  # noqa: BLE001
         c = parsed_msg.get("content", "")
         return c if isinstance(c, str) else tokenizer.decode(tokens)
+
+
+def decode_response(renderer, tokenizer, tokens) -> str:
+    """Robustly turn sampled tokens into assistant text.
+
+    Wraps BOTH ``renderer.parse_response`` (which raises RendererError for gpt-oss when a
+    sequence carries >1 stop token) and ``get_text_content`` (which can KeyError on
+    malformed structured content) so one bad sequence degrades to the decoded tokens
+    instead of aborting the caller. Prefer this over a bare ``parse_response`` +
+    ``parse_response_text`` pair, which leaves the parse call itself unguarded.
+    """
+    try:
+        parsed_msg, _ = renderer.parse_response(tokens)
+    except Exception:  # noqa: BLE001
+        return tokenizer.decode(tokens)
+    return parse_response_text(parsed_msg, tokenizer, tokens)
 
 
 class SamplingConfig(BaseModel):
@@ -152,9 +168,9 @@ class TinkerSamplingClient:
         samples = []
         for seq in result.sequences:
             tokens = list(seq.tokens)
-            # Use renderer to parse response
-            parsed_msg, _ = self.renderer.parse_response(tokens)
-            text = _parse_response_text(parsed_msg, self.tokenizer, tokens)
+            # Robust parse: decode_response guards the parse_response call itself, which
+            # can raise RendererError for gpt-oss; a bare parse_response here would crash.
+            text = decode_response(self.renderer, self.tokenizer, tokens)
             logprobs = list(seq.logprobs) if include_logprobs and seq.logprobs else None
 
             samples.append(SamplingResult(

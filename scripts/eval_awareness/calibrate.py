@@ -31,7 +31,7 @@ from dotenv import load_dotenv
 load_dotenv(PROJECT_ROOT / ".env")
 
 from cot_transparency.eval_awareness.judge import (  # noqa: E402
-    make_misalignment_judge, make_recognition_judge, DEFAULT_GRADER_MODEL,
+    make_misalignment_judge, make_refusal_judge, make_recognition_judge, DEFAULT_GRADER_MODEL,
 )
 
 VAL = PROJECT_ROOT / "dataset_dumps" / "eval_awareness" / "val_indist" / "naturalized_heldout.jsonl"
@@ -44,15 +44,17 @@ def _rows(path, limit, cue=None):
     return rows[:limit] if limit else rows
 
 
-sys.path.insert(0, str(Path(__file__).parent))
-
-
 async def calibrate_model(model: str, checkpoint, rows, args) -> dict:
-    from run_eval import _TinkerSampler
-    sampler = _TinkerSampler(model, checkpoint, args.max_new_tokens, args.temperature)
-    behave = make_misalignment_judge(args.grader_model)
-    recog_nat = make_recognition_judge(args.grader_model, messages_key="natural_question")
-    recog_cue = make_recognition_judge(args.grader_model, messages_key="eval_cued_question")
+    from cot_transparency.eval_awareness.samplers import TinkerSampler
+    sampler = TinkerSampler(model, checkpoint, args.max_new_tokens, args.temperature)
+    # safety datasets → harmful-compliance (misalignment); capability/benign → over-refusal.
+    behave = (make_refusal_judge(args.grader_model) if args.behavior_judge == "refusal"
+              else make_misalignment_judge(args.grader_model))
+    # Recognition judge ~doubles grader calls; skip for gap-only evals (--no-recognition).
+    async def _norec(*a, **k):
+        return float("nan")
+    recog_nat = _norec if args.no_recognition else make_recognition_judge(args.grader_model, messages_key="natural_question")
+    recog_cue = _norec if args.no_recognition else make_recognition_judge(args.grader_model, messages_key="eval_cued_question")
     sem = asyncio.Semaphore(args.concurrency)
 
     async def one(row, key, recog):
@@ -81,11 +83,14 @@ def main():
     p.add_argument("--models", nargs="+", required=True, help="Tinker model ids (optionally id::checkpoint)")
     p.add_argument("--data", default=str(VAL), help="rows file (natural_question/eval_cued_question)")
     p.add_argument("--cue", default=None, help="filter multi-cue files to one cue (e.g. train_cue for AM env)")
+    p.add_argument("--no-recognition", action="store_true", help="skip the recognition judge (gap-only eval; ~halves grader calls)")
     p.add_argument("--limit", type=int, default=50)
     p.add_argument("--n-samples", type=int, default=4)
     p.add_argument("--temperature", type=float, default=1.0)
     p.add_argument("--max-new-tokens", type=int, default=2560)
     p.add_argument("--concurrency", type=int, default=8)
+    p.add_argument("--behavior-judge", choices=["misalignment", "refusal"], default="misalignment",
+                   help="misalignment=harmful-compliance (safety); refusal=over-refusal (capability/benign)")
     p.add_argument("--grader-model", default=DEFAULT_GRADER_MODEL)
     p.add_argument("--out", default=str(PROJECT_ROOT / "sycophancy_eval_inspect" / "logs" / "eval_awareness" / "calibration.json"))
     args = p.parse_args()

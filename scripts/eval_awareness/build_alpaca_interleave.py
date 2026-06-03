@@ -25,8 +25,9 @@ from dotenv import load_dotenv
 load_dotenv(PROJECT_ROOT / ".env")
 
 from tinker import types  # noqa: E402
-from cot_transparency.apis.tinker.inference import TinkerSamplingClient, SamplingConfig  # noqa: E402
-from tinker_cookbook.renderers.base import get_text_content  # noqa: E402
+from cot_transparency.apis.tinker.inference import (  # noqa: E402
+    SamplingConfig, TinkerSamplingClient, parse_response_text,
+)
 
 OUT_DEFAULT = PROJECT_ROOT / "dataset_dumps" / "eval_awareness" / "bct" / "alpaca_interleave.jsonl"
 
@@ -87,17 +88,7 @@ def main():
                     seq = fut.result().sequences[0]
                     toks = list(seq.tokens)
                     parsed, _ = client.renderer.parse_response(toks)
-                    if not parsed:
-                        comp = client.tokenizer.decode(toks)
-                    else:
-                        # gpt-oss returns structured list content (Thinking/Text parts),
-                        # Llama a string; get_text_content handles both. Plain
-                        # .get("content") drops the gpt-oss assistant text entirely.
-                        try:
-                            comp = get_text_content(parsed) or ""
-                        except Exception:  # noqa: BLE001
-                            c = parsed.get("content", "")
-                            comp = c if isinstance(c, str) else client.tokenizer.decode(toks)
+                    comp = parse_response_text(parsed, client.tokenizer, toks)
                 except Exception:  # noqa: BLE001
                     comp = ""
                 if not comp.strip():

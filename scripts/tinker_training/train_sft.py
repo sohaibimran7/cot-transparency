@@ -139,6 +139,8 @@ def main():
     # Hyperparameters
     parser.add_argument("--lr", type=float, default=None,
                         help="Learning rate (default: auto-detect from model)")
+    parser.add_argument("--lr-schedule", default="linear", choices=["constant", "linear", "cosine"],
+                        help="LR schedule (shared SFT+RL default: linear)")
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--lora-rank", type=int, default=8)
@@ -153,6 +155,12 @@ def main():
     # Resume from checkpoint
     parser.add_argument("--resume-from", default=None,
                         help="Tinker checkpoint path to load before training (tinker://...)")
+    parser.add_argument("--resume-with-optimizer", dest="resume_with_optimizer",
+                        action="store_const", const=True, default=None,
+                        help="Force restoring optimizer state on resume (default: infer from URI)")
+    parser.add_argument("--no-resume-optimizer", dest="resume_with_optimizer",
+                        action="store_const", const=False,
+                        help="Force weights-only resume (optimizer resets)")
 
     # Execution
     parser.add_argument("-y", "--yes", action="store_true")
@@ -197,7 +205,7 @@ def main():
         run_name=args.run_name,
         model=args.model,
         lora=LoRAConfig(rank=args.lora_rank, seed=args.seed),
-        optimizer=AdamConfig(learning_rate=args.lr),
+        optimizer=AdamConfig(learning_rate=args.lr, lr_schedule=args.lr_schedule),
         n_epochs=args.epochs,
         batch_size=args.batch_size,
         checkpoint=CheckpointConfig(
@@ -207,8 +215,8 @@ def main():
         ),
     )
 
-    # Print summary
-    n_steps = n_samples // args.batch_size
+    # Print summary (ceiling division matches the actual batch loop in train_sft)
+    n_steps = (n_samples + args.batch_size - 1) // args.batch_size
     n_ckpts = n_steps // args.save_every
     print()
     print(f"Model: {config.model}")
@@ -230,7 +238,10 @@ def main():
             return
 
     # Train
-    final_checkpoint = asyncio.run(train_sft(data_path, config, resume_from=args.resume_from))
+    final_checkpoint = asyncio.run(train_sft(
+        data_path, config, resume_from=args.resume_from,
+        resume_with_optimizer=args.resume_with_optimizer,
+    ))
     print(f"\nDone! Final checkpoint: {final_checkpoint}")
 
 

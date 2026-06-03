@@ -119,6 +119,36 @@
       "edgecolor": "black",
       "training_biases": []
     },
+    "da-matched-32x2": {
+      "training_type": "da_matched_32x2",
+      "display_name": "Matched 32x2",
+      "color": "#6a51a3",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument"
+      ]
+    },
+    "da-grpo-baseline": {
+      "training_type": "da_grpo_baseline",
+      "display_name": "GRPO DA baseline",
+      "color": "#d94801",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument"
+      ]
+    },
+    "da-grpo-tags": {
+      "training_type": "da_grpo_tags",
+      "display_name": "GRPO DA (tags)",
+      "color": "#d94801",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument"
+      ]
+    },
     "rlct-wfs-bs1": {
       "training_type": "rlct_wfs_bs1",
       "display_name": "RLCT WFS bs1",

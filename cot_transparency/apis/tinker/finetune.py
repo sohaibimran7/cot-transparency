@@ -84,6 +84,7 @@ async def train_sft(
     config: Optional[SFTConfig] = None,
     max_samples: Optional[int] = None,
     resume_from: Optional[str] = None,
+    resume_with_optimizer: Optional[bool] = None,
 ) -> str:
     """
     Run SFT training from JSONL file.
@@ -95,6 +96,9 @@ async def train_sft(
         resume_from: Tinker checkpoint path to load weights from before training.
             Use a state_path (tinker://...weights/...) for full optimizer resume,
             or a sampler_path (tinker://...sampler_weights/...) for weights-only.
+        resume_with_optimizer: Explicitly choose optimizer-state restore. None (default)
+            infers from the URI; pass True/False to override the fragile URI heuristic
+            (e.g. for non-standard/local checkpoint paths).
 
     Returns:
         Final checkpoint path
@@ -124,8 +128,23 @@ async def train_sft(
         samples = samples[:max_samples]
 
     n_samples = len(samples)
-    steps_per_epoch = n_samples // cfg.batch_size
+    # Ceiling division: the batch loop below is range(0, n_samples, batch_size), which
+    # yields a partial final batch when n_samples % batch_size != 0. Flooring undercounts
+    # total_steps, so the LR schedule hits 0 on that batch and goes NEGATIVE on multi-epoch
+    # runs (gradient ascent), and gives total_steps=0 (a hard ConfigurationError from the
+    # scheduler) whenever n_samples < batch_size. Match the actual loop with ceil.
+    steps_per_epoch = (n_samples + cfg.batch_size - 1) // cfg.batch_size
     total_steps = steps_per_epoch * cfg.n_epochs
+    if total_steps == 0:
+        raise ValueError(
+            f"No training steps: {n_samples} samples, batch_size={cfg.batch_size}, "
+            f"n_epochs={cfg.n_epochs}. Add data or lower batch_size."
+        )
+
+    # Reproducibility: seed the per-epoch shuffle below. LoRA init is seeded separately by
+    # the SDK via lora.seed; without this, "same --seed" runs still differ in data order.
+    if cfg.lora.seed is not None:
+        random.seed(cfg.lora.seed)
 
     # Determine learning rate: use configured value or get recommended LR for model
     base_lr: float = cfg.optimizer.learning_rate if cfg.optimizer.learning_rate is not None else get_recommended_lr(cfg.model)
@@ -143,18 +162,23 @@ async def train_sft(
 
     # Load checkpoint if resuming from a previous training run
     if resume_from:
-        if "/weights/" in resume_from and "/sampler_weights/" not in resume_from:
-            # Full state path — load weights + optimizer state
+        # Explicit resume_with_optimizer wins; otherwise infer from the URI (state paths
+        # contain "/weights/", sampler paths "/sampler_weights/"). The URI heuristic is a
+        # fragile fallback — a non-standard/local state path would silently load
+        # weights-only and drop optimizer state, so callers can override via the flag.
+        if resume_with_optimizer is None:
+            with_opt = "/weights/" in resume_from and "/sampler_weights/" not in resume_from
+        else:
+            with_opt = resume_with_optimizer
+        if with_opt:
             print(f"Loading full state (weights + optimizer) from: {resume_from}")
             future = await training_client.load_state_with_optimizer_async(resume_from)
-            await future.result_async()
         else:
-            # Sampler-only or unknown path — load weights only, optimizer resets
             print(f"Loading weights (optimizer will reset) from: {resume_from}")
             future = await training_client.load_state_async(resume_from)
-            await future.result_async()
+        await future.result_async()
         print("Checkpoint loaded successfully")
-        logger.log_hparams({"resume_from": resume_from})
+        logger.log_hparams({"resume_from": resume_from, "resume_with_optimizer": with_opt})
 
     checkpoint_paths: list[str] = []
     global_step = 0
@@ -165,7 +189,7 @@ async def train_sft(
         epoch_samples = list(samples)
         random.shuffle(epoch_samples)
         epoch_loss = 0.0
-        n_steps = 0
+        n_examples = 0
 
         pbar = tqdm(range(0, n_samples, cfg.batch_size), desc=f"Epoch {epoch+1}")
         for batch_start in pbar:
@@ -178,11 +202,13 @@ async def train_sft(
                 batch_data.append(datum_from_model_input_weights(tokens, weights))
 
             # Compute LR with schedule
-            lr_mult = compute_schedule_lr_multiplier(
+            # max(0.0, ...) is belt-and-suspenders against a negative multiplier; the
+            # ceil-division total_steps above already keeps step < total_steps.
+            lr_mult = max(0.0, compute_schedule_lr_multiplier(
                 lr_schedule=cfg.optimizer.lr_schedule,
                 step=global_step,
                 total_steps=total_steps,
-            )
+            ))
             current_lr = base_lr * lr_mult
 
             adam_params = types.AdamParams(
@@ -209,8 +235,10 @@ async def train_sft(
             weights = [d.loss_fn_inputs["weights"] for d in batch_data]
             nll = compute_mean_nll(logprobs, weights)
 
-            epoch_loss += nll
-            n_steps += 1
+            # Weight each batch's (token-pooled) NLL by its sample count so the epoch mean
+            # isn't skewed by an unequal final/remainder batch.
+            epoch_loss += nll * len(batch_samples)
+            n_examples += len(batch_samples)
             global_step += 1
 
             pbar.set_postfix({"nll": f"{nll:.4f}", "lr": f"{current_lr:.2e}"})
@@ -236,8 +264,8 @@ async def train_sft(
                 logger.log_metrics({"checkpoint": checkpoint_path}, step=global_step)
 
         # Epoch summary
-        if n_steps > 0:
-            avg_loss = epoch_loss / n_steps
+        if n_examples > 0:
+            avg_loss = epoch_loss / n_examples
             print(f"Epoch {epoch+1} avg NLL: {avg_loss:.4f}")
             logger.log_metrics({"train/epoch_nll": avg_loss, "train/epoch": epoch + 1}, step=global_step)
 
@@ -267,6 +295,7 @@ def train_sft_sync(
     config: Optional[SFTConfig] = None,
     max_samples: Optional[int] = None,
     resume_from: Optional[str] = None,
+    resume_with_optimizer: Optional[bool] = None,
 ) -> str:
     """Synchronous wrapper for train_sft."""
-    return asyncio.run(train_sft(file_path, config, max_samples, resume_from))
+    return asyncio.run(train_sft(file_path, config, max_samples, resume_from, resume_with_optimizer))

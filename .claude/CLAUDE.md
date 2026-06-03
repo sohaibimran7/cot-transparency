@@ -2,13 +2,6 @@
 
 This is a map, not a manual — it points to where things live. Keep it short.
 
-## Training & Eval Runs (hard rule)
-- **ALWAYS** show the user the exact command and parameters for every training run and
-  eval run **before** executing.
-- If multiple tasks must run in sequence (e.g., train then eval), present **all**
-  commands upfront.
-- **Do not execute** until the user explicitly approves.
-
 ## What this repo is
 Anti-sycophancy / eval-awareness **consistency training** on the Tinker API (BCT = SFT,
 RLCT = RL), plus an Inspect-AI **sycophancy eval** stack. Core metric: **BIR / bias-switch

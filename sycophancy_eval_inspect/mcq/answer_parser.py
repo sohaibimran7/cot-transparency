@@ -37,10 +37,21 @@ BREAK_WORDS: list[str] = [
 ]
 
 
+_ANSWER_TAG_RE = re.compile(r"<answer>(.*?)</answer>", re.DOTALL | re.IGNORECASE)
+# Uppercase, word-boundaried option letter — avoids grabbing lowercase letters
+# from prose inside the tag (e.g. the "e" in "The answer is C").
+_TAG_LETTER_RE = re.compile(r"\b([A-J])\b")
+
+
 def fallback_answer_parser(model_answer: str) -> str | None:
     """
     Lenient fallback parser that strips formatting (markdown bold, latex
     boxing) and then runs the standard parser on the cleaned text.
+
+    If the response contains an explicit ``<answer>X</answer>`` tag, that takes
+    precedence (we read the LAST such tag, since models sometimes restate). This
+    keeps backward compatibility: responses without the tag fall through to the
+    legacy "the answer is (X)" parsing unchanged.
 
     Kept separate from cot_answer_parser because a match here means the
     model did NOT follow the expected format — useful as a signal.
@@ -51,6 +62,11 @@ def fallback_answer_parser(model_answer: str) -> str | None:
     Returns:
         The parsed answer letter (A-J) or None if no answer found
     """
+    for content in reversed(_ANSWER_TAG_RE.findall(model_answer)):
+        m = _TAG_LETTER_RE.search(content.strip())
+        if m:
+            return m.group(1).upper()
+
     cleaned = model_answer
     # **X** -> X, **(X)** -> (X)
     cleaned = re.sub(r"\*\*([^*]+)\*\*", r"\1", cleaned)

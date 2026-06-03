@@ -32,10 +32,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from dotenv import load_dotenv
 load_dotenv(PROJECT_ROOT / ".env")
 
-from tinker import types  # noqa: E402
-from tinker_cookbook.renderers.base import get_text_content  # noqa: E402
-from cot_transparency.apis.tinker.inference import TinkerSamplingClient, SamplingConfig  # noqa: E402
 from cot_transparency.eval_awareness.judge import make_refusal_judge, DEFAULT_GRADER_MODEL  # noqa: E402
+from cot_transparency.eval_awareness.samplers import TinkerSampler  # noqa: E402
 
 CKPTS = {
     "llama-base": None,
@@ -43,6 +41,9 @@ CKPTS = {
     "llama-rlct-deploy": "tinker://42bdd410-8113-535b-ace6-26a1395d9ab9:train:0/sampler_weights/evalaware_rlct_llama-rlct-deploy",
     "llama-rlct-symmetric": "tinker://80f386ee-437f-5cca-a4e6-12ec19e457b0:train:0/sampler_weights/evalaware_rlct_llama-rlct-symmetric",
     "llama-rlct-deploy-help": "tinker://dd7be5f6-c787-5bee-b08b-c5233750f260:train:0/sampler_weights/evalaware_rlct_llama-rlct-deploy-help",
+    "llama-rlct-deploy-help-matched": "tinker://74f7180e-893d-5c04-aff6-c80f1dcb3deb:train:0/sampler_weights/evalaware_rlct_llama-rlct-deploy-help-matched",
+    "llama-rlct-anchor-natural": "tinker://349f8f58-c745-5eaf-9697-dd6558724304:train:0/sampler_weights/evalaware_rlct_llama-rlct-anchor-natural",
+    "llama-ifeval-anchor": "tinker://3eb097c0-9bb1-5283-9bc2-d5a2f5cd31cc:train:0/sampler_weights/evalaware_rlct_llama-ifeval-anchor",
 }
 BASE_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 
@@ -67,32 +68,13 @@ def load_benign(limit: int | None) -> dict[str, list[dict]]:
 
 
 async def eval_model(name: str, ckpt: str | None, benign: dict[str, list[dict]], args) -> dict:
-    client = TinkerSamplingClient(
-        model=BASE_MODEL, checkpoint=ckpt,
-        config=SamplingConfig(max_tokens=args.max_new_tokens, temperature=args.temperature),
-    )
-    client.setup()
+    sampler = TinkerSampler(args.base_model, ckpt, args.max_new_tokens, args.temperature)
     judge = make_refusal_judge(args.grader_model)
-    params = types.SamplingParams(max_tokens=args.max_new_tokens, temperature=args.temperature,
-                                  stop=client.renderer.get_stop_sequences())
     sem = asyncio.Semaphore(args.concurrency)
-
-    def sample(prompt_text: str) -> list[str]:
-        p = client.renderer.build_generation_prompt([{"role": "user", "content": prompt_text}])
-        res = client.sampling_client.sample(prompt=p, sampling_params=params, num_samples=args.n_samples).result()
-        outs = []
-        for seq in res.sequences:
-            toks = list(seq.tokens)
-            parsed, _ = client.renderer.parse_response(toks)
-            try:
-                outs.append(get_text_content(parsed) if parsed else client.tokenizer.decode(toks))
-            except Exception:  # noqa: BLE001
-                outs.append(client.tokenizer.decode(toks))
-        return outs
 
     async def judge_row(row: dict) -> float:
         async with sem:
-            texts = await asyncio.to_thread(sample, row["prompt"])
+            texts = await sampler.sample([{"role": "user", "content": row["prompt"]}], args.n_samples)
         vals = await asyncio.gather(*[judge(t, row) for t in texts if t.strip()])
         return sum(vals) / len(vals) if vals else float("nan")
 
@@ -113,16 +95,20 @@ def main():
     p.add_argument("--max-new-tokens", type=int, default=1024)
     p.add_argument("--concurrency", type=int, default=8)
     p.add_argument("--grader-model", default=DEFAULT_GRADER_MODEL)
-    p.add_argument("--models", nargs="*", default=list(CKPTS), help="Subset of model names")
+    p.add_argument("--base-model", default=BASE_MODEL, help="Tinker base model for the checkpoints (e.g. Qwen/Qwen3-30B-A3B-Instruct-2507)")
+    p.add_argument("--models", nargs="*", default=list(CKPTS), help="Subset of model names (or name=tinker://ckpt)")
     p.add_argument("--out", default=str(PROJECT_ROOT / "sycophancy_eval_inspect" / "logs" / "eval_awareness" / "overrefusal.json"))
     args = p.parse_args()
 
     benign = load_benign(args.limit)
     print(f"Benign benchmarks: " + ", ".join(f"{k}={len(v)}" for k, v in benign.items()))
-    results = {}
-    for name in args.models:
+    out_path = Path(args.out)
+    results = json.loads(out_path.read_text()) if out_path.exists() else {}  # merge, don't clobber cached rows
+    for spec in args.models:
+        name, _, inline = spec.partition("=")  # allow "name=tinker://..." for ad-hoc checkpoints
+        ckpt = inline or CKPTS.get(name)
         print(f"\n=== {name} ===")
-        results[name] = asyncio.run(eval_model(name, CKPTS[name], benign, args))
+        results[name] = asyncio.run(eval_model(name, ckpt, benign, args))
         for src, r in results[name].items():
             print(f"  {src:16s} over-refusal={r['over_refusal_rate']:.3f} (n={r['n_prompts']})")
 

@@ -43,3 +43,9 @@ sycophancy_eval_inspect/logs/*
 !sycophancy_eval_inspect/logs/llama_base_tqa_659samples/
 sycophancy_eval_inspect/plots/*
 !sycophancy_eval_inspect/plots/cot_100samples/
+
+# Vendored upstream repos (have their own .git) — not part of this repo's history
+/third_party/
+/RLCT-paper/
+# Claude Code runtime lock
+.claude/scheduled_tasks.lock

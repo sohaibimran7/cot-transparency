@@ -538,6 +538,11 @@ def build_training_cmd(
         if "datasets" in args:
             ds = args["datasets"]
             cmd += ["--datasets", ds if isinstance(ds, str) else ",".join(ds)]
+        # Comma-join a YAML list like bias_types/datasets; str(list) would produce a Python
+        # repr ("['a', 'b']") that resolve_distractor_cues mis-splits into bogus cue keys.
+        if "distractor_cues" in args:
+            dc = args["distractor_cues"]
+            cmd += ["--distractor-cues", dc if isinstance(dc, str) else ",".join(dc)]
 
         # Hyperparams
         for key in (

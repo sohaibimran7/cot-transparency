@@ -1,7 +1,7 @@
 # Environment setup
 
-The current workflow uses **`uv`** (not the `pyenv`/`pip` flow in the old
-`README_FOR_CODE.md`, which describes the legacy `cot_transparency` stage_one pipeline).
+The current workflow uses **`uv`** (not the legacy `pyenv`/`pip` + `cot_transparency`
+stage_one flow, which is summarized under "Legacy `stage_one` pipeline" in `CLAUDE.md`).
 
 ## Quick start
 

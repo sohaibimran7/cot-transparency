@@ -35,7 +35,6 @@ from pydantic import BaseModel
 import torch
 from tqdm import tqdm
 
-from tinker_cookbook import checkpoint_utils
 from tinker_cookbook.utils.ml_log import setup_logging
 from tinker_cookbook.utils.lr_scheduling import compute_schedule_lr_multiplier
 from tinker_cookbook.rl.metrics import compute_kl_sample_train, incorporate_kl_penalty
@@ -51,11 +50,12 @@ from cot_transparency.apis.tinker.common import (
     AdamConfig,
     CheckpointConfig,
     get_renderer_and_tokenizer,
-    build_checkpoint_name,
     build_log_dir,
     get_recommended_lr,
     get_git_state,
     warn_if_dirty,
+    save_intermediate_checkpoint,
+    finalize_checkpoint,
 )
 
 
@@ -1275,43 +1275,33 @@ class RLTrainer:
             await optim_future.result_async()
 
         # Final checkpoint
-        final_name = build_checkpoint_name(self.config.experiment_name, self.config.run_name)
-        kind = "both" if self.config.checkpoint.save_state else "sampler"
-        paths = await checkpoint_utils.save_checkpoint_async(
+        final_path = await finalize_checkpoint(
             self.training_client,
-            name=final_name,
-            log_path=str(log_dir),
-            loop_state={"epoch": self.config.loop.n_epochs, "step": global_step, "final": True},
-            kind=kind,
+            experiment_name=self.config.experiment_name,
+            run_name=self.config.run_name,
+            n_epochs=self.config.loop.n_epochs,
+            save_state=self.config.checkpoint.save_state,
+            global_step=global_step,
+            log_dir=log_dir,
+            checkpoint_paths=checkpoint_paths,
+            logger=logger,
         )
-        final_path = paths.get("sampler_path") or paths.get("state_path")
-        checkpoint_paths.append(final_path)
-
-        print(f"\nTraining complete. Final checkpoint: {final_path}")
-        logger.log_metrics({"final_checkpoint": final_path}, step=global_step)
-        logger.log_hparams({"final_checkpoint": final_path, "all_checkpoints": checkpoint_paths})
-        logger.close()
-
         return final_path
 
     async def _maybe_save_checkpoint(self, global_step, total_steps, epoch, log_dir, checkpoint_paths, logger):
-        """Save intermediate checkpoint if schedule says so."""
-        ckpt_cfg = self.config.checkpoint
-        steps_remaining = total_steps - global_step
-        near_final = steps_remaining <= ckpt_cfg.skip_near_final_steps
-        if ckpt_cfg.save_every_n_steps and global_step % ckpt_cfg.save_every_n_steps == 0 and not near_final:
-            name = build_checkpoint_name(self.config.experiment_name, self.config.run_name, step=global_step)
-            kind = "both" if ckpt_cfg.save_state else "sampler"
-            paths = await checkpoint_utils.save_checkpoint_async(
-                self.training_client,
-                name=name,
-                log_path=str(log_dir),
-                loop_state={"epoch": epoch, "step": global_step},
-                kind=kind,
-            )
-            checkpoint_path = paths.get("sampler_path") or paths.get("state_path")
-            checkpoint_paths.append(checkpoint_path)
-            logger.log_metrics({"checkpoint": checkpoint_path}, step=global_step)
+        """Save intermediate checkpoint if the schedule says so (delegates to common)."""
+        await save_intermediate_checkpoint(
+            self.training_client,
+            experiment_name=self.config.experiment_name,
+            run_name=self.config.run_name,
+            checkpoint_cfg=self.config.checkpoint,
+            global_step=global_step,
+            total_steps=total_steps,
+            epoch=epoch,
+            log_dir=log_dir,
+            checkpoint_paths=checkpoint_paths,
+            logger=logger,
+        )
 
     def _log_step_metrics(
         self, logger, global_step, epoch, batch_items, grad_datums,

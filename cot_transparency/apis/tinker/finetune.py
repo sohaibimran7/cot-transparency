@@ -36,19 +36,19 @@ from tqdm import tqdm
 
 from tinker_cookbook.supervised.common import datum_from_model_input_weights, compute_mean_nll
 from tinker_cookbook.utils.lr_scheduling import compute_schedule_lr_multiplier
-from tinker_cookbook import checkpoint_utils
 from tinker_cookbook.utils.ml_log import setup_logging
 
 from cot_transparency.apis.tinker.common import (
     LoRAConfig,
     AdamConfig,
     CheckpointConfig,
-    build_checkpoint_name,
     build_log_dir,
     get_renderer_and_tokenizer,
     get_recommended_lr,
     get_git_state,
     warn_if_dirty,
+    save_intermediate_checkpoint,
+    finalize_checkpoint,
 )
 
 
@@ -245,23 +245,18 @@ async def train_sft(
             logger.log_metrics({"train/nll": nll, "train/lr": current_lr}, step=global_step)
 
             # Intermediate checkpoint (skip if near final to avoid duplicates)
-            ckpt_cfg = cfg.checkpoint
-            steps_remaining = total_steps - global_step
-            near_final = steps_remaining <= ckpt_cfg.skip_near_final_steps
-
-            if ckpt_cfg.save_every_n_steps and global_step % ckpt_cfg.save_every_n_steps == 0 and not near_final:
-                name = build_checkpoint_name(cfg.experiment_name, cfg.run_name, step=global_step)
-                kind = "both" if ckpt_cfg.save_state else "sampler"
-                paths = await checkpoint_utils.save_checkpoint_async(
-                    training_client,
-                    name=name,
-                    log_path=str(log_dir),
-                    loop_state={"epoch": epoch, "step": global_step},
-                    kind=kind,
-                )
-                checkpoint_path = paths.get("sampler_path") or paths.get("state_path")
-                checkpoint_paths.append(checkpoint_path)
-                logger.log_metrics({"checkpoint": checkpoint_path}, step=global_step)
+            await save_intermediate_checkpoint(
+                training_client,
+                experiment_name=cfg.experiment_name,
+                run_name=cfg.run_name,
+                checkpoint_cfg=cfg.checkpoint,
+                global_step=global_step,
+                total_steps=total_steps,
+                epoch=epoch,
+                log_dir=log_dir,
+                checkpoint_paths=checkpoint_paths,
+                logger=logger,
+            )
 
         # Epoch summary
         if n_examples > 0:
@@ -270,22 +265,17 @@ async def train_sft(
             logger.log_metrics({"train/epoch_nll": avg_loss, "train/epoch": epoch + 1}, step=global_step)
 
     # Final checkpoint (no step suffix)
-    final_name = build_checkpoint_name(cfg.experiment_name, cfg.run_name)
-    kind = "both" if cfg.checkpoint.save_state else "sampler"
-    paths = await checkpoint_utils.save_checkpoint_async(
+    final_path = await finalize_checkpoint(
         training_client,
-        name=final_name,
-        log_path=str(log_dir),
-        loop_state={"epoch": cfg.n_epochs, "step": global_step, "final": True},
-        kind=kind,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.run_name,
+        n_epochs=cfg.n_epochs,
+        save_state=cfg.checkpoint.save_state,
+        global_step=global_step,
+        log_dir=log_dir,
+        checkpoint_paths=checkpoint_paths,
+        logger=logger,
     )
-    final_path = paths.get("sampler_path") or paths.get("state_path")
-    checkpoint_paths.append(final_path)
-
-    print(f"\nTraining complete. Final checkpoint: {final_path}")
-    logger.log_metrics({"final_checkpoint": final_path}, step=global_step)
-    logger.log_hparams({"final_checkpoint": final_path, "all_checkpoints": checkpoint_paths})
-    logger.close()
 
     return final_path
 

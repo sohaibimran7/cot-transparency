@@ -7,17 +7,12 @@ name = "cot-transparency"
 version = "0.1.0"
 description = "Anti-sycophancy / eval-awareness consistency training + sycophancy eval stack"
 requires-python = ">=3.11"
-# Runtime dependencies stay in requirements.txt + the uv flow (see docs/ENVIRONMENT.md).
-# This [project]/[build-system] block exists so `uv pip install -e .` makes the first-party
-# packages importable from anywhere, retiring the ~24 `sys.path.insert(PROJECT_ROOT)` hacks.
+# Deps stay in requirements.txt; this block just enables `uv pip install -e .` (editable) so the
+# first-party packages import without sys.path hacks.
 
 [tool.setuptools.packages.find]
-# Flat-layout repo: everything is imported relative to the repo root (cot_transparency itself
-# does `from data.mmlu ...`, `from dataset_dumps ...`, `from scripts.* ...`). Expose all the
-# top-level importable dirs so a plain `uv pip install -e .` retires every PROJECT_ROOT hack
-# without needing `--config-settings editable_mode=compat`. namespaces=true picks up the many
-# dirs that lack __init__.py (they run as PEP-420 namespace packages today). third_party/ and
-# RLCT-paper/ are excluded.
+# Flat layout: code imports relative to repo root (e.g. `from data.mmlu ...`, `from scripts.* ...`),
+# so expose all top-level importable dirs. namespaces=true covers dirs without __init__.py (PEP-420).
 include = [
     "cot_transparency*",
     "sycophancy_eval_inspect*",

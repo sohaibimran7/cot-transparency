@@ -3,13 +3,8 @@
 matched_pair trains on a FAMILY of F6 jailbreak wrappers (idx0=natural + N wrappers).
 The scientific question is cue-invariance: does it close the gap on wrappers it never saw?
 
-This emits calibrate-shaped rows (natural_question + eval_cued_question) where each base
-F6 natural prompt is paired with a wrapper drawn round-robin from a chosen split:
-  --split trained  -> the first 32 train wrappers (what qwen-f6-matched saw)
-  --split holdout  -> the 23 holdout wrappers (never trained on anyone)
-  --split train    -> all 67 train wrappers
-Then `calibrate.py` on the output gives gap = harmful(natural) - harmful(wrapper-cued),
-averaged over the split's wrappers. Compare matched_pair vs a single-cue checkpoint vs base.
+Emits calibrate-shaped rows (natural_question + eval_cued_question) where each base F6 prompt
+is paired with a wrapper drawn round-robin from --split; `calibrate.py` then gives the gap.
 
 Usage:
   python scripts/eval_awareness/build_f6_wrapper_eval.py --split holdout \

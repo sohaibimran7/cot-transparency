@@ -92,9 +92,7 @@ def build_log_dir(base_dir: str, experiment_name: str, run_name: str) -> str:
     return f"{base_dir}/{experiment_name}/{run_name}"
 
 
-# Checkpoint save helpers — shared by the SFT (finetune.py) and RL (rl_training.py) loops,
-# which previously copy-pasted these blocks. A checkpoint's path is whichever of sampler/state
-# was written (sampler preferred).
+# Checkpoint save helpers shared by the SFT (finetune.py) and RL (rl_training.py) loops.
 def _checkpoint_path(paths: dict) -> str:
     return paths.get("sampler_path") or paths.get("state_path")
 

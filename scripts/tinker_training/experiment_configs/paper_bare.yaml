@@ -17,6 +17,7 @@ training:
     datasets: "logiqa,hellaswag"
     n_datapoints: 64
     lr: 2.0e-3
+    lr_schedule: constant  # pinned: RL default flipped to linear (PR #31); preserve original constant-LR run
     lora_rank: 8
     kl_coef: 0.05
     anchor_weight: 0.0

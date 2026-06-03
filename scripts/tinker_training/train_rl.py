@@ -61,7 +61,7 @@ from cot_transparency.formatters.more_biases.distractor_cue_variations import (
     split_cues,
 )
 from sycophancy_eval_inspect.mcq.answer_parser import fallback_answer_parser
-from sycophancy_eval_inspect.mcq.dataset import strip_cot_from_message, to_answer_tag_format
+from sycophancy_eval_inspect.mcq.dataset import strip_cot_from_message
 
 
 def load_datapoints(bias_types: list[str], datasets: list[str], n_datapoints: int, data_dir: Path) -> list[dict]:
@@ -104,30 +104,24 @@ def load_datapoints(bias_types: list[str], datasets: list[str], n_datapoints: in
     return datapoints
 
 
-def _apply_prompt_style(messages: list[dict], prompt_style: str, answer_format: str = "legacy") -> list[dict]:
-    """Transform user messages: strip CoT (prompt_style='no_cot') and/or swap the
-    answer-format spec to <answer>X</answer> tags (answer_format='tags')."""
-    if prompt_style != "no_cot" and answer_format != "tags":
+def _apply_prompt_style(messages: list[dict], prompt_style: str) -> list[dict]:
+    """Strip CoT instructions from user messages if prompt_style is 'no_cot'."""
+    if prompt_style != "no_cot":
         return messages
     out = []
     for m in messages:
         if m.get("role") == "user":
-            content = m["content"]
-            if prompt_style == "no_cot":
-                content = strip_cot_from_message(content)
-            if answer_format == "tags":
-                content = to_answer_tag_format(content)
-            out.append({**m, "content": content})
+            out.append({**m, "content": strip_cot_from_message(m["content"])})
         else:
             out.append(m)
     return out
 
 
-def make_perturbation_fns(prompt_style: str, answer_format: str = "legacy"):
+def make_perturbation_fns(prompt_style: str):
     def unbiased_perturbation(datapoint: dict) -> dict:
-        return {"messages": _apply_prompt_style(datapoint["unbiased_question"], prompt_style, answer_format)}
+        return {"messages": _apply_prompt_style(datapoint["unbiased_question"], prompt_style)}
     def biased_perturbation(datapoint: dict) -> dict:
-        return {"messages": _apply_prompt_style(datapoint["biased_question"], prompt_style, answer_format)}
+        return {"messages": _apply_prompt_style(datapoint["biased_question"], prompt_style)}
     return unbiased_perturbation, biased_perturbation
 
 
@@ -152,22 +146,21 @@ def resolve_distractor_cues(spec: str | None) -> list[str]:
     return keys
 
 
-def make_distractor_cue_perturbations(cues: list[str], prompt_style: str, answer_format: str = "legacy"):
+def make_distractor_cue_perturbations(cues: list[str], prompt_style: str):
     """[unbiased (ref, idx 0)] + one perturbation per distractor cue (idx 1..N).
 
     Each cue re-frames the datapoint's pre-extracted wrong argument (dp['_wrong_cot'])
     around its unbiased question, so the same argument is presented many ways.
     """
     def unbiased(dp: dict) -> dict:
-        return {"messages": _apply_prompt_style(dp["unbiased_question"], prompt_style, answer_format)}
+        return {"messages": _apply_prompt_style(dp["unbiased_question"], prompt_style)}
 
     def make_cue(key: str):
         def cue_pert(dp: dict) -> dict:
-            # Strip CoT / apply the answer-tag format on the bare question FIRST, then wrap.
-            # Transforming the wrapped blob would truncate at the CoT phrase now sitting
-            # inside <question>, deleting </question> and (for question-first cues) the
-            # entire <argument> block.
-            base = _apply_prompt_style(dp["unbiased_question"], prompt_style, answer_format)
+            # Strip CoT on the bare question FIRST, then wrap. Transforming the wrapped
+            # blob would truncate at the CoT phrase now sitting inside <question>,
+            # deleting </question> and (for question-first cues) the entire <argument> block.
+            base = _apply_prompt_style(dp["unbiased_question"], prompt_style)
             return {"messages": apply_distractor_cue(base, dp["_wrong_cot"], key)}
         return cue_pert
 
@@ -214,8 +207,6 @@ def main():
     parser.add_argument("--n-datapoints", type=int, default=100, help="Total number of datapoints (split evenly across dataset x bias_type combinations)")
     parser.add_argument("--data-dir", default=None, help="Override default dataset_dumps/test directory")
     parser.add_argument("--prompt-style", choices=["cot", "no_cot"], default="cot", help="Strip CoT instructions for reasoning models (e.g. gpt-oss)")
-    parser.add_argument("--answer-format", choices=["legacy", "tags"], default="legacy",
-                        help="Answer-format spec: 'legacy' (\"the best answer is: (X)\") or 'tags' (require <answer>X</answer>). Must match the eval's --answer-format.")
 
     # === Naming ===
     parser.add_argument("--experiment-name", required=True, help="Experiment name")
@@ -460,9 +451,9 @@ def main():
             sys.exit(0)
 
     if distractor_cues:
-        perturbation_fns = make_distractor_cue_perturbations(distractor_cues, args.prompt_style, args.answer_format)
+        perturbation_fns = make_distractor_cue_perturbations(distractor_cues, args.prompt_style)
     else:
-        unbiased_perturbation, biased_perturbation = make_perturbation_fns(args.prompt_style, args.answer_format)
+        unbiased_perturbation, biased_perturbation = make_perturbation_fns(args.prompt_style)
         if args.control:
             perturbation_fns = [unbiased_perturbation, unbiased_perturbation]
         else:

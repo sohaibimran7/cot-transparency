@@ -50,7 +50,6 @@ class ModelConfig:
     base_model: str
     checkpoint_path: str | None
     prompt_styles: list[str]
-    answer_format: str = "legacy"
 
     @property
     def renderer(self) -> str:
@@ -112,7 +111,6 @@ async def run(args):
             base_model=args.base_model or LLAMA_BASE,
             checkpoint_path=args.checkpoint,
             prompt_styles=args.prompt_styles.split(",") if args.prompt_styles else ["cot", "no_cot"],
-            answer_format=args.answer_format,
         )]
     else:
         configs = DEFAULT_CONFIGS
@@ -181,7 +179,6 @@ async def run(args):
                     dataset_path=str(dc.path),
                     variant=dc.variant,
                     prompt_style=prompt_style,
-                    answer_format=config.answer_format,
                     limit=args.limit,
                     allowed_hashes=dc.allowed_hashes,
                     metadata={
@@ -230,8 +227,6 @@ def main():
     parser.add_argument("--base-model", help="Base model name (e.g., meta-llama/Llama-3.1-8B-Instruct)")
     parser.add_argument("--name", help="Model name for logging")
     parser.add_argument("--prompt-styles", help="Prompt styles (comma-separated: cot,no_cot)")
-    parser.add_argument("--answer-format", choices=["legacy", "tags"], default="legacy",
-                        help="Answer format: 'legacy' (\"the best answer is: (X)\") or 'tags' (<answer>X</answer>)")
 
     # Filtering
     parser.add_argument("--models", help="Filter model configs by name (comma-separated)")

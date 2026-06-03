@@ -482,7 +482,7 @@ class TestMatchedPairEstimator:
     ONE gap vs p_ref, and score every cued rollout against p_ref (the matched control)."""
 
     def _trainer(self, **overrides):
-        cfg = dict(advantage_estimator="matched_pair", shrinkage_z=0.0, anchor_weight=0.0)
+        cfg = dict(advantage_estimator="matched_pair", snr_z=0.0, anchor_weight=0.0)
         cfg.update(overrides)
         trainer = make_minimal_trainer(**cfg)
         trainer.reward_function = ConsistencyReward()
@@ -504,7 +504,7 @@ class TestMatchedPairEstimator:
 
     def test_pooled_gap_and_control_baseline(self):
         # p_pool = (0.8*4 + 0.6*4)/8 = 0.7 ; gap = 0.7 - 0.3 = 0.4 ; baseline = p_ref = 0.3
-        trainer = self._trainer(shrinkage_normalizer="none")  # adv == raw reward
+        trainer = self._trainer(snr_normalizer="none")  # adv == raw reward
         item = self._item(
             p_hat={1: 0.8, 2: 0.6}, p_hat_counts={1: 4, 2: 4}, p_ref=0.3,
             rollouts=[
@@ -534,7 +534,7 @@ class TestMatchedPairEstimator:
     def test_magnitude_preserving_not_grpo(self):
         # Default normalizer 'trait_std' keeps the gap magnitude (divides by per-rollout
         # Bernoulli std), unlike grpo_normalized which would standardise to mean 0 / std 1.
-        trainer = self._trainer()  # shrinkage_normalizer defaults to 'trait_std'
+        trainer = self._trainer()  # snr_normalizer defaults to 'trait_std'
         item = self._item(
             p_hat={1: 0.8, 2: 0.6}, p_hat_counts={1: 4, 2: 4}, p_ref=0.3,
             rollouts=[
@@ -589,8 +589,8 @@ class TestMatchedPairShrinkFix:
     the old pooled-binomial SE would have."""
 
     def test_cluster_se_shrinks_less_than_pooled(self):
-        trainer = make_minimal_trainer(advantage_estimator="matched_pair", shrinkage_z=2.0,
-                                       anchor_weight=0.0, shrinkage_normalizer="none")
+        trainer = make_minimal_trainer(advantage_estimator="matched_pair", snr_z=2.0,
+                                       anchor_weight=0.0, snr_normalizer="none")
         trainer.reward_function = ConsistencyReward()
         trainer._create_rl_datum = lambda p, r, a: MagicMock()
         from tinker import types
@@ -605,11 +605,11 @@ class TestMatchedPairShrinkFix:
             n_total=16, n_parsed=16, n_ref_parsed=64, n_training_parsed=16,
         )
         trainer._build_training_batch([item])
-        g_used = trainer._shrink_metrics["train/gap_shrunk_abs_mean"]
+        g_used = trainer._snr_metrics["train/gap_snr_scaled_abs_mean"]
 
         raw = 0.5 - 0.2  # pooled gap
-        g_pooled = abs(trainer._shrink_gap(raw, RLTrainer._gap_se(0.5, 16, 0.2, 64)))
-        g_cluster = abs(trainer._shrink_gap(
+        g_pooled = abs(trainer._snr_scale_gap(raw, RLTrainer._gap_se(0.5, 16, 0.2, 64)))
+        g_cluster = abs(trainer._snr_scale_gap(
             raw, RLTrainer._matched_pair_gap_se({1: 0.9, 2: 0.1}, {1: 8, 2: 8}, 0.2, 64)))
         assert g_used == pytest.approx(g_cluster, abs=1e-9)   # the path uses the cluster SE
         assert g_used > g_pooled                              # ...and shrinks less

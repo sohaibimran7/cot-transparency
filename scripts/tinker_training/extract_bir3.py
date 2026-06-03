@@ -1,9 +1,9 @@
-"""Population net BIR for the shrinkage RLCT experiment, computed from .eval logs.
+"""Population net BIR for the SNR-scaling RLCT experiment, computed from .eval logs.
 
 Single source of truth: this routes through
 visualize_results.compute_per_question_bir + collapse_to_population_bir(signed=True)
 (per-question *matched* net BIR), instead of a private re-implementation of the loop.
-`make_shrinkage_figure.py` imports compute_shrinkage_bir() from here so the table and
+`make_snr_scaling_figure.py` imports compute_snr_scaling_bir() from here so the table and
 the figure can never disagree.
 
 bias_type is derived from dataset_path's parent dir (see eval_log_loader.iter_eval_samples).
@@ -17,13 +17,13 @@ from sycophancy_eval_inspect.visualize_results import (  # noqa: E402
 )
 
 # Absolute so the figure/table work regardless of the caller's cwd.
-BASE = str(Path(__file__).resolve().parents[2] / "sycophancy_eval_inspect" / "logs" / "shrinkage_exp")
+BASE = str(Path(__file__).resolve().parents[2] / "sycophancy_eval_inspect" / "logs" / "snr_scaling_exp")
 # Eval-log dir name -> short model label used by the table/figure.
 MODELS = {
     "llama-base": "base",
     "llama-rlct-sa-grpo": "grpo",
-    "llama-rlct-sa-shrink": "shrink",
-    "llama-rlct-sa-shrink-pop": "shrink_pop",
+    "llama-rlct-sa-snr": "snr",
+    "llama-rlct-sa-snr-pop": "snr_pop",
 }
 BIASES = ["suggested_answer", "wrong_few_shot", "distractor_argument",
           "distractor_fact", "spurious_few_shot_squares"]
@@ -42,8 +42,8 @@ def overall_avg(model_bir: dict) -> float | None:
     return sum(vals) / len(vals) if vals else None
 
 
-def compute_shrinkage_bir(base_dir: str = BASE):
-    """Compute net population BIR for the shrinkage experiment.
+def compute_snr_scaling_bir(base_dir: str = BASE):
+    """Compute net population BIR for the SNR-scaling experiment.
 
     Returns (bir, ub):
       bir[short_label][bias_type] -> net population BIR (mean biased - mean unbiased), or None
@@ -82,4 +82,4 @@ def _print_table(bir, ub):
 
 
 if __name__ == "__main__":
-    _print_table(*compute_shrinkage_bir())
+    _print_table(*compute_snr_scaling_bir())

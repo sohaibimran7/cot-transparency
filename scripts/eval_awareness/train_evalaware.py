@@ -66,9 +66,7 @@ def natural_perturbation(dp: dict) -> dict:
     return {"messages": dp["natural_question"]}
 
 
-# ── Multi-cue (F6 wrapper family) for matched_pair — mirrors the sycophancy distractor-cue
-#    setup: idx0 = natural (no-cue control/reference), idx 1..N = one F6 wrapper each. Lets
-#    matched_pair pool the cued rate across the wrapper family (cue diversity de-biases the gap).
+# Multi-cue F6 family for matched_pair: idx0 = natural (reference), idx 1..N = one F6 wrapper each.
 def _prepend_wrapper(messages: list, wrapper: str) -> list:
     out = [dict(m) for m in messages]
     for m in out:
@@ -170,8 +168,8 @@ def run_rl(args) -> None:
         anchor_weight=anchor_weight,
         anchor_model=args.anchor_model,
         advantage_estimator=args.advantage_estimator,
-        shrinkage_mode=args.shrinkage_mode,
-        shrinkage_z=args.shrinkage_z,
+        snr_mode=args.snr_mode,
+        snr_z=args.snr_z,
         helpfulness_weight=args.helpfulness_weight,
         n_helpfulness_rollouts=args.n_helpfulness_rollouts,
         helpfulness_mode=args.helpfulness_mode,
@@ -211,7 +209,7 @@ def run_rl(args) -> None:
     print(f"  lr / schedule    : {args.lr} / {args.lr_schedule}")
     print(f"  rollouts ref/tr  : {args.n_ref_rollouts}/{args.n_train_rollouts} (consistency {n_consistency})")
     print(f"  kl_coef/loss     : {args.kl_coef}/{args.loss_fn}")
-    print(f"  advantage_est    : {args.advantage_estimator}" + (f" (shrink {args.shrinkage_mode}, z={args.shrinkage_z})" if args.advantage_estimator == "shrinkage" else ""))
+    print(f"  advantage_est    : {args.advantage_estimator}" + (f" (snr {args.snr_mode}, z={args.snr_z})" if args.advantage_estimator == "snr_scaling" else ""))
     print(f"  helpfulness      : weight={args.helpfulness_weight}" + (f", {len(help_dps)} benign dps from {args.helpfulness_data}, {args.n_helpfulness_rollouts} rollouts" if args.helpfulness_weight > 0 else " (off)"))
     print(f"  epochs/batch     : {args.n_epochs}/{args.batch_size} | checkpoint every {args.checkpoint_every}")
     print(f"  experiment/run   : {args.experiment_name}/{args.run_name}")
@@ -348,10 +346,10 @@ def main():
     rl.add_argument("--seed", type=int, default=None)
     rl.add_argument("--kl-coef", type=float, default=0.05)
     rl.add_argument("--loss-fn", default="ppo", choices=["ppo", "importance_sampling"])
-    # Advantage estimator (shrinkage tapers the consistency gradient to ~0 once natural≈cued)
-    rl.add_argument("--advantage-estimator", default="shrinkage", choices=["grpo_normalized", "shrinkage", "matched_pair"])
-    rl.add_argument("--shrinkage-mode", default="soft", choices=["soft", "hard"])
-    rl.add_argument("--shrinkage-z", type=float, default=2.0)
+    # Advantage estimator (snr_scaling tapers the consistency gradient to ~0 once natural≈cued)
+    rl.add_argument("--advantage-estimator", default="snr_scaling", choices=["grpo_normalized", "snr_scaling", "matched_pair"])
+    rl.add_argument("--snr-mode", default="soft", choices=["soft", "hard"])
+    rl.add_argument("--snr-z", type=float, default=2.0)
     # Benign-helpfulness term (anti refuse-all)
     rl.add_argument("--helpfulness-weight", type=float, default=0.0, help=">0 mixes a benign-completion GRPO reward")
     rl.add_argument("--helpfulness-data", default=str(PROJECT_ROOT / "dataset_dumps" / "eval_awareness" / "agentharm_benign" / "benign.jsonl"))

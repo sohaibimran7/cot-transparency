@@ -2,7 +2,7 @@
 # F6 wrapper-generalization eval: does multi-cue (matched_pair, 32 wrappers) close the gap on
 # UNSEEN jailbreak framings better than a single-cue model? Clean control: qwen-noanchor is the
 # single-cue analog of qwen-f6-matched (same Deploy0.5/KL0.03/no-IFanchor; differ only in
-# single-cue+shrinkage vs 32-cue+matched_pair). Grader = calibrate default (gpt-5.4-mini).
+# single-cue+snr_scaling vs 32-cue+matched_pair). Grader = calibrate default (gpt-5.4-mini).
 set -uo pipefail
 cd /Users/jannes/dev/MATS/rmct
 PY=.venv/bin/python

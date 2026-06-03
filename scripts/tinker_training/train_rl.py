@@ -223,17 +223,17 @@ def main():
     parser.add_argument("--anchor-weight", type=float, default=0.5, help="Anchor weight (alpha): 0=pure consistency, 1=pure anchor, 0.5=equal")
     parser.add_argument("--anchor-model", default="base", choices=["base", "initial_policy"], help="Model for anchor reference rate: 'base' (frozen base) or 'initial_policy' (policy at init, incl. resumed ckpt)")
     parser.add_argument("--loss-fn", default="ppo", choices=["ppo", "importance_sampling"])
-    parser.add_argument("--advantage-estimator", default="grpo_normalized", choices=["grpo_normalized", "shrinkage", "matched_pair"],
+    parser.add_argument("--advantage-estimator", default="grpo_normalized", choices=["grpo_normalized", "snr_scaling", "matched_pair"],
                         help="Advantage construction: 'grpo_normalized' (std-normalize; drops gap magnitude, keeps only its sign), "
-                             "'shrinkage' (keep gap magnitude, shrunk toward 0 by its sampling SNR), or "
+                             "'snr_scaling' (still GRPO; keep gap magnitude, shrunk toward 0 by its sampling SNR), or "
                              "'matched_pair' (pool the cued rate across the cue family into one gap vs the neutral control; "
                              "use with --distractor-cues and a small --n-train-rollouts)")
-    parser.add_argument("--shrinkage-mode", default="soft", choices=["soft", "hard"],
-                        help="Shrinkage shape (advantage-estimator=shrinkage only): 'soft' smooth taper, 'hard' significance gate")
-    parser.add_argument("--shrinkage-z", type=float, default=2.0,
-                        help="Shrinkage scale in SEs: half-weight (soft) / cutoff (hard) at |gap| = z·SE; z=0 = no floor (full faithful gap)")
-    parser.add_argument("--shrinkage-normalizer", default="trait_std", choices=["trait_std", "none"],
-                        help="Shrinkage advantage scaling: 'trait_std' (divide by sqrt(p(1-p)+floor)) or 'none' (bare A=-gap*(T-p))")
+    parser.add_argument("--snr-mode", default="soft", choices=["soft", "hard"],
+                        help="SNR-scaling shape (advantage-estimator=snr_scaling only): 'soft' smooth taper, 'hard' significance gate")
+    parser.add_argument("--snr-z", type=float, default=2.0,
+                        help="SNR scale in SEs: half-weight (soft) / cutoff (hard) at |gap| = z·SE; z=0 = no floor (full faithful gap)")
+    parser.add_argument("--snr-normalizer", default="trait_std", choices=["trait_std", "none"],
+                        help="SNR-scaling advantage scaling: 'trait_std' (divide by sqrt(p(1-p)+floor)) or 'none' (bare A=-gap*(T-p))")
     parser.add_argument("--unparsed-handling", default="discard", choices=["discard", "resample"],
                         help="Unparsed/hedged rollouts: 'discard' (drop from rate denominator + gradient, "
                              "default) or 'resample' (re-sample until a usable answer, up to "
@@ -370,9 +370,9 @@ def main():
         anchor_weight=args.anchor_weight,
         anchor_model=args.anchor_model,
         advantage_estimator=args.advantage_estimator,
-        shrinkage_mode=args.shrinkage_mode,
-        shrinkage_z=args.shrinkage_z,
-        shrinkage_normalizer=args.shrinkage_normalizer,
+        snr_mode=args.snr_mode,
+        snr_z=args.snr_z,
+        snr_normalizer=args.snr_normalizer,
         unparsed_handling=args.unparsed_handling,
         max_resample_attempts=args.max_resample_attempts,
         log_base_dir="logs",
@@ -414,10 +414,10 @@ def main():
     print(f"  KL coef:            {args.kl_coef}")
     print(f"  Anchor weight:      {args.anchor_weight}")
     print(f"  Anchor model:       {args.anchor_model}")
-    if args.advantage_estimator == "shrinkage":
-        _adv_desc = f"shrinkage ({args.shrinkage_mode}, z={args.shrinkage_z}, norm={args.shrinkage_normalizer})"
+    if args.advantage_estimator == "snr_scaling":
+        _adv_desc = f"snr_scaling ({args.snr_mode}, z={args.snr_z}, norm={args.snr_normalizer})"
     elif args.advantage_estimator == "matched_pair":
-        _adv_desc = f"matched_pair (pooled gap, z={args.shrinkage_z}, norm={args.shrinkage_normalizer}, {len(distractor_cues) or 1} cue(s))"
+        _adv_desc = f"matched_pair (pooled gap, z={args.snr_z}, norm={args.snr_normalizer}, {len(distractor_cues) or 1} cue(s))"
     else:
         _adv_desc = args.advantage_estimator
     print(f"  Advantage est.:     {_adv_desc}")

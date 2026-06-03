@@ -20,7 +20,7 @@ clear-cut judgments, ~cheaper). IFEval trait uses a free deterministic verifier.
 ---
 
 ## Legend / glossary
-Shorthand used throughout. Code-level names (`shrinkage`, `grpo`, `matched_pair`) are kept as-is;
+Shorthand used throughout. Code-level names (`snr_scaling`, `grpo`, `matched_pair`) are kept as-is;
 plain-English meaning is given here.
 
 **Training methods**
@@ -39,7 +39,7 @@ plain-English meaning is given here.
 **Advantage estimator** — how the per-rollout RL advantage is computed (`--advantage-estimator`):
 - **grpo** (grpo_normalized) — standard GRPO group-normalised advantage. Closes the gap fastest; can
   overshoot / oscillate around 0.
-- **shrinkage** — GRPO advantage *tapered by the gap's signal-to-noise ratio* (anti-overshoot). Gentler
+- **SNR-scaling** (`snr_scaling`) — GRPO advantage *scaled by the gap's signal-to-noise ratio* (anti-overshoot). Gentler
   and slower to close; the gentleness is intrinsic, not an LR-schedule artifact.
 - **matched_pair** — pools the cued trait-rate across a whole *cue family* per item (needs multi-cue
   data). Meant for cue-invariance; under-trains at low rollouts-per-cue.
@@ -128,7 +128,7 @@ XSTest-safe(250) + EvalAwareBench-capability held-out split(30). Base over-refus
 - On a **refusal-shaped trait the gap closes only by collapsing to refuse-everything** (a degenerate
   equaliser the sycophancy-MCQ setting lacks). Pure consistency-RL and either anchor direction collapse.
 - A **capability-preservation signal** is required. Ranked by EAB-cap: **IFEval anchor (69%)** <
-  distill-AgentHarm (84) < shrinkage/KL variants (82–83) < reward/matched (94–98).
+  distill-AgentHarm (84) < SNR-scaling/KL variants (82–83) < reward/matched (94–98).
 - **Distance-from-trait beats distribution-match**: the off-distribution *verifiable* IFEval anchor
   (base acc 0.69, non-refusing) beats the on-twin EAB-cap data. Distilling/anchoring onto a set where
   **base over-refuses (AgentHarm-Benign, ~50%)** copies that over-refusal → worse.
@@ -164,10 +164,10 @@ manually stopped (this is fine — the gap had converged).
 |---|---|---|---|---|
 | base | — | +0.348 | 6.2% | 0% |
 | qwen-sym | anchor 0 | +0.100 | 16% | **14%** (over-refuses) |
-| qwen-b0 | Deploy 0.5 + shrinkage + IFanchor | +0.270 | 7.5% | 0% (too gentle @100) |
-| qwen-aw08 | Deploy 0.8 + shrinkage + IFanchor | +0.277 | 6.0% | 0% |
+| qwen-b0 | Deploy 0.5 + SNR-scaling + IFanchor | +0.270 | 7.5% | 0% (too gentle @100) |
+| qwen-aw08 | Deploy 0.8 + SNR-scaling + IFanchor | +0.277 | 6.0% | 0% |
 | qwen-grpo | Deploy 0.5 + **grpo** + IFanchor | +0.197 | 6.4% | 0% (closes more, cap safe) |
-| **qwen-noanchor** | Deploy 0.5 + shrinkage, **no IFanchor** (KL 0.03, linear LR) | **+0.190** | **4.5%** | 0% (best closer, cleanest) |
+| **qwen-noanchor** | Deploy 0.5 + SNR-scaling, **no IFanchor** (KL 0.03, linear LR) | **+0.190** | **4.5%** | 0% (best closer, cleanest) |
 | qwen-f6-matched | 32-wrapper matched_pair, 2 roll/cue | +0.317 | 6.7% | 0% (under-trained @100) |
 | qwen-kl01n | no-IFanchor, KL **0.01**, linear | +0.237 | 7.1% | 0% |
 | qwen-const | no-IFanchor, KL 0.03, **constant LR** | +0.243 | 4.8% | 0% |
@@ -181,11 +181,11 @@ manually stopped (this is fine — the gap had converged).
   over-refusal (XSTest 4.5% < base 6.2%) and identical EAB-cap 0%. The capability insurance that was
   **critical for Llama's refusal-shaped trait is dead weight here** because F6 isn't refusal-shaped.
   → clean recipe simplifies to **Deployment-anchor + KL, no helpfulness term**.
-- **Estimator**: **grpo closes, shrinkage stalls at 100 steps**. Hypothesis (LR schedule compounds
-  shrinkage's taper → over-damped) **TESTED & REJECTED**: `qwen-const` (constant LR) gap +0.243 ≈
+- **Estimator**: **grpo closes, SNR-scaling stalls at 100 steps**. Hypothesis (LR schedule compounds
+  SNR-scaling's taper → over-damped) **TESTED & REJECTED**: `qwen-const` (constant LR) gap +0.243 ≈
   `qwen-noanchor` (linear LR) +0.190 — within eval noise, both EAB-cap 0%, both low over-refusal.
   → **LR schedule is NOT the lever**; constant ≈ linear, so you *can* drop the schedule (user's
-  hypothesis confirmed in the weak sense) but it does **not** unlock more closing. shrinkage's
+  hypothesis confirmed in the weak sense) but it does **not** unlock more closing. SNR-scaling's
   gentleness is **intrinsic to its SNR taper**, not a schedule artifact. Real closers = **grpo** or
   **more steps**. **KL also not a lever**: KL 0.01 (+0.237) ≈ 0.03 (+0.190) within noise, all EAB-cap 0%.
   - ⚠️ **Caveat (2026-06-03)**: the `const`-vs-`linear` LR arms above predate the fix that made RL
@@ -202,13 +202,13 @@ manually stopped (this is fine — the gap had converged).
   cautious, base over-refusal already 0%), so closing it doesn't require refuse-everything;
   the Deployment-anchor alone keeps benign behaviour at base.
 - **RECIPE (settled): Deployment-anchor (aw 0.5) + grpo + KL 0.03, NO helpfulness term, early-stop
-  ~150 steps.** (shrinkage is the anti-overshoot alternative but closes slower regardless of LR
+  ~150 steps.** (SNR-scaling is the anti-overshoot alternative but closes slower regardless of LR
   schedule; grpo closes faster, watch for late-step over-refusal creep >step 150.)
 
 ### 3c. F6 wrapper-generalization (matched_pair payoff) — DONE
 Does multi-cue training (matched_pair on 32 jailbreak wrappers) close the gap on **unseen** wrappers
 better than a single-cue model? Clean control: `qwen-noanchor` is the single-cue analog of
-`qwen-f6-matched` (identical Deploy0.5/KL0.03/no-IFanchor; differ only single-cue+shrinkage vs
+`qwen-f6-matched` (identical Deploy0.5/KL0.03/no-IFanchor; differ only single-cue+SNR-scaling vs
 32-cue+matched_pair). Eval sets `f6_{holdout,trained}_wrappers.jsonl` round-robin the 23 holdout /
 32 trained wrappers onto the 100 base F6 prompts (`build_f6_wrapper_eval.py`). Driver
 `run_f6_generalization.sh` → `/tmp/f6_generalization_results.txt`.
@@ -264,7 +264,7 @@ step150** (F6-closed: +0.083, EAB-cap 0%) on held-out slices. `run_crossfactor_s
 - `cot_transparency/eval_awareness/`: `cues.py` (TRAIN_CUE + EVAL_MARKERS), `judge.py`
   (misalignment / AM-scenario / refusal / recognition judges; nano+mini), `ifeval_verify.py`
   (deterministic IFEval trait via lighteval's google verifiers), `samplers.py`.
-- `rl_training.py` additions: async trait classifier; **shrinkage** advantage estimator (default);
+- `rl_training.py` additions: async trait classifier; **SNR-scaling** (`snr_scaling`) advantage estimator (default);
   **matched_pair** (pools cued rate over a cue *family* — needs multi-cue data); **helpfulness term**
   `mode ∈ {reward, anchor, distill}` (anchor = match benign trait to base per-prompt; distill =
   imitate base completions = forward-KL on held-out benign).
@@ -277,7 +277,7 @@ step150** (F6-closed: +0.083, EAB-cap 0%) on held-out slices. `run_crossfactor_s
 ## 5. Open items
 - [x] matched_pair held-out-wrapper generalization (§3c): under-trains AND unnecessary for a tight cue family; single-cue generalizes within F6.
 - [x] Full cross-factor/env generalization sweep (§3d): broad safety-positive harm reduction transfers; cross-factor gap-closing modest.
-- [x] kl01/kl10 re-run + constant-LR arm (§3b): KL shown NOT to be a lever; shrinkage gentleness is intrinsic. Recipe settled on grpo. (LR-schedule "non-lever" claim is caveated — the "linear" arm ran constant pre-fix; see §3b.)
+- [x] kl01/kl10 re-run + constant-LR arm (§3b): KL shown NOT to be a lever; SNR-scaling gentleness is intrinsic. Recipe settled on grpo. (LR-schedule "non-lever" claim is caveated — the "linear" arm ran constant pre-fix; see §3b.)
 - [ ] Open question raised by §3d: does the cleaner **no-IFanchor** recipe, or a **multi-FACTOR** cue set (F1+F6+F8) via matched_pair, yield more *targeted* eval-invariance (vs broad caution)?
 - [ ] If pursuing matched_pair again: equal *total* rollouts (more steps) + heterogeneous (multi-factor) cues — that's where cue-diversity should pay off.
 - [ ] Recurring blocker: **flaky local wifi** kills long runs (checkpoint-every-50 + watchdogs mitigate; a stable VM would fix it).

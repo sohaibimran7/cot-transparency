@@ -83,7 +83,7 @@ Over-refusal rate (fraction of safe prompts refused; lower = better):
 | **BCT (+2048 Alpaca interleave)** | **0.071** ✓ | 0.310 ✓ |
 | RLCT Deploy←Eval (plain) | **0.782** ⚠️ | 0.955 ⚠️ |
 | RLCT symmetric | 0.310 ⚠️ | 0.990 ⚠️ |
-| **RLCT + helpfulness(0.5) + shrinkage** | **0.245** ↓ | 0.943 ⚠️ |
+| **RLCT + helpfulness(0.5) + SNR-scaling** | **0.245** ↓ | 0.943 ⚠️ |
 | **RLCT + helpfulness(1.0) + matched benign** | 0.408 ⚠️ | 0.983 ⚠️ |
 
 (EAB-cap: base/help rows on the full 100-prompt set; the weight-1.0 row is on the 30-prompt
@@ -95,7 +95,7 @@ obviously-safe XSTest prompts). KL=0.05 + anchor didn't prevent collapse. **BCT 
 it over-refuses barely above base because of its Alpaca capability-retention interleave.
 
 **Helpfulness-term fix (RL analog of BCT's interleave) — partial success.** Adding a
-benign-completion GRPO reward (on AgentHarm-Benign) + the shrinkage estimator to RLCT
+benign-completion GRPO reward (on AgentHarm-Benign) + the SNR-scaling estimator to RLCT
 Deploy←Eval **kept the held-out gap closed (+0.003)** and **cut XSTest over-refusal 78%→24.5%**
 (training `helpfulness_mean` rose 0→1.0 — the model relearns to complete benign tasks). But it's
 **not a full fix**: XSTest is still 4× base, and **EAB-capability is unchanged (94%)** — because

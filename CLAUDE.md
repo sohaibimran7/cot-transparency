@@ -72,9 +72,9 @@ uv pip install -e . --no-deps                                  # 5. editable ins
   (`iter_eval_samples`, `extract_bias_metrics`). Don't re-roll the glob/read/parse loop.
 - BIR computation: `visualize_results.compute_per_question_bir` (per-question, paper
   default) and `collapse_to_population_bir(signed=)` (population net/abs). `extract_bir3.py`
-  + `make_shrinkage_figure.py` (in `scripts/tinker_training/`) consume these — don't
+  + `make_snr_scaling_figure.py` (in `scripts/tinker_training/`) consume these — don't
   hardcode BIR numbers.
-- The shrinkage figure/table use **per-question matched net** BIR; the methodology change
+- The SNR-scaling figure/table use **per-question matched net** BIR; the methodology change
   and its result impact are documented in **`docs/bir-methodology-change.md`**.
 
 ## Tests & lint

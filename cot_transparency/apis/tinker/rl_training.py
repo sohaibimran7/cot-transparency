@@ -188,24 +188,25 @@ class RLConfig(BaseModel):
     #   "grpo_normalized" — standardize each population to unit variance. With one
     #     datapoint/perturbation per step this divides out (p_hat - p_ref) entirely,
     #     so only the sign of the gap survives (chases sampling noise near convergence).
-    #   "shrinkage" — keep the gap magnitude but shrink it toward 0 by its sampling
+    #   "snr_scaling" — keep the gap magnitude but scale it toward 0 by its sampling
     #     SNR, then standardize only the per-rollout Bernoulli noise (trait std). The
-    #     signal tapers to ~0 once the gap is within statistical error.
+    #     signal tapers to ~0 once the gap is within statistical error. (Still GRPO; just
+    #     a different advantage scaling than grpo_normalized — not a replacement for it.)
     #   "matched_pair" — pool the cued rate across the WHOLE cue family for an item into
     #     one gap (p_hat_pool - p_ref) and score every cued rollout against the neutral
     #     reference p_ref (the matched control), not its own per-cue mean. Lets each cue
     #     use ~1-2 rollouts: cue diversity (not per-cue depth) de-biases the per-item gap.
-    #     Reuses the shrinkage SE taper (shrinkage_z; z=0 => faithful gap).
-    advantage_estimator: Literal["grpo_normalized", "shrinkage", "matched_pair"] = "grpo_normalized"
-    shrinkage_mode: Literal["soft", "hard"] = "soft"
-    shrinkage_z: float = 2.0   # half-weight (soft) / cutoff (hard) at |gap| = z·SE; z=0 => no floor (full faithful gap)
-    # How to scale the shrinkage advantage (advantage_estimator="shrinkage" only):
+    #     Reuses the SNR SE taper (snr_z; z=0 => faithful gap).
+    advantage_estimator: Literal["grpo_normalized", "snr_scaling", "matched_pair"] = "grpo_normalized"
+    snr_mode: Literal["soft", "hard"] = "soft"
+    snr_z: float = 2.0   # half-weight (soft) / cutoff (hard) at |gap| = z·SE; z=0 => no floor (full faithful gap)
+    # How to scale the SNR-scaling advantage (advantage_estimator="snr_scaling" only):
     #   "trait_std" — divide by per-rollout Bernoulli std sqrt(p(1-p)+floor). Makes
     #     |adv| ~ GRPO-scale for LR transfer, but adds an arbitrary var_floor and (empirically)
     #     leaves |adv| ~10x smaller than GRPO anyway.
     #   "none" — bare estimator A = -shrunk_gap * (T - p_hat), no division. Magnitude
     #     vanishes naturally as p->0; the faithful rate-matching policy gradient.
-    shrinkage_normalizer: Literal["trait_std", "none"] = "trait_std"
+    snr_normalizer: Literal["trait_std", "none"] = "trait_std"
     # Non-answer handling during rollout collection (the answer-parse-failure / hedge case):
     #   "discard"  — unparsed (or logprob-less) rollouts are dropped from BOTH the rate
     #     (p_hat = #biased / #parsed, so the denominator shrinks) and the gradient. The default;
@@ -225,10 +226,8 @@ class RLConfig(BaseModel):
     # reward  : maximise the benign trait (push accuracy/helpfulness up — anti refuse-all).
     # anchor  : MATCH the benign trait to the base model's per-prompt level (preserve capability,
     #           don't distort). Target = per-prompt base accuracy measured at startup.
-    # distill : functional KL-to-base on held-out benign data — sample completions from BASE and
-    #           imitate them (forward-KL ≈ SFT on base's own samples). No trait/judge needed;
-    #           keeps the whole output distribution near base off the trait distribution, which
-    #           is where over-refusal lives. The principled, distribution-agnostic version.
+    # distill : forward-KL to base on held-out benign data (sample from BASE, imitate) — judge-free,
+    #           keeps the output distribution near base where over-refusal would otherwise grow.
     helpfulness_mode: Literal["reward", "anchor", "distill"] = "reward"
     log_base_dir: str = "logs"
 
@@ -302,7 +301,7 @@ class ConsistencyReward:
 
         r = -gap[pert] * (trait - baseline)
 
-        ``gaps`` lets the caller substitute a transformed gap (e.g. shrinkage-corrected)
+        ``gaps`` lets the caller substitute a transformed gap (e.g. SNR-scaled)
         per perturbation. When None, the raw gap (p_hat[pert] - p_ref) is used.
         ``baseline`` overrides the per-perturbation mean p_hat[pert] used to centre the
         score term; the matched-pair estimator passes p_ref (the neutral control) so every
@@ -350,7 +349,7 @@ class RLTrainer:
         self.anchor_sampling_client: tinker.SamplingClient | None = None
         self.renderer: Any = None
         self.tokenizer: Any = None
-        self._shrink_metrics: dict[str, float] = {}
+        self._snr_metrics: dict[str, float] = {}
 
     def setup(self) -> None:
         """Initialize clients and renderer."""
@@ -567,9 +566,9 @@ class RLTrainer:
     def _trait_std(p: float, var_floor: float = 0.01) -> float:
         """Per-rollout Bernoulli std, used to standardize trait noise (NOT the gap).
 
-        Dividing the shrinkage reward by this — rather than by the full reward std —
+        Dividing the SNR-scaling reward by this — rather than by the full reward std —
         normalizes only the per-rollout noise and leaves the gap magnitude intact, so
-        |advantage| ~ |shrunk gap| (comparable scale to grpo's unit advantages).
+        |advantage| ~ |SNR-scaled gap| (comparable scale to grpo's unit advantages).
         """
         return (p * (1.0 - p) + var_floor) ** 0.5
 
@@ -618,21 +617,21 @@ class RLTrainer:
             cued_var = sum(RLTrainer._binom_var(rate, 1, pseudocount) for rate in p_hat.values()) / (k * k)
         return (cued_var + RLTrainer._binom_var(p_ref, n_ref, pseudocount)) ** 0.5
 
-    def _shrink_gap(self, d: float, se: float) -> float:
-        """Shrink an empirical gap toward 0 by its sampling SNR = (d/se)^2.
+    def _snr_scale_gap(self, d: float, se: float) -> float:
+        """Scale an empirical gap toward 0 by its sampling SNR = (d/se)^2.
 
         soft: d * snr / (snr + z^2)     — smooth, half-weight at |d| = z·SE
         hard: d * max(0, 1 - z^2/snr)   — positive-part gate, zero below |d| = z·SE
 
-        Larger sampling budget → smaller SE → less shrinkage (you trust smaller gaps).
+        Larger sampling budget → smaller SE → less SNR scaling (you trust smaller gaps).
         """
         if d == 0.0:
             return 0.0
         if se <= 0.0:
             return d
         snr = (d * d) / (se * se)
-        z2 = self.config.shrinkage_z ** 2
-        if self.config.shrinkage_mode == "hard":
+        z2 = self.config.snr_z ** 2
+        if self.config.snr_mode == "hard":
             factor = max(0.0, 1.0 - z2 / snr)
         else:
             factor = snr / (snr + z2)
@@ -758,7 +757,7 @@ class RLTrainer:
         or None if the batch should be skipped (empty/zero advantages).
         """
         anchor_weight = self.config.anchor_weight
-        use_shrinkage = self.config.advantage_estimator == "shrinkage"
+        use_snr = self.config.advantage_estimator == "snr_scaling"
         use_matched = self.config.advantage_estimator == "matched_pair"
 
         # Consistency: training perturbation rollouts
@@ -768,12 +767,12 @@ class RLTrainer:
             gaps = None
             baseline = None        # matched_pair: centre the score on p_ref, not per-cue p_hat
             div_p = None           # matched_pair: per-rollout trait-std argument (pooled rate)
-            if use_shrinkage:
+            if use_snr:
                 gaps = {}
                 for pert, rate in item.p_hat.items():
                     raw = rate - item.p_ref
                     se = self._gap_se(rate, item.p_hat_counts.get(pert, 0), item.p_ref, item.n_ref_parsed)
-                    gaps[pert] = self._shrink_gap(raw, se)
+                    gaps[pert] = self._snr_scale_gap(raw, se)
                     raw_gap_abs += abs(raw); shrunk_gap_abs += abs(gaps[pert]); gap_n += 1
             elif use_matched and item.p_hat:
                 # Pool the cued rate across the whole cue family into ONE gap vs p_ref, and
@@ -789,7 +788,7 @@ class RLTrainer:
                 # between-cue-weighted within-cue variance, NOT one pooled binomial over
                 # n_pool (which would over-shrink by counting cue heterogeneity as noise).
                 se = self._matched_pair_gap_se(item.p_hat, item.p_hat_counts, item.p_ref, item.n_ref_parsed)
-                g = self._shrink_gap(raw, se)  # SE taper ON by default (shrinkage_z=2.0); set shrinkage_z=0 for the faithful pooled gap
+                g = self._snr_scale_gap(raw, se)  # SE taper ON by default (snr_z=2.0); set snr_z=0 for the faithful pooled gap
                 gaps = {pert: g for pert in item.p_hat}
                 baseline = item.p_ref
                 div_p = p_pool
@@ -807,14 +806,14 @@ class RLTrainer:
         if anchor_weight > 0:
             for item in batch_items:
                 anchor_gap = None
-                if (use_shrinkage or use_matched) and item.p_ref_init is not None:
+                if (use_snr or use_matched) and item.p_ref_init is not None:
                     raw = item.p_ref - item.p_ref_init
                     # p_ref_init was sampled with its OWN parsed count (step-0 policy or the
                     # anchor model), not this step's n_ref_parsed; use the tracked count and
                     # fall back to the configured budget when unavailable.
                     n_init = item.n_ref_init_parsed or self.config.reference_rate.n_rollouts
                     se = self._gap_se(item.p_ref, item.n_ref_parsed, item.p_ref_init, n_init)
-                    anchor_gap = self._shrink_gap(raw, se)
+                    anchor_gap = self._snr_scale_gap(raw, se)
                 rewards = self.reward_function.compute_anchor_rewards(
                     item.anchor_rollouts, item.p_ref, item.p_ref_init, gap=anchor_gap)
                 anchor_rewards.extend(rewards)
@@ -823,10 +822,10 @@ class RLTrainer:
                     anchor_div.append(self._trait_std(item.p_ref))
 
         # Form advantages. grpo_normalized: standardize each population to unit variance
-        # (drops gap magnitude). shrinkage / matched_pair: keep the (pooled) gap magnitude,
+        # (drops gap magnitude). snr_scaling / matched_pair: keep the (pooled) gap magnitude,
         # standardize only the per-rollout Bernoulli noise by trait std.
-        if use_shrinkage or use_matched:
-            if self.config.shrinkage_normalizer == "none":
+        if use_snr or use_matched:
+            if self.config.snr_normalizer == "none":
                 consistency_adv = list(consistency_rewards)
                 anchor_adv = list(anchor_rewards)
             else:
@@ -838,11 +837,11 @@ class RLTrainer:
         consistency_adv = [a * (1 - anchor_weight) for a in consistency_adv]
         anchor_adv = [a * anchor_weight for a in anchor_adv]
 
-        self._shrink_metrics = (
+        self._snr_metrics = (
             {"train/gap_raw_abs_mean": raw_gap_abs / gap_n,
-             "train/gap_shrunk_abs_mean": shrunk_gap_abs / gap_n,
-             "train/gap_shrink_factor": (shrunk_gap_abs / raw_gap_abs) if raw_gap_abs > 1e-9 else 0.0}
-            if (use_shrinkage or use_matched) and gap_n > 0 else {}
+             "train/gap_snr_scaled_abs_mean": shrunk_gap_abs / gap_n,
+             "train/gap_snr_scale_factor": (shrunk_gap_abs / raw_gap_abs) if raw_gap_abs > 1e-9 else 0.0}
+            if (use_snr or use_matched) and gap_n > 0 else {}
         )
 
         all_rewards = consistency_rewards + anchor_rewards
@@ -1376,7 +1375,7 @@ class RLTrainer:
             step_metrics[f"train/reward_pert{pert_idx}_trait{trait_key}_count"] = len(rewards)
 
         step_metrics.update(kl_sample_train_metrics)
-        step_metrics.update(self._shrink_metrics)
+        step_metrics.update(self._snr_metrics)
         for k, v in kl_penalty_metrics.items():
             step_metrics[f"train/{k}"] = v
 

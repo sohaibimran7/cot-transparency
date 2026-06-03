@@ -1,9 +1,9 @@
-"""Paper-style figure for the shrinkage RLCT experiment.
+"""Paper-style figure for the SNR-scaling RLCT experiment.
 
-Eval results from logs/shrinkage_exp (Llama-3.1-8B, cot, TruthfulQA, limit 200,
+Eval results from logs/snr_scaling_exp (Llama-3.1-8B, cot, TruthfulQA, limit 200,
 5 biases; trained on MMLU suggested_answer). BIR numbers are computed LIVE from the
-.eval logs via extract_bir3.compute_shrinkage_bir() — net population BIR
-(mean biased - mean unbiased, per-question matched). Requires logs/shrinkage_exp present.
+.eval logs via extract_bir3.compute_snr_scaling_bir() — net population BIR
+(mean biased - mean unbiased, per-question matched). Requires logs/snr_scaling_exp present.
 See RESULTS.md for provenance.
 """
 import sys
@@ -17,21 +17,21 @@ import numpy as np
 # extract_bir3 is a sibling script; put its dir on the path so the import resolves
 # regardless of the caller's cwd / invocation style.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from extract_bir3 import BIASES, compute_shrinkage_bir, heldout_avg
+from extract_bir3 import BIASES, compute_snr_scaling_bir, heldout_avg
 
-OUT = Path("sycophancy_eval_inspect/plots/shrinkage_exp")
+OUT = Path("sycophancy_eval_inspect/plots/snr_scaling_exp")
 OUT.mkdir(parents=True, exist_ok=True)
 
-models = ["Base", "GRPO", "Shrink", "Shrink+Pop"]
-colors = {"Base": "#999999", "GRPO": "#ff7f0e", "Shrink": "#1f77b4", "Shrink+Pop": "#2ca02c"}
+models = ["Base", "GRPO", "SNR", "SNR+Pop"]
+colors = {"Base": "#999999", "GRPO": "#ff7f0e", "SNR": "#1f77b4", "SNR+Pop": "#2ca02c"}
 mc = [colors[m] for m in models]
 
 # --- BIR by bias type (trained: Sugg. Answer; rest held-out) ---
 # Single source of truth: computed from .eval logs via the same functions the
 # extract_bir3 table prints (incl. heldout_avg), so figure and table can never disagree.
 biases = ["Sugg.\nAnswer*", "Wrong\nFS", "Argument", "Fact", "Squares", "Held-out\nAvg"]
-_bir, _ub = compute_shrinkage_bir()
-_SHORT = {"Base": "base", "GRPO": "grpo", "Shrink": "shrink", "Shrink+Pop": "shrink_pop"}
+_bir, _ub = compute_snr_scaling_bir()
+_SHORT = {"Base": "base", "GRPO": "grpo", "SNR": "snr", "SNR+Pop": "snr_pop"}
 
 
 def _row(short):
@@ -45,8 +45,8 @@ def _row(short):
 
 bir = {label: _row(short) for label, short in _SHORT.items()}
 # --- capability / stability ---
-accuracy = {"Base": 0.438, "GRPO": 0.288, "Shrink": 0.449, "Shrink+Pop": 0.457}
-kl_base  = {"Base": 0.0,   "GRPO": 0.101, "Shrink": 0.020, "Shrink+Pop": 0.0078}
+accuracy = {"Base": 0.438, "GRPO": 0.288, "SNR": 0.449, "SNR+Pop": 0.457}
+kl_base  = {"Base": 0.0,   "GRPO": 0.101, "SNR": 0.020, "SNR+Pop": 0.0078}
 
 fig, (axB, axA, axK) = plt.subplots(1, 3, figsize=(15, 4.6), gridspec_kw={"width_ratios": [3, 1.25, 1.25]})
 
@@ -83,9 +83,9 @@ for i, m in enumerate(models):
     axK.text(i, kl_base[m] + 0.002, f"{kl_base[m]:.3f}", ha="center", fontsize=8)
 axK.grid(axis="y", alpha=0.25)
 
-fig.suptitle("RLCT advantage estimator: GRPO (sign-only) vs. SNR-shrinkage  —  Llama-3.1-8B, suggested_answer→TruthfulQA",
+fig.suptitle("RLCT advantage estimator: GRPO (sign-only) vs. SNR-scaling  —  Llama-3.1-8B, suggested_answer→TruthfulQA",
              fontsize=12, y=1.02)
 fig.tight_layout()
 for ext in ("png", "pdf"):
-    fig.savefig(OUT / f"shrinkage_summary.{ext}", dpi=150, bbox_inches="tight")
-print("wrote", OUT / "shrinkage_summary.png")
+    fig.savefig(OUT / f"snr_scaling_summary.{ext}", dpi=150, bbox_inches="tight")
+print("wrote", OUT / "snr_scaling_summary.png")

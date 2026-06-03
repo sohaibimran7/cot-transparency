@@ -1,4 +1,4 @@
-# Paper-regime 3-model comparison — TRAIT_STD shrinkage (normalizer=trait_std, z=2)
+# Paper-regime 3-model comparison — TRAIT_STD SNR-scaling (normalizer=trait_std, z=2)
 # Identical to paper_grpo.yaml except advantage_estimator + LR.
 # A = -shrink_z(gap)*(T-p)/sqrt(p(1-p)+floor); keeps gap magnitude, tapers within noise.
 # LR: __LR_PLACEHOLDER__ (see approval message)
@@ -21,10 +21,10 @@ training:
     kl_coef: 0.05
     anchor_weight: 0.0
     loss_fn: ppo
-    advantage_estimator: shrinkage
-    shrinkage_normalizer: trait_std
-    shrinkage_mode: soft
-    shrinkage_z: 2.0
+    advantage_estimator: snr_scaling
+    snr_normalizer: trait_std
+    snr_mode: soft
+    snr_z: 2.0
     n_ref_rollouts: 128
     n_train_rollouts: 128
     n_consistency_rollouts: 128

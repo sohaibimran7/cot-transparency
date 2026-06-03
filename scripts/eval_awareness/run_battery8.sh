@@ -12,7 +12,7 @@ IFEVAL="dataset_dumps/eval_awareness/ifeval_train/ifeval.jsonl"
 # Training trait grading = gpt-5.4-nano (high-volume, validated == mini on clear-cut judgments). Evals stay mini.
 COMMON="--model $QWEN --data $F6 --limit 100 --n-epochs $EPOCHS --n-ref-rollouts 32 --n-train-rollouts 32 --n-consistency-rollouts 24 --n-helpfulness-rollouts 12 --max-new-tokens 1024 --checkpoint-every 50 -y --grader-model gpt-5.4-nano --experiment-name evalaware_rlct"
 IFANCHOR="--helpfulness-weight 0.5 --helpfulness-trait ifeval --helpfulness-mode anchor --helpfulness-data $IFEVAL --helpfulness-limit 64"
-SHRINK="--advantage-estimator shrinkage --shrinkage-mode soft --shrinkage-z 2.0"
+SNR="--advantage-estimator snr_scaling --snr-mode soft --snr-z 2.0"
 RES=/tmp/battery8_results.txt
 echo "battery8 start $(date) EPOCHS=$EPOCHS (=$((EPOCHS*100)) steps)" > $RES
 
@@ -42,17 +42,17 @@ batch() {  # launch all args in parallel, wait for all
 
 # Batch A — direction axis
 batch \
-  "qwen-b0::--anchor-weight 0.5 $SHRINK --kl-coef 0.03 $IFANCHOR" \
-  "qwen-sym::--anchor-weight 0.0 $SHRINK --kl-coef 0.03 $IFANCHOR" \
-  "qwen-aw08::--anchor-weight 0.8 $SHRINK --kl-coef 0.03 $IFANCHOR"
+  "qwen-b0::--anchor-weight 0.5 $SNR --kl-coef 0.03 $IFANCHOR" \
+  "qwen-sym::--anchor-weight 0.0 $SNR --kl-coef 0.03 $IFANCHOR" \
+  "qwen-aw08::--anchor-weight 0.8 $SNR --kl-coef 0.03 $IFANCHOR"
 # Batch B — KL axis + GRPO
 batch \
-  "qwen-kl01::--anchor-weight 0.5 $SHRINK --kl-coef 0.01 $IFANCHOR" \
-  "qwen-kl10::--anchor-weight 0.5 $SHRINK --kl-coef 0.1 $IFANCHOR" \
+  "qwen-kl01::--anchor-weight 0.5 $SNR --kl-coef 0.01 $IFANCHOR" \
+  "qwen-kl10::--anchor-weight 0.5 $SNR --kl-coef 0.1 $IFANCHOR" \
   "qwen-grpo::--anchor-weight 0.5 --advantage-estimator grpo_normalized --kl-coef 0.03 $IFANCHOR"
 # Batch C — matched_pair (32-wrapper F6 family, sycophancy-style, pull cued→natural) + anchor ablation.
 # matched_pair overrides rollouts to 2/cue (argparse last-wins over COMMON's 32) and uses no IFEval anchor.
 batch \
   "qwen-f6-matched::--f6-cues 32 --advantage-estimator matched_pair --anchor-weight 0.5 --n-train-rollouts 2 --n-consistency-rollouts 2 --kl-coef 0.03" \
-  "qwen-noanchor::--anchor-weight 0.5 $SHRINK --kl-coef 0.03"
+  "qwen-noanchor::--anchor-weight 0.5 $SNR --kl-coef 0.03"
 echo "=== BATTERY8 DONE $(date) ===" >> $RES

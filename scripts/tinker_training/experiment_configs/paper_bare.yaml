@@ -22,9 +22,9 @@ training:
     kl_coef: 0.05
     anchor_weight: 0.0
     loss_fn: ppo
-    advantage_estimator: shrinkage
-    shrinkage_normalizer: none
-    shrinkage_z: 0.0
+    advantage_estimator: snr_scaling
+    snr_normalizer: none
+    snr_z: 0.0
     n_ref_rollouts: 128
     n_train_rollouts: 128
     n_consistency_rollouts: 128

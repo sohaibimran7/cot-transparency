@@ -1,7 +1,7 @@
 #!/bin/bash
-# Follow-up to battery8. Clean recipe = Deploy 0.5 + shrinkage + KL, NO IFEval anchor (§3b finding).
+# Follow-up to battery8. Clean recipe = Deploy 0.5 + snr_scaling + KL, NO IFEval anchor (§3b finding).
 # Arms:
-#   qwen-const : --lr-schedule constant   → tests "shrinkage ⇒ no LR schedule needed" (user hypothesis)
+#   qwen-const : --lr-schedule constant   → tests "snr_scaling ⇒ no LR schedule needed" (user hypothesis)
 #   qwen-kl01n : KL 0.01  (re-run wifi-killed, now no-IFanchor → comparable to noanchor)
 #   qwen-kl10n : KL 0.1   (re-run wifi-killed, now no-IFanchor)
 # Reference midpoint already done: qwen-noanchor (KL 0.03, linear LR) = +0.190.
@@ -12,7 +12,7 @@ EPOCHS=${EPOCHS:-1}
 QWEN="Qwen/Qwen3-30B-A3B-Instruct-2507"
 F6="dataset_dumps/eval_awareness/eval_cues/evalawarebench_F6.jsonl"
 COMMON="--model $QWEN --data $F6 --limit 100 --n-epochs $EPOCHS --n-ref-rollouts 32 --n-train-rollouts 32 --n-consistency-rollouts 24 --n-helpfulness-rollouts 12 --max-new-tokens 1024 --checkpoint-every 50 -y --grader-model gpt-5.4-nano --experiment-name evalaware_rlct"
-SHRINK="--advantage-estimator shrinkage --shrinkage-mode soft --shrinkage-z 2.0"
+SNR="--advantage-estimator snr_scaling --snr-mode soft --snr-z 2.0"
 RES=/tmp/lrkl_results.txt
 echo "lr-kl batch start $(date) EPOCHS=$EPOCHS" > $RES
 
@@ -32,8 +32,8 @@ run_one() {
 }
 
 echo ">>> BATCH @ $(date +%T): const kl01n kl10n" >> $RES
-run_one "qwen-const" --anchor-weight 0.5 $SHRINK --lr-schedule constant --kl-coef 0.03 &
-run_one "qwen-kl01n" --anchor-weight 0.5 $SHRINK --kl-coef 0.01 &
-run_one "qwen-kl10n" --anchor-weight 0.5 $SHRINK --kl-coef 0.1 &
+run_one "qwen-const" --anchor-weight 0.5 $SNR --lr-schedule constant --kl-coef 0.03 &
+run_one "qwen-kl01n" --anchor-weight 0.5 $SNR --kl-coef 0.01 &
+run_one "qwen-kl10n" --anchor-weight 0.5 $SNR --kl-coef 0.1 &
 wait
 echo "=== LR-KL BATCH DONE $(date) ===" >> $RES

@@ -26,12 +26,17 @@ uv venv                                                        # 1. create the v
 grep -v '^grugstream' requirements.txt | uv pip install -r /dev/stdin  # 2. deps, EXCLUDING grugstream
 uv pip install inspect-ai                                      # 3. inspect-ai is NOT in requirements.txt
 uv run python -c "import nltk; nltk.download('punkt')"         # 4. one-time NLTK data (some formatters)
+uv pip install -e . --no-deps                                  # 5. editable install of this repo (see below)
 ```
 
 - **grugstream**: in `requirements.txt` but must be excluded (step 2) — it fails to
   resolve/build here and nothing in the active Tinker/eval path imports it.
 - **inspect-ai**: the `sycophancy_eval_inspect/` stack needs it, but it's installed
   separately (step 3), not pinned in `requirements.txt`.
+- **editable install** (step 5): makes the first-party packages (`cot_transparency`,
+  `sycophancy_eval_inspect`, `data`, `dataset_dumps`, `scripts`, `tests`) importable from
+  anywhere — new scripts just `from cot_transparency... import ...`, **no `sys.path` hacks**.
+  Configured in `pyproject.toml` (`[project]` + `setuptools.packages.find`, namespaces=true).
 - **`zsh: command not found: conda`** printed before shell commands is harmless (a stale
   conda init in the shell, not from this repo) — ignore it.
 - **API keys**: put credentials in a `.env` at the repo root (loaded via `python-dotenv`):
@@ -50,7 +55,8 @@ uv run python -c "import nltk; nltk.download('punkt')"         # 4. one-time NLT
 
 ## Where things live
 - `cot_transparency/apis/tinker/` — Tinker wrappers: `rl_training.py` (RLCT),
-  `finetune.py` (BCT/SFT), `inference.py` (sampling), `common.py`.
+  `finetune.py` (BCT/SFT), `inference.py` (sampling), `common.py` (shared config +
+  checkpoint save/finalize helpers — both training loops delegate here, don't re-roll).
 - `cot_transparency/eval_awareness/` — eval-awareness cues + LLM judges.
 - `sycophancy_eval_inspect/` — Inspect-AI eval tasks/scorers + analysis. Run as a module
   (`python -m sycophancy_eval_inspect.visualize_results`).
@@ -80,9 +86,6 @@ make check        # black + ruff + pyright via pre-commit (.pre-commit-config.ya
 ```
 Mark live-API / GPU / Tinker tests with `@pytest.mark.{network,gpu,tinker}` so the default
 loop stays fast and offline. Markers are defined in `pyproject.toml`.
-
-## Known issues / backlog
-- Deferred refactors (god functions, checkpoint-save duplication, etc.): **`docs/tech-debt-tracker.md`**.
 
 ## Legacy `stage_one` pipeline (out of date)
 The original `cot_transparency` `stage_one` flow predates the Tinker / eval-awareness

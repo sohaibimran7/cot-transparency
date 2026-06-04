@@ -29,7 +29,6 @@ import sys
 from pathlib import Path
 
 # Add project root to path to allow direct imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Import directly from modules to avoid broken __init__.py chains
 # that try to import from old openai package

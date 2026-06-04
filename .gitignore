@@ -10,6 +10,7 @@ htmlcov
 .coverage*
 *.xml
 *.egg-info
+uv.lock
 .python-version
 .DS_Store
 

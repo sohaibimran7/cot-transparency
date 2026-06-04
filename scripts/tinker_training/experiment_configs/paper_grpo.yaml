@@ -1,0 +1,55 @@
+# Paper-regime 3-model comparison — GRPO (= paper RMCT baseline)
+# Matches RLCT paper appendix: DA_g4 (LogiQA+HellaSwag) train, HLE eval (6 biases),
+# 64 datapoints, N=128 trajectories, batch 4 (16 steps), KL 0.05, anchor 0, LoRA r8,
+# max 20480 tokens, temp 1.0. grad_clip_norm defaults to 1.0 (new behavior; all 3 runs
+# share it, so the 3-way comparison is internally consistent).
+# LR: __LR_PLACEHOLDER__ (see approval message)
+
+name: paper-grpo
+model: meta-llama/Llama-3.1-8B-Instruct
+
+training:
+  method: rl
+  include_control: false
+  args:
+    experiment_name: rlct_paper
+    run_name: llama-rmct-da-grpo
+    bias_types: distractor_argument_g4
+    datasets: "logiqa,hellaswag"
+    n_datapoints: 64
+    lr: 2.86e-4
+    lr_schedule: constant  # pinned: RL default flipped to linear (PR #31); preserve original constant-LR run
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.0
+    loss_fn: ppo
+    advantage_estimator: grpo_normalized
+    n_ref_rollouts: 128
+    n_train_rollouts: 128
+    n_consistency_rollouts: 128
+    temperature: 1.0
+    max_new_tokens: 20480
+    batch_size: 4
+    refresh_every: 1
+    checkpoint_every: 16
+
+evaluation:
+  include_base: true
+  args:
+    bias_types: "distractor_argument_g4,suggested_answer,distractor_fact,wrong_few_shot,spurious_few_shot_squares,post_hoc"
+    datasets: hle
+    prompt_styles: cot
+    limit: 200
+    log_dir: sycophancy_eval_inspect/logs/paper_regime
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+
+viz_registration:
+  dir_suffix: rmct-da-grpo
+  display_name: "RMCT DA (GRPO)"
+  color: "#ff7f0e"
+  training_biases: [distractor_argument_g4]

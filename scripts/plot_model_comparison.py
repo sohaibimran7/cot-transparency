@@ -11,18 +11,17 @@ Two BIR aggregation methods:
 For `are_you_sure`: both methods return biased_bmr (switching rate, paper convention).
 """
 import argparse
-import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sycophancy_eval_inspect.visualize_results import (
     BIAS_DISPLAY_NAMES,
     aggregate_samples,
+    collapse_to_population_bir,
     compute_per_question_bir,
 )
 
@@ -204,53 +203,6 @@ def print_bir_tables(bir_df, metric="bir"):
         print("".join(parts))
 
 
-def collapse_to_population_bir(bir_df: pd.DataFrame) -> pd.DataFrame:
-    """Collapse per-question rows into population-level BIR = |mean(biased) - mean(unbiased)|.
-
-    Returns a DataFrame with one row per (model, training_type, model_family,
-    prompt_style, dataset, bias_type, seed) group. The `bir` column becomes the
-    population-level gap; `n_valid` reflects the number of question pairs used.
-    For are_you_sure, bir = mean(biased_bmr) (switching rate, paper convention).
-
-    Per-question CI underestimates the switching variance at the population level,
-    so we also emit a Wald SE on the gap for downstream error bars.
-    """
-    group_cols = [
-        "model", "training_type", "model_family", "prompt_style",
-        "dataset", "bias_type", "seed",
-    ]
-    rows = []
-    for key, g in bir_df.groupby(group_cols, dropna=False):
-        bt = key[group_cols.index("bias_type")]
-        biased_valid = g["biased_bmr"].dropna()
-        unbiased_valid = g["unbiased_bmr"].dropna()
-        if len(biased_valid) == 0:
-            continue
-
-        if bt == "are_you_sure":
-            gap = float(biased_valid.mean())
-            n = int(len(biased_valid))
-            var = biased_valid.var(ddof=1) if n > 1 else 0.0
-            se = float(np.sqrt(var / n)) if n > 1 else 0.0
-        else:
-            if len(unbiased_valid) == 0:
-                continue
-            m_b = float(biased_valid.mean())
-            m_u = float(unbiased_valid.mean())
-            gap = abs(m_b - m_u)
-            nb, nu = len(biased_valid), len(unbiased_valid)
-            vb = biased_valid.var(ddof=1) if nb > 1 else 0.0
-            vu = unbiased_valid.var(ddof=1) if nu > 1 else 0.0
-            se = float(np.sqrt(vb / nb + vu / nu))
-            n = min(nb, nu)
-
-        rec = {col: val for col, val in zip(group_cols, key)}
-        rec.update({"bir": gap, "bir_se": se, "n_valid": n})
-        rows.append(rec)
-
-    return pd.DataFrame(rows)
-
-
 def collapse_to_pro_bias_excess(
     bir_df: pd.DataFrame,
     second_unbiased: dict | None = None,
@@ -427,42 +379,17 @@ def compute_noise_floor(noise_dir: str):
     For use with apply_noise_floor, which joins against the first run in bir_df.
     """
     from collections import defaultdict
-    from inspect_ai.log import read_eval_log
-    from sycophancy_eval_inspect.visualize_results import (
-        _get_model_family_from_dir,
-        _iter_model_dirs,
-    )
+
+    from sycophancy_eval_inspect.eval_log_loader import extract_bias_metrics, iter_eval_samples
 
     second_unbiased = defaultdict(dict)  # (model_family, prompt_style, dataset) -> {hash: bmr}
-    for model_dir, dir_name in _iter_model_dirs([noise_dir]):
-        model_family = _get_model_family_from_dir(dir_name)
-        if model_family is None:
+    for ctx in iter_eval_samples([noise_dir]):
+        if ctx.model_family is None or ctx.variant != "unbiased":
             continue
-        for log_file in sorted(model_dir.glob("*.eval")):
-            try:
-                log = read_eval_log(str(log_file))
-            except Exception:
-                continue
-            if log.eval.task_args.get("variant") != "unbiased":
-                continue
-            prompt_style = log.eval.task_args.get("prompt_style", "no_cot")
-            dataset_path = log.eval.task_args.get("dataset_path", "")
-            bias_type = Path(dataset_path).parent.name
-            dataset = Path(dataset_path).stem.replace(f"_{bias_type}", "")
-
-            for sample in log.samples or []:
-                if not sample.scores:
-                    continue
-                score = sample.scores.get("mcq_bias_scorer")
-                if not score or not score.value:
-                    continue
-                strict_parsed = score.value.get("answer_parsed")
-                if strict_parsed is None:
-                    strict_parsed = 1.0 if (score.metadata or {}).get("parse_success", True) else 0.0
-                if not strict_parsed:
-                    continue
-                bmr = score.value.get("matches_bias", score.value.get("bias_match_rate", np.nan))
-                second_unbiased[(model_family, prompt_style, dataset)][sample.id] = bmr
+        metrics = extract_bias_metrics(ctx.sample)
+        if metrics is None or not metrics.strict_parsed:
+            continue
+        second_unbiased[(ctx.model_family, ctx.prompt_style, ctx.dataset)][ctx.sample.id] = metrics.bmr
 
     return second_unbiased
 
@@ -903,6 +830,11 @@ def main():
     ]
     print(f"Loading eval data (bir_method={args.bir_method})...")
     bir_df = compute_per_question_bir(log_dirs)
+    # This script standardizes on a `bir` working column. The canonical per-question
+    # metric is `total_bsr` (the redundant `bir`/`lenient_bir` aliases were removed from
+    # compute_per_question_bir), so map it to the working name here. The population path
+    # below produces its own `bir` column via collapse_to_population_bir.
+    bir_df = bir_df.rename(columns={"total_bsr": "bir", "lenient_total_bsr": "lenient_bir"})
     print(f"Loaded {len(bir_df)} rows, models: {bir_df['model_family'].unique()}, "
           f"datasets: {bir_df['dataset'].unique()}")
 

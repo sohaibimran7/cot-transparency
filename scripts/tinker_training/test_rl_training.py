@@ -11,12 +11,10 @@ Usage:
 import asyncio
 import argparse
 import json
-import sys
 from pathlib import Path
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 # Load environment variables from .env
 from dotenv import load_dotenv

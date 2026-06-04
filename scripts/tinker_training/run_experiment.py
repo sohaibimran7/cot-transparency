@@ -265,103 +265,6 @@ def run_stage_command(
     return proc.returncode, "".join(captured)
 
 
-def run_parallel_commands(
-    commands: list[tuple[list[str], str]],
-    stage_name: str,
-    config: dict,
-    dry_run: bool = False,
-) -> list[tuple[int, str]]:
-    """Run multiple commands in parallel with labeled output.
-
-    Args:
-        commands: List of (cmd, label) tuples.
-        stage_name: Stage name for headers and log files.
-        config: Experiment config (for log directory).
-        dry_run: Print commands without executing.
-
-    Returns:
-        List of (return_code, captured_output) per command.
-    """
-    # Print all commands
-    for cmd, label in commands:
-        cmd_str = " \\\n    ".join(cmd)
-        _print(f"\n{'='*60}")
-        _print(f"  {stage_name} [{label}]")
-        _print(f"{'='*60}")
-        _print(f"Command:\n  {cmd_str}\n")
-
-    if dry_run:
-        for _, label in commands:
-            _print(f"  [dry-run] Skipping {label}")
-        return [(0, "") for _ in commands]
-
-    if len(commands) == 1:
-        # Single command — run without label prefix for cleaner output
-        cmd, label = commands[0]
-        log_dir = state_dir(config) / "logs"
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_file = log_dir / f"{stage_name}_{label}.log"
-
-        captured: list[str] = []
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, cwd=str(_PROJECT_ROOT), env=_subprocess_env(),
-        )
-        with open(log_file, "w") as lf:
-            for line in proc.stdout:
-                _write(line)
-                lf.write(line)
-                captured.append(line)
-        proc.wait()
-        return [(proc.returncode, "".join(captured))]
-
-    # Multiple commands — run in parallel with label prefixes
-    log_dir = state_dir(config) / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    procs = []
-    captures: list[list[str]] = []
-    log_files = []
-    for cmd, label in commands:
-        lf = open(log_dir / f"{stage_name}_{label}.log", "w")
-        log_files.append(lf)
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, cwd=str(_PROJECT_ROOT), env=_subprocess_env(),
-        )
-        procs.append(proc)
-        captures.append([])
-
-    # Capture parent thread's prefix so child reader threads inherit it
-    parent_prefix = getattr(_thread_local, "prefix", "")
-
-    def _reader(proc, label, capture, log_file):
-        _thread_local.prefix = parent_prefix
-        for line in proc.stdout:
-            tagged = f"[{label}] {line}"
-            _write(tagged)
-            log_file.write(line)
-            capture.append(line)
-
-    threads = []
-    for i, (proc, (_, label)) in enumerate(zip(procs, commands)):
-        t = threading.Thread(target=_reader, args=(proc, label, captures[i], log_files[i]))
-        t.daemon = True
-        t.start()
-        threads.append(t)
-
-    for t in threads:
-        t.join()
-
-    results = []
-    for i, proc in enumerate(procs):
-        proc.wait()
-        log_files[i].close()
-        results.append((proc.returncode, "".join(captures[i])))
-
-    return results
-
-
 # ---------------------------------------------------------------------------
 # Stage: data_generation
 # ---------------------------------------------------------------------------
@@ -635,6 +538,11 @@ def build_training_cmd(
         if "datasets" in args:
             ds = args["datasets"]
             cmd += ["--datasets", ds if isinstance(ds, str) else ",".join(ds)]
+        # Comma-join a YAML list like bias_types/datasets; str(list) would produce a Python
+        # repr ("['a', 'b']") that resolve_distractor_cues mis-splits into bogus cue keys.
+        if "distractor_cues" in args:
+            dc = args["distractor_cues"]
+            cmd += ["--distractor-cues", dc if isinstance(dc, str) else ",".join(dc)]
 
         # Hyperparams
         for key in (
@@ -644,6 +552,7 @@ def build_training_cmd(
             "n_anchor_rollouts", "temperature", "max_new_tokens",
             "n_epochs", "batch_size", "gradient_accumulation_steps",
             "refresh_every", "checkpoint_every", "prompt_style",
+            "advantage_estimator", "snr_mode", "snr_z", "snr_normalizer",
         ):
             if key in args:
                 cmd += [f"--{key.replace('_', '-')}", str(args[key])]
@@ -669,32 +578,6 @@ def build_training_cmd(
         raise ValueError(f"Unknown training method: {method}")
 
     return cmd
-
-
-def build_training_cmds(config: dict, st: dict) -> list[tuple[list[str], str]]:
-    """Build training commands. Returns list of (cmd, label) tuples.
-
-    Supports include_control (parallel main + control), control_only, and
-    multi-seed (training.seeds list). Seeds and control are crossed:
-    e.g. seeds=[0,42] + include_control produces 4 parallel runs.
-    For data_mode=sequential, returns commands for each data step (run serially by caller).
-    """
-    tr = config.get("training", {})
-    control_only = tr.get("control_only", False)
-    include_control = tr.get("include_control", False) or control_only
-    seeds = tr.get("seeds")  # None or list[int]
-
-    cmds = []
-    seed_list = seeds if seeds else [None]
-
-    for seed in seed_list:
-        if not control_only:
-            label = f"main-s{seed}" if seed is not None else "main"
-            cmds.append((build_training_cmd(config, st, is_control=False, seed=seed), label))
-        if include_control:
-            label = f"control-s{seed}" if seed is not None else "control"
-            cmds.append((build_training_cmd(config, st, is_control=True, seed=seed), label))
-    return cmds
 
 
 def build_sequential_training_cmds(
@@ -821,8 +704,8 @@ def _build_single_eval_cmd(
     if "max_tasks" in args:
         cmd += ["--max-tasks", str(args["max_tasks"])]
     # Hash file: either explicit (args["hash_file"]) or default to common_hashes.json
-    # in the log dir. Actual precomputation happens in build_eval_cmds before the
-    # eval commands are handed off; here we just reference the expected path.
+    # in the log dir. Actual precomputation happens in _precompute_hash_file_for_eval
+    # before the eval commands are handed off; here we just reference the expected path.
     if "hash_file" in args:
         cmd += ["--hash-file", str(args["hash_file"])]
     else:
@@ -874,137 +757,9 @@ def _precompute_hash_file_for_eval(args: dict) -> None:
     subprocess.run(cmd, check=True)
 
 
-def build_eval_cmds(
-    config: dict, st: dict, checkpoint_override: str | None,
-) -> list[tuple[list[str], str]]:
-    """Build evaluation commands. Returns list of (cmd, label) tuples.
-
-    Supports include_base (also eval base model) and base_only.
-    Automatically includes control checkpoint eval if one was trained.
-    """
-    ev = config.get("evaluation", {})
-    tr = config.get("training", {})
-    args = ev.get("args", {})
-    base_only = ev.get("base_only", False)
-    include_base = ev.get("include_base", False) or base_only
-
-    # Precompute the hash file once so parallel eval runs can all load it
-    # without racing to create it.
-    _precompute_hash_file_for_eval(args)
-
-    cmds = []
-
-    # Base model eval (no checkpoint). When training.seeds is set, run the base
-    # eval once per seed with a matching sampling seed so variance across base is
-    # comparable to variance across trained runs.
-    if include_base:
-        base_args = _resolve_base_eval_args(ev)
-        if base_args is not args:
-            _precompute_hash_file_for_eval(base_args)
-
-        model_prefix = get_model_prefix(config["model"])
-        base_seeds = tr.get("seeds")
-        if base_seeds:
-            for seed in base_seeds:
-                base_name = f"{model_prefix}-base-s{seed}"
-                cmd = _build_single_eval_cmd(
-                    config, base_args, checkpoint=None, eval_name=base_name, seed=seed,
-                )
-                cmds.append((cmd, f"base-s{seed}"))
-        else:
-            base_name = f"{model_prefix}-base"
-            cmd = _build_single_eval_cmd(config, base_args, checkpoint=None, eval_name=base_name)
-            cmds.append((cmd, "base"))
-
-    if not base_only:
-        training_outputs = stage_outputs(st, "training")
-        seeds = tr.get("seeds")
-
-        if seeds and not checkpoint_override:
-            # Multi-seed: eval each seed's checkpoint
-            for seed in seeds:
-                main_key = f"main-s{seed}_checkpoint"
-                ckpt = training_outputs.get(main_key)
-                if ckpt:
-                    cmd = _build_single_eval_cmd(
-                        config, args, checkpoint=ckpt,
-                        eval_name=_eval_name(config, suffix=f"-s{seed}"),
-                    )
-                    cmds.append((cmd, f"main-s{seed}"))
-
-                ctrl_key = f"control-s{seed}_checkpoint"
-                ctrl_ckpt = training_outputs.get(ctrl_key)
-                if ctrl_ckpt:
-                    cmd = _build_single_eval_cmd(
-                        config, args, checkpoint=ctrl_ckpt,
-                        eval_name=_eval_name(config, suffix=f"-s{seed}-ctrl"),
-                    )
-                    cmds.append((cmd, f"control-s{seed}"))
-        else:
-            # Single-seed: existing logic
-            checkpoint = (
-                checkpoint_override
-                or training_outputs.get("checkpoint")
-                or tr.get("checkpoint")
-            )
-            if checkpoint:
-                cmd = _build_single_eval_cmd(
-                    config, args, checkpoint=checkpoint, eval_name=_eval_name(config),
-                )
-                cmds.append((cmd, "main"))
-
-            # Control checkpoint (auto-detected from training outputs)
-            control_checkpoint = training_outputs.get("control_checkpoint")
-            if control_checkpoint:
-                cmd = _build_single_eval_cmd(
-                    config, args, checkpoint=control_checkpoint,
-                    eval_name=_eval_name(config, suffix="-ctrl"),
-                )
-                cmds.append((cmd, "control"))
-
-    return cmds
-
-
 # ---------------------------------------------------------------------------
 # Stage: analysis
 # ---------------------------------------------------------------------------
-
-def build_analysis_cmd(config: dict, st: dict) -> list[str]:
-    """Build the command for analysis/visualization."""
-    an = config.get("analysis", {})
-    args = an.get("args", {})
-
-    cmd = [sys.executable, "-m", "sycophancy_eval_inspect.visualize_results"]
-
-    # Resolve log dir
-    ev_args = config.get("evaluation", {}).get("args", {})
-    log_dir = args.get("log_dir") or ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
-    cmd += ["--log-dir", str(log_dir)]
-
-    if args.get("bir"):
-        cmd.append("--bir")
-    if args.get("ba"):
-        cmd.append("--ba")
-    if args.get("plot"):
-        cmd.append("--plot")
-    if "output_dir" in args:
-        cmd += ["--output-dir", str(args["output_dir"])]
-    if "model" in args:
-        models = args["model"] if isinstance(args["model"], list) else [args["model"]]
-        for m in models:
-            cmd += ["--model", m]
-    if "prompt_style" in args:
-        styles = args["prompt_style"] if isinstance(args["prompt_style"], list) else [args["prompt_style"]]
-        for s in styles:
-            cmd += ["--prompt-style", s]
-    if args.get("summary"):
-        cmd.append("--summary")
-    if args.get("common_questions"):
-        cmd.append("--common-questions")
-    if args.get("variance_across"):
-        cmd += ["--variance-across", str(args["variance_across"])]
-
-    return cmd
 
 
 # ---------------------------------------------------------------------------

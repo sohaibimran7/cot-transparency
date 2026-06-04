@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 import tinker
 from tinker import types
 from tinker_cookbook import renderers, model_info
+from tinker_cookbook.renderers.base import get_text_content
 from tinker_cookbook.tokenizer_utils import get_tokenizer
 from pydantic import BaseModel
 
@@ -25,6 +26,40 @@ def get_renderer_for_model(model: str):
     tokenizer = get_tokenizer(model)
     renderer_name = model_info.get_recommended_renderer_name(model)
     return renderers.get_renderer(renderer_name, tokenizer), tokenizer
+
+
+def parse_response_text(parsed_msg, tokenizer, tokens) -> str:
+    """Extract assistant text from a parsed response message.
+
+    gpt-oss returns structured list content (channel-tagged Thinking/Text parts);
+    Llama returns a plain string. ``get_text_content`` handles both (concatenating
+    the Text parts, stripping thinking). A plain ``parsed_msg["content"]`` returns
+    the raw list for gpt-oss, so any downstream string op (``.strip()``, regex,
+    JSON) breaks. Falls back to decoding raw tokens when parsing fails.
+    """
+    if not parsed_msg:
+        return tokenizer.decode(tokens)
+    try:
+        return get_text_content(parsed_msg) or ""
+    except Exception:  # noqa: BLE001
+        c = parsed_msg.get("content", "")
+        return c if isinstance(c, str) else tokenizer.decode(tokens)
+
+
+def decode_response(renderer, tokenizer, tokens) -> str:
+    """Robustly turn sampled tokens into assistant text.
+
+    Wraps BOTH ``renderer.parse_response`` (which raises RendererError for gpt-oss when a
+    sequence carries >1 stop token) and ``get_text_content`` (which can KeyError on
+    malformed structured content) so one bad sequence degrades to the decoded tokens
+    instead of aborting the caller. Prefer this over a bare ``parse_response`` +
+    ``parse_response_text`` pair, which leaves the parse call itself unguarded.
+    """
+    try:
+        parsed_msg, _ = renderer.parse_response(tokens)
+    except Exception:  # noqa: BLE001
+        return tokenizer.decode(tokens)
+    return parse_response_text(parsed_msg, tokenizer, tokens)
 
 
 class SamplingConfig(BaseModel):
@@ -133,9 +168,9 @@ class TinkerSamplingClient:
         samples = []
         for seq in result.sequences:
             tokens = list(seq.tokens)
-            # Use renderer to parse response
-            parsed_msg, _ = self.renderer.parse_response(tokens)
-            text = parsed_msg.get("content", "") if parsed_msg else self.tokenizer.decode(tokens)
+            # Robust parse: decode_response guards the parse_response call itself, which
+            # can raise RendererError for gpt-oss; a bare parse_response here would crash.
+            text = decode_response(self.renderer, self.tokenizer, tokens)
             logprobs = list(seq.logprobs) if include_logprobs and seq.logprobs else None
 
             samples.append(SamplingResult(
@@ -276,11 +311,6 @@ def sample_from_tinker(
 
 
 if __name__ == "__main__":
-    # Add project root to path for direct execution
-    import sys
-    from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
     # Example usage
     from cot_transparency.data_models.messages import StrictChatMessage, StrictMessageRole
 

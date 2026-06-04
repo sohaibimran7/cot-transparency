@@ -119,6 +119,36 @@
       "edgecolor": "black",
       "training_biases": []
     },
+    "da-matched-32x2": {
+      "training_type": "da_matched_32x2",
+      "display_name": "Matched 32x2",
+      "color": "#6a51a3",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument"
+      ]
+    },
+    "da-grpo-baseline": {
+      "training_type": "da_grpo_baseline",
+      "display_name": "GRPO DA baseline",
+      "color": "#d94801",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument"
+      ]
+    },
+    "da-grpo-tags": {
+      "training_type": "da_grpo_tags",
+      "display_name": "GRPO DA (tags)",
+      "color": "#d94801",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument"
+      ]
+    },
     "rlct-wfs-bs1": {
       "training_type": "rlct_wfs_bs1",
       "display_name": "RLCT WFS bs1",
@@ -613,6 +643,46 @@
       "training_type": "bct_nd5000",
       "display_name": "BCT nd=5000",
       "color": "#984ea3",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-sa-bare-z0-v2": {
+      "training_type": "rlct_sa_bare_z0_v2",
+      "display_name": "RLCT SA (Bare z0)",
+      "color": "#08519c",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-sa-grpo": {
+      "training_type": "rlct_sa_grpo",
+      "display_name": "GRPO",
+      "color": "#ff7f0e",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-sa-snr": {
+      "training_type": "rlct_sa_snr",
+      "display_name": "SNR",
+      "color": "#1f77b4",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-sa-snr-pop": {
+      "training_type": "rlct_sa_snr_pop",
+      "display_name": "SNR+Pop",
+      "color": "#2ca02c",
       "hatch": "",
       "edgecolor": "black",
       "training_biases": [

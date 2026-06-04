@@ -1,3 +1,29 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cot-transparency"
+version = "0.1.0"
+description = "Anti-sycophancy / eval-awareness consistency training + sycophancy eval stack"
+requires-python = ">=3.11"
+# Deps stay in requirements.txt; this block just enables `uv pip install -e .` (editable) so the
+# first-party packages import without sys.path hacks.
+
+[tool.setuptools.packages.find]
+# Flat layout: code imports relative to repo root (e.g. `from data.mmlu ...`, `from scripts.* ...`),
+# so expose all top-level importable dirs. namespaces=true covers dirs without __init__.py (PEP-420).
+include = [
+    "cot_transparency*",
+    "sycophancy_eval_inspect*",
+    "data*",
+    "dataset_dumps*",
+    "scripts*",
+    "tests*",
+]
+namespaces = true
+
+
 [tool.black]
 line-length = 120
 exclude = "venv*"
@@ -36,3 +62,19 @@ reportUnusedExpression = true
 reportMatchNotExhaustive = true
 reportShadowedImports = true
 reportPrivateImportUsage = false
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Default loop runs the offline subset; opt into live/heavy tests with e.g.
+#   pytest -m tinker        (just the tinker-SDK tests)
+#   pytest -m ""            (everything, including network/gpu/tinker)
+# --strict-markers surfaces typo'd markers instead of silently registering them.
+addopts = "-m 'not network and not gpu and not tinker' --strict-markers"
+markers = [
+    "network: hits a live external API (OpenAI/Anthropic/HTTP) — excluded by default",
+    "gpu: requires a GPU — excluded by default",
+    "tinker: needs the live Tinker service or a checkpoint — excluded by default",
+    "slow: takes more than a few seconds",
+]
+filterwarnings = ["ignore::DeprecationWarning"]

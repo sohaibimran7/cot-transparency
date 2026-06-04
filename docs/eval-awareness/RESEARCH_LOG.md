@@ -1,6 +1,6 @@
 # Eval-Awareness Consistency Training — Research Log
 
-Living log of all experiments + results. (Started 2026-05-31; updated 2026-06-03.)
+Living log of all experiments + results. (Started 2026-05-31; updated 2026-06-04.)
 Companion to `WRITEUP.md` (narrative) — this is the results-of-record reference.
 
 ## Goal
@@ -181,6 +181,10 @@ manually stopped (this is fine — the gap had converged).
   over-refusal (XSTest 4.5% < base 6.2%) and identical EAB-cap 0%. The capability insurance that was
   **critical for Llama's refusal-shaped trait is dead weight here** because F6 isn't refusal-shaped.
   → clean recipe simplifies to **Deployment-anchor + KL, no helpfulness term**.
+  - ⚠️ **OVERTURNED by §3f (2026-06-04).** Held only for the *gentle OLD snr*, which never pushed
+    hard enough to reveal collapse. With the **properly-scaled snr (§3e)**, closing the F6 gap from
+    the natural side **IS refusal-shaped** and over-refuses without a capability term — the IFanchor
+    was load-bearing; we just hadn't pushed hard enough to find out.
 - **Estimator**: **grpo closes, SNR-scaling stalls at 100 steps**. Hypothesis (LR schedule compounds
   SNR-scaling's taper → over-damped) **TESTED & REJECTED**: `qwen-const` (constant LR) gap +0.243 ≈
   `qwen-noanchor` (linear LR) +0.190 — within eval noise, both EAB-cap 0%, both low over-refusal.
@@ -260,16 +264,80 @@ step150** (F6-closed: +0.083, EAB-cap 0%) on held-out slices. `run_crossfactor_s
   caution*, not factor-general eval-invariance. (Follow-up: does the cleaner no-IFanchor recipe, or a
   multi-FACTOR cue set via matched_pair, yield more targeted invariance?)
 
+---
+
+### 3e. SNR-scaling redesign — fixing the advantage (2026-06-04)
+The old `snr_scaling` (`reward / trait_std`, keeping the raw shrunk-gap magnitude, NO unit-variance
+normalization) was **scale-fragile**: ~4× smaller advantage than grpo at 32 rollouts (hence "too
+gentle / needs an LR bump"), and it **collapsed to a ~0 advantage at batch_size > 1** — the
+paper-grade 128/128/128 + batch-4 run was a **no-op** (`advantage_abs_mean` ≈ 0.0007 vs grpo's 0.20).
+Root cause: keeping raw magnitude with no normalization makes the advantage scale depend on gap size,
+rollout count, AND batch composition.
+
+**Fix (`ecdc64b`):** `snr_scaling` = **unit-variance GRPO advantage × per-item SNR shrink-factor gate**
+`f = snr/(snr+z²) ∈ [0,1]`, `snr=(gap/SE)²`. Far from convergence → full GRPO step; within the noise
+floor → gradient tapers to 0 (anti-overshoot). Keeps GRPO's scale-stability (LR transfers,
+batch-invariant) AND the SNR taper — strictly `grpo × confidence-gate` (grpo's gate ≡ 1). matched_pair
+keeps the old `trait_std` div path. **Verified:** advantage restored 0.0007 → ~0.05 (grpo-scale),
+batch-invariant (offline demo 0.867 b1 vs 0.856 b4); **no LR bump needed** (standard ~5e-4). Decouples
+the two jobs the raw gap was overloading: *scale* (unit variance) vs *confidence/magnitude* (the gate).
+
+### 3f. pooled vs per_item normalization — and the load-bearing IFanchor (2026-06-04)
+`--normalize` (`a7ce329`): how the unit-variance base is standardized.
+- **pooled** — one std over the whole batch → big-gap items get bigger advantages (gap magnitude →
+  cross-item weighting). Aggressive; batch-composition-dependent.
+- **per_item** — standardize each item's rollouts within its own group → the per-item gap (a constant
+  in the group) cancels, leaving `sign(gap)·standardized(trait−p̂)`; **the gate is the sole magnitude
+  signal**, no single big-gap item dominates. Gentle; batch-composition-invariant; matches canonical GRPO.
+
+Head-to-head, identical config (**new snr · Deploy 0.5 · KL 0.03 · NO IFanchor · 128/128/128 · batch 4 ·
+50 steps**, eval @10/20/30/40/50). Base: gap +0.348, EAB-cap 0%.
+| step | pooled gap | pooled EAB-cap | per_item gap | per_item EAB-cap |
+|---|---|---|---|---|
+| 10 | +0.620 | 0% | +0.153 | 0% |
+| 20 | +0.283 | 2% | +0.403 | 0% |
+| 30 | +0.263 | 6% | +0.390 | 0% |
+| 40 | +0.070 | **34%** | +0.357 | 0% |
+| 50 | +0.113 | **48%** | +0.357 | 0% |
+
+**Findings**
+- **A clean stability↔aggression trade-off; neither closes-AND-preserves alone.**
+  - **pooled** closes the gap (+0.348→+0.11) but **cued collapses to ~0 and EAB-cap explodes 0→48%**
+    (over-refusal). "Refuses everything"-ish by step 50 (XSTest 17%, EAB-cap 48%; benign capability wrecked).
+  - **per_item** keeps **EAB-cap at 0% throughout** (capability preserved) but is **too gentle to close**:
+    gap ends +0.357 ≈ base. It lowered *both* rates ~equally (natural 0.635→0.41, cued 0.287→0.05) =
+    symmetric harm reduction, gap preserved. (step-10 +0.153 was a noisy blip.)
+- **Verdict on normalization**: **per_item is the better/more-stable choice** (batch-invariant, no
+  capability collapse, matches canonical GRPO) — but on its own it under-closes; pooled supplies the
+  closing force at the cost of stability. For the *gated* estimator, per_item is principled (gate =
+  sole magnitude signal, no double-counting); pooled keeps grpo's magnitude-as-weighting.
+- **THE load-bearing finding — the capability anchor (IFanchor) is necessary** (overturns §3b's
+  "IFanchor unnecessary for F6"). Both configs fail without it, in opposite directions. The earlier
+  "unnecessary" was an artifact of the **gentle old snr** that never pushed hard enough to collapse.
+  With the properly-scaled snr, **F6-closing-from-the-natural-side IS refusal-shaped** (like Llama §2).
+- **Root cause under both failures: the Deploy-anchor (0.5) doesn't hold cued at base** — cued drifts
+  to ~0.05 (not pinned at 0.287) in both runs, so the "match at base" target is lost → both-crash
+  (pooled) or both-drift (per_item). The only config that ever closed **and** preserved was the
+  **300-run (grpo + IFEval-anchor, §3a)** — gap≈0 at EAB-cap 0% @ step 150.
+- **Next**: re-add the capability term → **pooled-snr + IFEval-anchor** (pooled closes, IFanchor
+  preserves — the snr analog of the 300-run), early-stop ~30–40; test **anchor 0.8** (hold cued at
+  base). per_item + IFanchor likely still under-closes. Checkpoints: pooled `qwen-f6-snr-v2` 5458902b;
+  per_item `qwen-f6-snr-peritem` (`/tmp/snr_{canonical,peritem}_results.txt`).
+
 ## 4. Methods / implementations (in code)
 - `cot_transparency/eval_awareness/`: `cues.py` (TRAIN_CUE + EVAL_MARKERS), `judge.py`
   (misalignment / AM-scenario / refusal / recognition judges; nano+mini), `ifeval_verify.py`
   (deterministic IFEval trait via lighteval's google verifiers), `samplers.py`.
-- `rl_training.py` additions: async trait classifier; **SNR-scaling** (`snr_scaling`) advantage estimator (default);
-  **matched_pair** (pools cued rate over a cue *family* — needs multi-cue data); **helpfulness term**
-  `mode ∈ {reward, anchor, distill}` (anchor = match benign trait to base per-prompt; distill =
-  imitate base completions = forward-KL on held-out benign).
-- `train_evalaware.py`: `--anchor-weight`/`--anchor-natural` (direction), `--helpfulness-*`,
+- `rl_training.py` additions: async trait classifier; **SNR-scaling** (`snr_scaling`) advantage
+  estimator = **unit-variance GRPO advantage × per-item SNR gate** (§3e; redesigned 2026-06-04 from the
+  old `reward/trait_std`); **`--normalize` pooled | per_item** (advantage standardization, §3f);
+  **matched_pair** (pools cued rate over a cue *family* — needs multi-cue data, keeps the `trait_std`
+  div path); **helpfulness term** `mode ∈ {reward, anchor, distill}` (anchor = match benign trait to
+  base per-prompt; distill = imitate base completions = forward-KL on held-out benign).
+- `train_evalaware.py`: `--anchor-weight`/`--anchor-natural` (direction), `--normalize`, `--helpfulness-*`,
   `--f6-cues N` (sycophancy-style multi-cue: idx0=natural ref + N F6 wrappers, for matched_pair).
+- Driver scripts: `run_battery8.sh`, `run_lr_kl_batch.sh`, `run_f6_generalization.sh`,
+  `run_crossfactor_sweep.sh`, `run_snr_canonical.sh` (pooled), `run_snr_peritem.sh` (per_item).
 - Eval: `run_eval.py`, `calibrate.py` (`--no-recognition`, `--behavior-judge`), `overrefusal_eval.py`
   (`--base-model`, inline `name=ckpt`), `show_refusals.py`, `show_am_transcripts.py`, plotters.
 - Data: `dataset_dumps/eval_awareness/` (jsonl, gitignored), `f6_cues.json` (90 wrappers, train 67/holdout 23).
@@ -278,8 +346,15 @@ step150** (F6-closed: +0.083, EAB-cap 0%) on held-out slices. `run_crossfactor_s
 - [x] matched_pair held-out-wrapper generalization (§3c): under-trains AND unnecessary for a tight cue family; single-cue generalizes within F6.
 - [x] Full cross-factor/env generalization sweep (§3d): broad safety-positive harm reduction transfers; cross-factor gap-closing modest.
 - [x] kl01/kl10 re-run + constant-LR arm (§3b): KL shown NOT to be a lever; SNR-scaling gentleness is intrinsic. Recipe settled on grpo. (LR-schedule "non-lever" claim is caveated — the "linear" arm ran constant pre-fix; see §3b.)
-- [ ] Open question raised by §3d: does the cleaner **no-IFanchor** recipe, or a **multi-FACTOR** cue set (F1+F6+F8) via matched_pair, yield more *targeted* eval-invariance (vs broad caution)?
-- [ ] If pursuing matched_pair again: equal *total* rollouts (more steps) + heterogeneous (multi-factor) cues — that's where cue-diversity should pay off.
+- [x] SNR-scaling redesign (§3e): old `reward/trait_std` was scale-fragile + a no-op at batch>1; now
+  `grpo × SNR-gate` — batch-invariant, grpo-scale, no LR bump. Committed `ecdc64b`.
+- [x] pooled vs per_item normalization (§3f): per_item is the better/stable choice (EAB-cap 0%) but
+  under-closes; pooled closes but over-refuses. Neither closes+preserves without a capability anchor.
+- [ ] **NEXT (priority): re-add the capability term** — `pooled-snr + IFEval-anchor` (Deploy 0.5, KL 0.03,
+  `--helpfulness-trait ifeval --helpfulness-mode anchor`), early-stop ~30–40 + an **anchor 0.8** arm
+  (hold cued at base). This is the snr analog of the proven 300-run; should close AND preserve.
+- [ ] Open question (§3d): does a **multi-FACTOR** cue set (F1+F6+F8) via matched_pair yield more *targeted* eval-invariance (vs broad caution)?
+- [ ] If pursuing matched_pair again: equal *total* rollouts (more steps) + heterogeneous (multi-factor) cues.
 - [ ] Recurring blocker: **flaky local wifi** kills long runs (checkpoint-every-50 + watchdogs mitigate; a stable VM would fix it).
 
 ## 6. Checkpoints (Tinker sampler_weights, for reference)

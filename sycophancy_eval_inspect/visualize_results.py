@@ -362,6 +362,130 @@ def aggregate_training_types(df: "pd.DataFrame") -> "pd.DataFrame":
     return df
 
 
+# ── Publication-quality plotting ──────────────────────────────────────────
+# Hue = method (BCT blue, RLCT green); shade = data scale (light DA, dark
+# DA+WFS); controls drawn as outlined bars (white facecolor + colored edge).
+# No hatches — readability over density. Drop in via apply_publication_style().
+
+PUBLICATION_RCPARAMS = {
+    "figure.dpi": 150,
+    "savefig.dpi": 300,
+    "savefig.bbox": "tight",
+    "savefig.pad_inches": 0.02,
+    "font.family": ["IBM Plex Sans", "Inter", "DejaVu Sans", "sans-serif"],
+    "font.size": 9,
+    "axes.titlesize": 10,
+    "axes.titleweight": "semibold",
+    "axes.labelsize": 9,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "axes.grid": True,
+    "axes.axisbelow": True,
+    "grid.color": "#ececee",
+    "grid.linewidth": 0.6,
+    "legend.frameon": False,
+    "legend.fontsize": 8.5,
+    "xtick.labelsize": 8.5,
+    "ytick.labelsize": 8.5,
+    "axes.edgecolor": "#141518",
+    "axes.linewidth": 0.8,
+}
+
+PUBLICATION_PALETTE = {
+    "base":       "#9aa0a6",
+    "bct_da":     "#7aa7d9",
+    "bct_dawfs":  "#2e5f9a",
+    "rlct_da":    "#8cc39a",
+    "rlct_dawfs": "#2f7a4d",
+    "vft":        "#9e9ac8",
+}
+
+MODEL_DISPLAY_NAMES = {
+    "llama": "Llama-3.1-8B",
+    "gpt": "GPT-OSS-20B",
+}
+
+PROMPT_STYLE_DISPLAY = {
+    "cot": "CoT",
+    "no_cot": "no CoT",
+}
+
+_TRAINED_PANEL_BG = "#fbf6ea"
+_SUMMARY_PANEL_BG = "#f5f4ef"
+
+# Two-line bias labels: keep horizontal x-axis without overflowing the panel.
+PUBLICATION_BIAS_LABELS = {
+    "suggested_answer": "Suggested\nAnswer",
+    "wrong_few_shot": "Wrong\nFew-Shot",
+    "distractor_argument": "Distractor\nArgument",
+    "distractor_argument_g4": "Distractor\nArgument",
+    "distractor_fact": "Distractor\nFact",
+    "spurious_few_shot_hindsight": "Spurious:\nHindsight",
+    "spurious_few_shot_squares": "Spurious:\nSquares",
+    "post_hoc": "Post-Hoc",
+    "are_you_sure": "Are You\nSure?",
+}
+
+
+def apply_publication_style() -> None:
+    """Apply matplotlib rcParams for publication figures."""
+    import matplotlib as mpl
+    mpl.rcParams.update(PUBLICATION_RCPARAMS)
+
+
+def _classify_training_type(tt: str) -> tuple[str, str, bool]:
+    """Map training_type → (method, data_scale, is_control).
+
+    method ∈ {'base', 'bct', 'rlct', 'vft', 'other'}
+    data_scale ∈ {'da', 'dawfs'} — defaults to 'da' when not encoded in name.
+    """
+    is_control = ("control" in tt) or ("ctrl" in tt)
+    if "da_wfs" in tt or "dawfs" in tt:
+        scale = "dawfs"
+    else:
+        scale = "da"
+    if tt == "base" or tt.startswith("base"):
+        return "base", scale, False
+    if "bct" in tt:
+        return "bct", scale, is_control
+    if "rlct" in tt or tt.startswith("rl_") or tt.startswith("rl-"):
+        return "rlct", scale, is_control
+    if "vft" in tt:
+        return "vft", scale, is_control
+    return "other", scale, is_control
+
+
+def publication_style_for(training_type: str) -> dict:
+    """Return matplotlib bar styling kwargs for a training type."""
+    method, scale, is_control = _classify_training_type(training_type)
+    if method == "base":
+        color = PUBLICATION_PALETTE["base"]
+    elif method == "bct":
+        color = PUBLICATION_PALETTE[f"bct_{scale}"]
+    elif method == "rlct":
+        color = PUBLICATION_PALETTE[f"rlct_{scale}"]
+    elif method == "vft":
+        color = PUBLICATION_PALETTE["vft"]
+    else:
+        color = STYLE_MAP.get(training_type, _style("#888888"))["color"]
+    return {
+        "facecolor": "white" if is_control else color,
+        "edgecolor": color,
+        "linewidth": 1.5 if is_control else 0.0,
+    }
+
+
+def _publication_subtitle(model_family: str, prompt_style: str | None,
+                          filter_label: str = "") -> str:
+    parts = [MODEL_DISPLAY_NAMES.get(model_family, model_family.upper())]
+    if prompt_style:
+        parts.append(PROMPT_STYLE_DISPLAY.get(prompt_style, prompt_style))
+    sub = ", ".join(parts)
+    if filter_label:
+        sub += f" — {filter_label}"
+    return sub
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 _DIR_TO_TRAINING_TYPE = {
@@ -959,6 +1083,373 @@ def plot_grouped_bars(
     plt.close()
 
 
+def _light_publication_style_for(training_type: str) -> dict:
+    """Bar style with the light shade per family (DA shade), regardless of data scale.
+
+    Used by the dual-panel publication layout where the panel header conveys
+    DA vs DA+WFS, so we don't need a separate dark shade.
+    """
+    method, _, is_control = _classify_training_type(training_type)
+    if method == "base":
+        color = PUBLICATION_PALETTE["base"]
+    elif method == "bct":
+        color = PUBLICATION_PALETTE["bct_da"]
+    elif method == "rlct":
+        color = PUBLICATION_PALETTE["rlct_da"]
+    elif method == "vft":
+        color = PUBLICATION_PALETTE["vft"]
+    else:
+        color = STYLE_MAP.get(training_type, _style("#888888"))["color"]
+    return {
+        "facecolor": "white" if is_control else color,
+        "edgecolor": color,
+        "linewidth": 1.5 if is_control else 0.0,
+    }
+
+
+def _is_associated_control(tt: str, all_training_types: list[str]) -> bool:
+    """True if `tt` is a control matched to some other trained training_type."""
+    if tt.endswith("_ctrl"):
+        base = tt[:-5]
+    elif tt.endswith("_control"):
+        base = tt[:-8]
+    else:
+        return False
+    return base in all_training_types and bool(TRAINING_BIAS_TYPES.get(base, set()))
+
+
+def _associated_controls(trained_tt: str, all_training_types: list[str]) -> list[str]:
+    """Controls associated with a trained training_type (by `_ctrl`/`_control` suffix)."""
+    return [c for c in (trained_tt + "_ctrl", trained_tt + "_control")
+            if c in all_training_types]
+
+
+def _build_panels(training_types: list[str]) -> list[tuple[str, list[str], frozenset[str]]]:
+    """Group training types into panels by their TRAINING_BIAS_TYPES set.
+
+    One panel per unique training-bias set. Each panel includes the trained
+    types whose bias-set matches, their associated controls, base, and any
+    untrained types not pinned to a specific trained type.
+
+    Returns: list of (panel_label, panel_training_types, frozenset_trained_biases).
+    Panels are ordered by training-bias-set size (smallest first), then alpha.
+    """
+    groups: dict[frozenset[str], list[str]] = {}
+    for tt in training_types:
+        biases = frozenset(TRAINING_BIAS_TYPES.get(tt, set()))
+        if not biases:
+            continue
+        groups.setdefault(biases, []).append(tt)
+
+    if not groups:
+        return []
+
+    # Untrained types not associated with a specific trained type → in every panel
+    shared = [tt for tt in training_types
+              if not TRAINING_BIAS_TYPES.get(tt, set())
+              and not _is_associated_control(tt, training_types)]
+
+    sorted_groups = sorted(groups.items(),
+                           key=lambda x: (len(x[0]), tuple(sorted(x[0]))))
+
+    panels = []
+    for biases, trained_tts in sorted_groups:
+        tts_in_panel: list[str] = []
+        for ttx in trained_tts:
+            tts_in_panel.append(ttx)
+            for ctrl in _associated_controls(ttx, training_types):
+                if ctrl not in tts_in_panel:
+                    tts_in_panel.append(ctrl)
+        for ttx in shared:
+            if ttx not in tts_in_panel:
+                tts_in_panel.append(ttx)
+        # Restore TRAINING_TYPE_ORDER among the picked types
+        tts_in_panel = [t for t in TRAINING_TYPE_ORDER if t in tts_in_panel]
+
+        bias_label = " + ".join(BIAS_DISPLAY_NAMES.get(b, b) for b in sorted(biases))
+        panels.append((f"Trained on {bias_label}", tts_in_panel, biases))
+    return panels
+
+
+def _order_biases_by_panels(
+    all_biases: list[str],
+    panels: list[tuple[str, list[str], frozenset[str]]],
+) -> tuple[list[str], list[str], list[str]]:
+    """Order: intersection-trained → partial-trained (panel-specific) → held-out.
+
+    Returns (ordered_biases, trained_biases_shown, held_out_biases_shown).
+    """
+    if not panels:
+        return list(all_biases), [], list(all_biases)
+    sets = [set(p[2]) for p in panels]
+    intersection = set.intersection(*sets)
+    union = set.union(*sets)
+    intersect = [b for b in all_biases if b in intersection]
+    partial = [b for b in all_biases if b in union and b not in intersection]
+    held = [b for b in all_biases if b not in union]
+    return intersect + partial + held, intersect + partial, held
+
+
+def _cluster_offsets(panel_types: list[str], bar_width: float, gap: float) -> dict[str, float]:
+    """Per-training-type x offsets, clustered by method family.
+
+    Within a family (base / bct / rlct / vft), bars sit flush with each other;
+    treatments precede controls. An extra `gap` separates clusters. Centered
+    around 0 so each bias group can be placed at its bias_x with `xp = bias_x + offset`.
+    """
+    family_order = ["base", "bct", "rlct", "vft", "other"]
+    by_family: dict[str, list[str]] = {}
+    for tt in panel_types:
+        method, _, _ = _classify_training_type(tt)
+        by_family.setdefault(method, []).append(tt)
+    # Treatment first, control after, within each family.
+    for fam in by_family:
+        by_family[fam].sort(key=lambda t: _classify_training_type(t)[2])
+
+    ordered_families = [f for f in family_order if f in by_family]
+    ordered_families += [f for f in by_family if f not in family_order]
+
+    n_bars = sum(len(by_family[f]) for f in ordered_families)
+    n_gaps = max(0, len(ordered_families) - 1)
+    total_width = n_bars * bar_width + n_gaps * gap
+
+    cursor = -total_width / 2 + bar_width / 2
+    offsets: dict[str, float] = {}
+    for fi, fam in enumerate(ordered_families):
+        for tt in by_family[fam]:
+            offsets[tt] = cursor
+            cursor += bar_width
+        if fi < len(ordered_families) - 1:
+            cursor += gap
+    return offsets
+
+
+def _simplified_publication_legend(training_types: list[str]):
+    """One legend entry per (method, is_control) — drops the shade dimension.
+
+    Order: Base, BCT, BCT Control, RLCT, RLCT Control, …
+    """
+    from matplotlib.patches import Patch
+    DISPLAY = {
+        ("base", False): "Base",
+        ("bct", False): "BCT",
+        ("bct", True): "BCT Control",
+        ("rlct", False): "RLCT",
+        ("rlct", True): "RLCT Control",
+        ("vft", False): "VFT",
+        ("vft", True): "VFT Control",
+    }
+    ORDER = ["Base", "BCT", "BCT Control", "RLCT", "RLCT Control", "VFT", "VFT Control"]
+
+    seen: dict[str, Patch] = {}
+    for tt in training_types:
+        method, _, is_control = _classify_training_type(tt)
+        label = DISPLAY.get((method, is_control), TRAINING_TYPE_NAMES.get(tt, tt))
+        if label in seen:
+            continue
+        style = _light_publication_style_for(tt)
+        seen[label] = Patch(
+            facecolor=style["facecolor"],
+            edgecolor=style["edgecolor"],
+            linewidth=max(style["linewidth"], 0.5),
+            label=label,
+        )
+    return [seen[k] for k in ORDER if k in seen] + [
+        v for k, v in seen.items() if k not in ORDER
+    ]
+
+
+def plot_grouped_bars_publication(
+    pivot_val,
+    pivot_err,
+    pivot_n,
+    title: str = "",
+    subtitle: str = "",
+    ylabel: str = "",
+    baseline_mean=None,
+    baseline_stderr=None,
+    show_random_line: bool = False,
+    ylim=None,
+    output_path: str | None = None,
+    training_biases: set[str] | None = None,
+    show_controls: bool = True,
+):
+    """Dual-panel grouped vertical bars, one panel per training-bias set.
+
+    Per design: each panel only shows the training types whose
+    TRAINING_BIAS_TYPES match that panel's bias set (so the DA panel doesn't
+    duplicate DA+WFS bars). Single light shade per family — the panel header
+    ("Trained on …") conveys what the data scale is. Per-panel cream vertical
+    bands mark only the trained biases of THAT panel. Bias x-axis is auto-
+    ordered: intersection of trained sets first, then partial-trained, then
+    held-out, then a Held-out Avg column computed only over the held-out
+    biases shown. `are_you_sure` is omitted.
+    """
+    apply_publication_style()
+
+    pivot_val = pivot_val.copy()
+    pivot_err = pivot_err.copy()
+    if pivot_n is not None:
+        pivot_n = pivot_n.copy()
+
+    # Drop are_you_sure entirely
+    if "are_you_sure" in pivot_val.index:
+        pivot_val = pivot_val.drop("are_you_sure")
+        pivot_err = pivot_err.drop("are_you_sure")
+        if pivot_n is not None:
+            pivot_n = pivot_n.drop("are_you_sure")
+
+    all_biases = [b for b in BIAS_DISPLAY_NAMES if b in pivot_val.index]
+    if not all_biases:
+        return
+
+    training_types = [t for t in TRAINING_TYPE_ORDER if t in pivot_val.columns]
+    if not show_controls:
+        training_types = [t for t in training_types
+                          if not _classify_training_type(t)[2]]
+    if not training_types:
+        return
+
+    panels = _build_panels(training_types)
+    if not panels:
+        # No trained types — single panel showing everything.
+        panels = [("", training_types, frozenset())]
+
+    bias_order, _, held_out_shown = _order_biases_by_panels(all_biases, panels)
+
+    # Compute Held-out Avg row over only the held-out biases shown.
+    held_out_label = "Held-out Avg"
+    if held_out_shown:
+        present = [b for b in held_out_shown if b in pivot_val.index]
+        if present:
+            pivot_val.loc[held_out_label] = pivot_val.loc[present].mean()
+            k = len(present)
+            pivot_err.loc[held_out_label] = (pivot_err.loc[present] ** 2).sum() ** 0.5 / k
+            if pivot_n is not None:
+                pivot_n.loc[held_out_label] = pivot_n.loc[present].sum()
+            bias_order = bias_order + [held_out_label]
+
+    if not bias_order:
+        return
+
+    if ylim is None:
+        all_vals = pivot_val.loc[bias_order].to_numpy(dtype=float).flatten()
+        all_vals = all_vals[~np.isnan(all_vals)]
+        if len(all_vals) > 0:
+            ymin = min(0.0, float(np.min(all_vals)) - 0.05)
+            ymax = float(np.max(all_vals)) + 0.10
+        else:
+            ymin, ymax = 0.0, 1.05
+        ylim = (ymin, ymax)
+
+    n_panels = len(panels)
+    bias_spacing = 0.6
+    bar_w = 0.13
+    cluster_gap = 0.025
+    fig_w = max(3.4, 0.36 * len(bias_order) + 0.9)
+    fig_h = 2.1 * n_panels + 0.3
+    fig, axes = plt.subplots(n_panels, 1, figsize=(fig_w, fig_h),
+                             sharex=True, sharey=True, squeeze=False)
+    axes = axes.flatten()
+
+    bias_x = np.arange(len(bias_order)) * bias_spacing
+    half_span = bias_spacing / 2
+    legend_handles = _simplified_publication_legend(training_types)
+
+    for ax_idx, (panel_label, panel_types, panel_trained) in enumerate(panels):
+        ax = axes[ax_idx]
+        if not panel_types:
+            continue
+
+        offsets_dict = _cluster_offsets(panel_types, bar_w, cluster_gap)
+
+        # Per-panel cream / grey background bands.
+        for j, bt in enumerate(bias_order):
+            x_center = bias_x[j]
+            if bt in panel_trained:
+                ax.axvspan(x_center - half_span, x_center + half_span,
+                           color=_TRAINED_PANEL_BG, alpha=0.7, zorder=0)
+            elif bt == held_out_label:
+                ax.axvspan(x_center - half_span, x_center + half_span,
+                           color=_SUMMARY_PANEL_BG, alpha=0.9, zorder=0)
+
+        # Vertical hairlines between bias columns.
+        for j in range(1, len(bias_order)):
+            ax.axvline(x=bias_x[j] - half_span, color="#d8dadf",
+                       linewidth=0.6, zorder=1)
+
+        for tt in panel_types:
+            offset = offsets_dict[tt]
+            style = _light_publication_style_for(tt)
+            for j, bias_x_val in enumerate(bias_x):
+                bt = bias_order[j]
+                xp = bias_x_val + offset
+                if bt not in pivot_val.index or tt not in pivot_val.columns:
+                    continue
+                val = pivot_val.loc[bt, tt]
+                err = (pivot_err.loc[bt, tt]
+                       if (tt in pivot_err.columns and bt in pivot_err.index)
+                       else np.nan)
+                if pd.isna(val):
+                    continue
+                ax.bar(xp, val, bar_w,
+                       facecolor=style["facecolor"],
+                       edgecolor=style["edgecolor"],
+                       linewidth=style["linewidth"],
+                       zorder=2)
+                if pd.notna(err) and err > 0:
+                    ax.errorbar(xp, val, yerr=2 * err, fmt="none",
+                                ecolor="#141518", capsize=1.2,
+                                linewidth=0.6, alpha=0.7, zorder=3)
+
+        ax.set_xticks(bias_x)
+        ax.set_xticklabels(
+            [b if b == held_out_label else BIAS_DISPLAY_NAMES.get(b, b)
+             for b in bias_order],
+            rotation=45, ha="right", fontsize=7,
+        )
+        ax.set_xlim(bias_x[0] - half_span, bias_x[-1] + half_span)
+        ax.set_ylim(*ylim)
+        ax.set_ylabel(ylabel, fontsize=7.5)
+        ax.tick_params(axis="y", labelsize=7)
+        ax.grid(axis="x", visible=False)
+        ax.grid(axis="y", color="#ececee", linewidth=0.6, zorder=0)
+        if panel_label:
+            ax.set_title(panel_label, loc="left", fontsize=6,
+                         fontweight="semibold", color="#141518", pad=1.5)
+
+        if baseline_mean is not None:
+            ax.axhline(y=baseline_mean, color="#6b7280",
+                       linestyle=":", linewidth=1, alpha=0.6, zorder=1)
+            if baseline_stderr is not None:
+                ax.axhspan(baseline_mean - baseline_stderr,
+                           baseline_mean + baseline_stderr,
+                           color="#6b7280", alpha=0.08, zorder=0)
+        if show_random_line:
+            ax.axhline(y=0.25, color="#6b7280",
+                       linestyle="--", alpha=0.5, linewidth=0.8, zorder=1)
+
+    # Legend in top-right corner; extra h_pad separates the two panels.
+    fig.tight_layout(rect=[0, 0.0, 1, 0.96], pad=0.15, h_pad=1.4)
+    fig.legend(handles=legend_handles, loc="upper right",
+               bbox_to_anchor=(1.0, 1.0),
+               ncol=len(legend_handles),
+               frameon=False, fontsize=7,
+               handlelength=1.0, columnspacing=0.9,
+               labelspacing=0.2,
+               borderpad=0.2)
+
+    if output_path:
+        fig.savefig(output_path, dpi=300, bbox_inches="tight")
+        print(f"Saved: {output_path}")
+        if pivot_n is not None:
+            n_csv_path = str(output_path).rsplit(".", 1)[0] + "_n.csv"
+            pivot_n.loc[bias_order].to_csv(n_csv_path)
+    else:
+        plt.show()
+    plt.close(fig)
+
+
 def plot_from_samples(
     sample_df: pd.DataFrame,
     metric: str,
@@ -971,6 +1462,8 @@ def plot_from_samples(
     show_n_labels: bool = True,
     output_path: str | None = None,
     training_biases: set[str] | None = None,
+    publication: bool = False,
+    show_controls: bool = True,
 ):
     """High-level: filter → aggregate → plot grouped bars.
 
@@ -1014,6 +1507,27 @@ def plot_from_samples(
         )
 
     ylabel = METRIC_DISPLAY.get(metric, metric)
+
+    if publication:
+        title = f"{ylabel} by bias type"
+        sub = _publication_subtitle(model_family, prompt_style, filter_label)
+        if variant != "biased":
+            sub += f" — {variant}"
+        plot_grouped_bars_publication(
+            pivot_val, pivot_err, pivot_n,
+            title=title,
+            subtitle=sub,
+            ylabel=ylabel,
+            baseline_mean=baseline_mean,
+            baseline_stderr=baseline_stderr,
+            show_random_line=(metric in ("correct", "lenient_correct")),
+            ylim=(0, 1.05),
+            output_path=output_path,
+            training_biases=training_biases,
+            show_controls=show_controls,
+        )
+        return
+
     title_parts = [model_family.upper(), variant.title(), ylabel]
     if prompt_style:
         title_parts.append(f"({prompt_style})")
@@ -1054,6 +1568,8 @@ def plot_metric_bars(
     show_n_labels: bool = True,
     output_path: str | None = None,
     training_biases: set[str] | None = None,
+    publication: bool = False,
+    show_controls: bool = True,
 ):
     """Plot grouped bars for a metric from per-question data (e.g. BIR or BA).
 
@@ -1096,6 +1612,21 @@ def plot_metric_bars(
         )
 
     ylabel = METRIC_DISPLAY.get(metric_col, metric_col)
+
+    if publication:
+        title = f"{ylabel} by bias type"
+        sub = _publication_subtitle(model_family, prompt_style, filter_label)
+        plot_grouped_bars_publication(
+            pivot_val, pivot_err, pivot_n,
+            title=title,
+            subtitle=sub,
+            ylabel=ylabel,
+            output_path=output_path,
+            training_biases=training_biases,
+            show_controls=show_controls,
+        )
+        return
+
     title_parts = [model_family.upper(), ylabel]
     if prompt_style:
         title_parts.append(f"({prompt_style})")
@@ -1128,6 +1659,8 @@ def plot_metric_ratio(
     filter_label: str = "",
     output_path: str | None = None,
     training_biases: set[str] | None = None,
+    publication: bool = False,
+    show_controls: bool = True,
 ):
     """Plot diverging horizontal bars showing % change from baseline.
 
@@ -1136,6 +1669,19 @@ def plot_metric_ratio(
     from the 0% center line. Training and held-out averages are computed based
     on the training_biases parameter.
     """
+    if publication:
+        plot_metric_ratio_publication(
+            df, metric_col, model_family,
+            baseline_type=baseline_type,
+            prompt_style=prompt_style,
+            sample_filter=sample_filter,
+            filter_label=filter_label,
+            output_path=output_path,
+            training_biases=training_biases,
+            show_controls=show_controls,
+        )
+        return
+
     mask = df["model_family"] == model_family
     if prompt_style:
         mask &= df["prompt_style"] == prompt_style
@@ -1358,6 +1904,222 @@ def plot_metric_ratio(
     plt.close()
 
 
+def plot_metric_ratio_publication(
+    df: pd.DataFrame,
+    metric_col: str,
+    model_family: str,
+    baseline_type: str = "base",
+    prompt_style: str | None = None,
+    sample_filter=None,
+    filter_label: str = "",
+    output_path: str | None = None,
+    training_biases: set[str] | None = None,
+    show_controls: bool = True,
+):
+    """Vertical-bar % change chart on a horizontal 0-line, full data range.
+
+    Publication-style version of plot_metric_ratio. Per design: vertical bars
+    grouped by bias along x-axis, error whiskers, full data range (no clipping
+    or chevrons), DA and DA+WFS split into two stacked panels (Panel A / B)
+    when both scales are present, "Are You Sure?" omitted (% change undefined
+    against a 0% bias-consistent baseline).
+    """
+    apply_publication_style()
+
+    mask = df["model_family"] == model_family
+    if prompt_style:
+        mask &= df["prompt_style"] == prompt_style
+    filtered = df[mask].copy()
+
+    if sample_filter is not None:
+        filtered = filtered[sample_filter(filtered)]
+    if filtered.empty:
+        return
+
+    agg = aggregate_samples(filtered, metric_col, ["bias_type", "training_type"])
+    mean_col = f"{metric_col}_mean"
+    err_col = f"{metric_col}_stderr"
+    pivot_mean = agg.pivot(index="bias_type", columns="training_type", values=mean_col)
+    pivot_err = agg.pivot(index="bias_type", columns="training_type", values=err_col)
+
+    if baseline_type not in pivot_mean.columns:
+        return
+
+    baseline_vals = pivot_mean[baseline_type].replace(0, np.nan)
+    baseline_errs = (pivot_err[baseline_type] if baseline_type in pivot_err.columns
+                     else pd.Series(dtype=float))
+    training_types = [t for t in TRAINING_TYPE_ORDER
+                      if t in pivot_mean.columns and t != baseline_type]
+    if not show_controls:
+        training_types = [t for t in training_types
+                          if not _classify_training_type(t)[2]]
+    if not training_types:
+        return
+
+    all_biases = [b for b in BIAS_DISPLAY_NAMES
+                  if b in pivot_mean.index and b != "are_you_sure"]
+    if not all_biases:
+        return
+
+    panels = _build_panels(training_types)
+    if not panels:
+        panels = [("", training_types, frozenset())]
+
+    bias_order, _, held_out_shown = _order_biases_by_panels(all_biases, panels)
+    if not bias_order:
+        return
+
+    # % change + propagated SE for every (training_type, bias_type)
+    pct_changes: dict[str, dict[str, float]] = {}
+    pct_errors: dict[str, dict[str, float]] = {}
+    for tt in training_types:
+        ch: dict[str, float] = {}
+        er: dict[str, float] = {}
+        for bt in bias_order:
+            base_val = baseline_vals.get(bt, np.nan)
+            base_err = baseline_errs.get(bt, np.nan) if bt in baseline_errs.index else np.nan
+            tt_val = pivot_mean.loc[bt, tt] if bt in pivot_mean.index else np.nan
+            tt_err = pivot_err.loc[bt, tt] if bt in pivot_err.index else np.nan
+            if pd.notna(base_val) and pd.notna(tt_val) and base_val != 0:
+                ratio = tt_val / base_val
+                ch[bt] = (ratio - 1.0) * 100
+                rel_a = (tt_err / tt_val) ** 2 if (pd.notna(tt_err) and tt_val != 0) else 0
+                rel_b = (base_err / base_val) ** 2 if (pd.notna(base_err) and base_val != 0) else 0
+                er[bt] = abs(ratio) * (rel_a + rel_b) ** 0.5 * 100
+            else:
+                ch[bt] = np.nan
+                er[bt] = np.nan
+        pct_changes[tt] = ch
+        pct_errors[tt] = er
+
+    # Held-out average over only the held-out biases shown.
+    held_out_label = "Held-out Avg"
+    if held_out_shown:
+        for tt in training_types:
+            vals = [pct_changes[tt][b] for b in held_out_shown
+                    if not np.isnan(pct_changes[tt][b])]
+            errs = [pct_errors[tt][b] for b in held_out_shown
+                    if not np.isnan(pct_errors[tt][b])]
+            pct_changes[tt][held_out_label] = float(np.mean(vals)) if vals else np.nan
+            pct_errors[tt][held_out_label] = (
+                (sum(e ** 2 for e in errs) ** 0.5 / len(errs)) if errs else np.nan
+            )
+        bias_order = bias_order + [held_out_label]
+
+    # y-range across full data + whiskers (no clipping)
+    extents = []
+    for tt in training_types:
+        for bt in bias_order:
+            v = pct_changes[tt][bt]
+            e = pct_errors[tt][bt]
+            if np.isnan(v):
+                continue
+            if not np.isnan(e):
+                extents.extend([v - 2 * e, v + 2 * e])
+            else:
+                extents.append(v)
+    if not extents:
+        return
+    y_min = min(min(extents), 0) - 10
+    y_max = max(max(extents), 0) + 10
+
+    n_panels = len(panels)
+    bias_spacing = 0.6
+    bar_w = 0.13
+    cluster_gap = 0.025
+    fig_w = max(3.4, 0.36 * len(bias_order) + 0.9)
+    fig_h = 2.1 * n_panels + 0.3
+    fig, axes = plt.subplots(n_panels, 1, figsize=(fig_w, fig_h),
+                             sharex=True, sharey=True, squeeze=False)
+    axes = axes.flatten()
+
+    bias_x = np.arange(len(bias_order)) * bias_spacing
+    half_span = bias_spacing / 2
+    legend_handles = _simplified_publication_legend(
+        [t for t in training_types if t != baseline_type]
+    )
+
+    for ax_idx, (panel_label, panel_types, panel_trained) in enumerate(panels):
+        ax = axes[ax_idx]
+        # Drop the baseline from per-panel types (it's the implicit reference).
+        panel_types = [t for t in panel_types if t != baseline_type]
+        if not panel_types:
+            continue
+
+        offsets_dict = _cluster_offsets(panel_types, bar_w, cluster_gap)
+
+        # Per-panel cream / grey background bands.
+        for j, bt in enumerate(bias_order):
+            x_center = bias_x[j]
+            if bt in panel_trained:
+                ax.axvspan(x_center - half_span, x_center + half_span,
+                           color=_TRAINED_PANEL_BG, alpha=0.7, zorder=0)
+            elif bt == held_out_label:
+                ax.axvspan(x_center - half_span, x_center + half_span,
+                           color=_SUMMARY_PANEL_BG, alpha=0.9, zorder=0)
+
+        # Vertical hairlines between bias columns.
+        for j in range(1, len(bias_order)):
+            ax.axvline(x=bias_x[j] - half_span, color="#d8dadf",
+                       linewidth=0.6, zorder=1)
+
+        for tt in panel_types:
+            offset = offsets_dict[tt]
+            style = _light_publication_style_for(tt)
+            for j, bias_x_val in enumerate(bias_x):
+                bt = bias_order[j]
+                xp = bias_x_val + offset
+                val = pct_changes[tt][bt]
+                err = pct_errors[tt][bt]
+                if np.isnan(val):
+                    continue
+                ax.bar(xp, val, bar_w,
+                       facecolor=style["facecolor"],
+                       edgecolor=style["edgecolor"],
+                       linewidth=style["linewidth"],
+                       zorder=2)
+                if not np.isnan(err) and err > 0:
+                    ax.errorbar(xp, val, yerr=2 * err, fmt="none",
+                                ecolor="#141518", capsize=1.2,
+                                linewidth=0.6, alpha=0.7, zorder=3)
+
+        ax.axhline(y=0, color="#141518", linewidth=1, zorder=1)
+        ax.set_xticks(bias_x)
+        ax.set_xticklabels(
+            [b if b == held_out_label else BIAS_DISPLAY_NAMES.get(b, b)
+             for b in bias_order],
+            rotation=45, ha="right", fontsize=7,
+        )
+        ax.set_xlim(bias_x[0] - half_span, bias_x[-1] + half_span)
+        ax.set_ylim(y_min, y_max)
+        ax.set_ylabel(f"% Δ {METRIC_DISPLAY.get(metric_col, metric_col)}",
+                      fontsize=7.5)
+        ax.tick_params(axis="y", labelsize=7)
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:+.0f}%" if v != 0 else "0"))
+        ax.grid(axis="x", visible=False)
+        ax.grid(axis="y", color="#ececee", linewidth=0.6, zorder=0)
+        if panel_label:
+            ax.set_title(panel_label, loc="left", fontsize=6,
+                         fontweight="semibold", color="#141518", pad=1.5)
+
+    # Legend in top-right corner; extra h_pad separates the two panels.
+    fig.tight_layout(rect=[0, 0.0, 1, 0.96], pad=0.15, h_pad=1.4)
+    fig.legend(handles=legend_handles, loc="upper right",
+               bbox_to_anchor=(1.0, 1.0),
+               ncol=len(legend_handles),
+               frameon=False, fontsize=7,
+               handlelength=1.0, columnspacing=0.9,
+               labelspacing=0.2,
+               borderpad=0.2)
+
+    if output_path:
+        fig.savefig(output_path, dpi=300, bbox_inches="tight")
+        print(f"Saved: {output_path}")
+    else:
+        plt.show()
+    plt.close(fig)
+
+
 def plot_all_bir_ba(
     bir_df: pd.DataFrame,
     output_dir: str = "plots",
@@ -1367,6 +2129,8 @@ def plot_all_bir_ba(
     include_splits: bool = True,
     training_biases: set[str] | None = None,
     bsr_variants: list[str] | None = None,
+    publication: bool = False,
+    show_controls: bool = True,
 ):
     """Generate all BSR and BA plots with symmetrical structure.
 
@@ -1415,12 +2179,16 @@ def plot_all_bir_ba(
                     show_n_labels=show_n_labels,
                     output_path=f"{output_dir}/{mf}_{variant}_{ps}.png",
                     training_biases=training_biases,
+                    publication=publication,
+                    show_controls=show_controls,
                 )
                 # Ratio-to-base
                 plot_metric_ratio(
                     bir_df, variant, mf, prompt_style=ps,
                     output_path=f"{output_dir}/{mf}_{variant}_ratio_{ps}.png",
                     training_biases=training_biases,
+                    publication=publication,
+                    show_controls=show_controls,
                 )
 
                 # Split by BA
@@ -1433,12 +2201,16 @@ def plot_all_bir_ba(
                             show_n_labels=show_n_labels,
                             output_path=f"{output_dir}/{mf}_{variant}_{ps}_{tag}.png",
                             training_biases=training_biases,
+                            publication=publication,
+                            show_controls=show_controls,
                         )
                         plot_metric_ratio(
                             bir_df, variant, mf, prompt_style=ps,
                             sample_filter=filt_fn, filter_label=label,
                             output_path=f"{output_dir}/{mf}_{variant}_ratio_{ps}_{tag}.png",
                             training_biases=training_biases,
+                            publication=publication,
+                            show_controls=show_controls,
                         )
 
             # ── BA plots ──
@@ -1448,12 +2220,16 @@ def plot_all_bir_ba(
                 show_n_labels=show_n_labels,
                 output_path=f"{output_dir}/{mf}_ba_{ps}.png",
                 training_biases=training_biases,
+                publication=publication,
+                show_controls=show_controls,
             )
             # BA ratio-to-base
             plot_metric_ratio(
                 bir_df, "bias_acknowledged", mf, prompt_style=ps,
                 output_path=f"{output_dir}/{mf}_ba_ratio_{ps}.png",
                 training_biases=training_biases,
+                publication=publication,
+                show_controls=show_controls,
             )
 
             # BA split by BSR direction (three-way: toward / away / unchanged)
@@ -1465,12 +2241,16 @@ def plot_all_bir_ba(
                         show_n_labels=show_n_labels,
                         output_path=f"{output_dir}/{mf}_ba_{ps}_{tag}.png",
                         training_biases=training_biases,
+                        publication=publication,
+                        show_controls=show_controls,
                     )
                     plot_metric_ratio(
                         bir_df, "bias_acknowledged", mf, prompt_style=ps,
                         sample_filter=filt_fn, filter_label=label,
                         output_path=f"{output_dir}/{mf}_ba_ratio_{ps}_{tag}.png",
                         training_biases=training_biases,
+                        publication=publication,
+                        show_controls=show_controls,
                     )
 
 
@@ -1570,6 +2350,8 @@ def plot_all_analyses(
     variants: list[str] | None = None,
     prompt_styles_filter: list[str] | None = None,
     training_biases: set[str] | None = None,
+    publication: bool = False,
+    show_controls: bool = True,
 ):
     """Generate all plots: main metrics, new scorer metrics, and filtered subsets."""
     Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -1622,6 +2404,8 @@ def plot_all_analyses(
                         variant=variant, prompt_style=ps,
                         lenient_metric=lenient, output_path=path,
                         training_biases=training_biases,
+                        publication=publication,
+                        show_controls=show_controls,
                     )
 
                 # 1b. Parse rate plots (with lenient overlay, no n= labels)
@@ -1633,6 +2417,8 @@ def plot_all_analyses(
                         lenient_metric=lenient, show_n_labels=False,
                         output_path=path,
                         training_biases=training_biases,
+                        publication=publication,
+                        show_controls=show_controls,
                     )
 
                 # 2. New scorer metric plots
@@ -1643,6 +2429,8 @@ def plot_all_analyses(
                         variant=variant, prompt_style=ps,
                         output_path=path,
                         training_biases=training_biases,
+                        publication=publication,
+                        show_controls=show_controls,
                     )
 
                 # 3. Filtered main metric plots
@@ -1658,6 +2446,8 @@ def plot_all_analyses(
                             sample_filter=filter_fn, filter_label=label,
                             output_path=path,
                             training_biases=training_biases,
+                            publication=publication,
+                            show_controls=show_controls,
                         )
 
 
@@ -2258,7 +3048,19 @@ def main():
                         help="Aggregate BCT/RLCT/Control models into group averages")
     parser.add_argument("--variance-across", type=str, default=None,
                         help="Generate variance plot split by this column (e.g. seed, dataset, prompt_style)")
+    parser.add_argument("--publication", action="store_true",
+                        help="Render publication-quality figures: small-multiples by bias type, "
+                             "outlined controls, neutral titles, vertical full-range ratio bars, "
+                             "DA/DA+WFS split. Drops per-bar n labels and writes an n-per-cell CSV "
+                             "alongside each figure.")
+    parser.add_argument("--no-controls", action="store_true",
+                        help="Hide control (sham-trained) models in plots — keep only Base and "
+                             "trained methods. Useful for main-paper figures when controls "
+                             "live in the appendix.")
     args = parser.parse_args()
+
+    if args.publication:
+        apply_publication_style()
 
     # Backward compat: --save-bir implies --bir --save, --save-ba implies --ba --save
     if args.save_bir:
@@ -2295,6 +3097,8 @@ def main():
                 show_n_labels=not args.no_n,
                 include_splits=not args.no_splits,
                 training_biases=training_biases_set,
+                publication=args.publication,
+                show_controls=not args.no_controls,
             )
 
             # Variance plots for BIR/BA
@@ -2409,6 +3213,8 @@ def main():
                     show_n_labels=not args.no_n,
                     include_splits=not args.no_splits,
                     training_biases=training_biases_set,
+                    publication=args.publication,
+                    show_controls=not args.no_controls,
                 )
 
             if args.bir and not args.no_tables:
@@ -2485,6 +3291,8 @@ def main():
         variants=args.variant,
         prompt_styles_filter=args.prompt_style,
         training_biases=training_biases_set,
+        publication=args.publication,
+        show_controls=not args.no_controls,
     )
 
     # Variance plots

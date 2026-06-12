@@ -1,0 +1,89 @@
+# BCT (SFT) on Qwen/Qwen3.6-35B-A3B (renderer override → qwen3_5)
+# Biases: distractor_argument_g4 + wrong_few_shot, each on logiqa + hellaswag (1024 per combo), non_cot
+# + 2048 instruct samples mixed in
+# Training: bs=128, ~48 steps, save_every=24 (midway); final checkpoint evaluated
+# Eval skips are_you_sure bias (per user request).
+
+name: bct_da_wfs_qwen
+model: Qwen/Qwen3.6-35B-A3B
+
+data_generation:
+  - script: generate_bct_from_test
+    args:
+      bias: distractor_argument_g4
+      datasets: [logiqa, hellaswag]
+      limits: [1024, 1024]
+      max_tokens: 24576
+      temperature: 1.0
+      batch_size: 64
+      non_cot: true
+      output_dir: dataset_dumps/train-from-test-logiqa-hellaswag/da-g4-wfs/da-g4/qwen3-6-35b-a3b
+  - script: generate_bct_from_test
+    args:
+      bias: wrong_few_shot
+      datasets: [logiqa, hellaswag]
+      limits: [1024, 1024]
+      max_tokens: 24576
+      temperature: 1.0
+      batch_size: 64
+      non_cot: true
+      output_dir: dataset_dumps/train-from-test-logiqa-hellaswag/da-g4-wfs/wfs/qwen3-6-35b-a3b
+
+data_preparation:
+  enabled: true
+  args:
+    inputs:
+      - "dataset_dumps/train-from-test-logiqa-hellaswag/da-g4-wfs/da-g4/qwen3-6-35b-a3b/bct_non_cot.jsonl"
+      - "dataset_dumps/train-from-test-logiqa-hellaswag/da-g4-wfs/wfs/qwen3-6-35b-a3b/bct_non_cot.jsonl"
+      - "dataset_dumps/train_seed_42/gpt-oss-120b/instruct_samples.jsonl:2048"
+    control_inputs:
+      - "dataset_dumps/train-from-test-logiqa-hellaswag/da-g4-wfs/da-g4/qwen3-6-35b-a3b/control_non_cot.jsonl"
+      - "dataset_dumps/train-from-test-logiqa-hellaswag/da-g4-wfs/wfs/qwen3-6-35b-a3b/control_non_cot.jsonl"
+      - "dataset_dumps/train_seed_42/gpt-oss-120b/instruct_samples.jsonl:2048"
+    shuffle: true
+    seed: 42
+    clean: true
+    output: dataset_dumps/train-from-test-logiqa-hellaswag/da-g4-wfs/qwen3-6-35b-a3b/bct_non_cot_instruct.jsonl
+    control_output: dataset_dumps/train-from-test-logiqa-hellaswag/da-g4-wfs/qwen3-6-35b-a3b/control_non_cot_instruct.jsonl
+
+training:
+  method: sft
+  seeds: [0, 42, 123]
+  include_control: false
+  data_mode: concat
+  args:
+    experiment_name: bct_da_wfs_qwen
+    run_name: qwen3-6-35b-a3b-bct-da-wfs
+    data: auto
+    batch_size: 128
+    epochs: 1
+    lr: 2.86e-4
+    lora_rank: 8
+    save_every: 24
+
+evaluation:
+  include_base: false
+  args:
+    bias_types: "suggested_answer,distractor_fact,distractor_argument_g4,post_hoc,spurious_few_shot_squares,wrong_few_shot"
+    datasets: hle
+    prompt_styles: no_cot
+    limit: 100
+    max_tokens: 24576
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/consistency_hle_qwen/eval_logs
+    base_model: Qwen/Qwen3.6-35B-A3B
+    renderer: qwen3_5
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+    variance_across: seed
+
+viz_registration:
+  dir_suffix: bct-da-wfs
+  display_name: "BCT (DA+WFS)"
+  color: "#6baed6"
+  control_color: "#c6dbef"
+  training_biases: [distractor_argument_g4, wrong_few_shot]

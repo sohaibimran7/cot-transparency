@@ -1,0 +1,61 @@
+# RLCT on Llama-3.1-8B-Instruct
+# Bias: distractor_argument_g4 on logiqa+hellaswag. anchor_weight=0.5.
+# 128 datapoints, bs=8, checkpoint_every=8 (midway=64 datapoints).
+
+name: rlct_da_aw05_llama
+model: meta-llama/Llama-3.1-8B-Instruct
+
+training:
+  method: rl
+  seeds: [0, 42, 123]
+  include_control: true
+  args:
+    experiment_name: rlct_da_aw05_llama
+    run_name: llama-rlct-da-aw05
+    bias_types: "distractor_argument_g4"
+    datasets: "logiqa,hellaswag"
+    n_datapoints: 128
+    prompt_style: cot
+    lr_schedule: constant
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.5
+    anchor_model: base
+    loss_fn: ppo
+    n_ref_rollouts: 32
+    n_train_rollouts: 32
+    n_consistency_rollouts: 32
+    n_anchor_rollouts: 32
+    temperature: 1.0
+    max_new_tokens: 16384
+    n_epochs: 1
+    batch_size: 8
+    gradient_accumulation_steps: 1
+    refresh_every: 1
+    checkpoint_every: 8
+
+evaluation:
+  include_base: false
+  args:
+    bias_types: "suggested_answer,are_you_sure,distractor_fact,distractor_argument_g4,post_hoc,spurious_few_shot_squares,wrong_few_shot"
+    datasets: hle
+    prompt_styles: cot
+    limit: 100
+    max_tokens: 16384
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/consistency_hle_llama/eval_logs
+    base_model: meta-llama/Llama-3.1-8B-Instruct
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+    variance_across: seed
+
+viz_registration:
+  dir_suffix: rlct-da-aw05
+  display_name: "RLCT (DA, aw=0.5)"
+  color: "#74c476"
+  control_color: "#c7e9c0"
+  training_biases: [distractor_argument_g4]

@@ -1,0 +1,40 @@
+name: lr_hp_llama_bct_da_g4_lr5e4
+model: meta-llama/Llama-3.1-8B-Instruct
+training:
+  method: sft
+  include_control: false
+  args:
+    experiment_name: lr_hp_llama_bct_da_g4_lr5e4
+    run_name: llama-bct-da-g4-lr5e4
+    data: dataset_dumps/train-from-test-mmlu/da-g4/llama_3_1_8b_instruct/bct_cot.jsonl:2000
+    batch_size: 128
+    epochs: 1
+    lr: 0.0005
+    lora_rank: 8
+    save_every: 9999
+evaluation:
+  include_base: false
+  args:
+    bias_types: distractor_argument_g4,suggested_answer,distractor_fact,wrong_few_shot,spurious_few_shot_squares
+    datasets: truthfulqa
+    prompt_styles: cot
+    limit: 150
+    max_tokens: 16384
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/lr_hparam_truthfulqa/eval_logs
+    hash_file: artifacts/eval_suites/lr_hparam_truthfulqa/eval_logs/common_hashes.json
+analysis:
+  args:
+    training_biases:
+    - distractor_argument_g4
+    bir: true
+    ba: true
+    plot: true
+    output_dir: artifacts/eval_suites/lr_hparam_truthfulqa/plots
+viz_registration:
+  dir_suffix: bct-da-g4-lr5e4
+  training_type: bct_da_g4_lr5e4
+  display_name: Llama BCT lr=0.0005
+  color: '#6baed6'
+  training_biases:
+  - distractor_argument_g4

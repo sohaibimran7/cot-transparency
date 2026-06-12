@@ -1,0 +1,29 @@
+# Base model eval for Qwen/Qwen3.6-35B-A3B on HLE (6 biases, no_cot, limit 400)
+# Skips are_you_sure bias (per user request).
+# Renderer override (qwen3_5) configured in
+# cot_transparency/apis/tinker/{common,inference}.py since Qwen3.6 isn't
+# yet registered in tinker_cookbook.model_info.
+
+name: base_hle_qwen
+model: Qwen/Qwen3.6-35B-A3B
+
+evaluation:
+  base_only: true
+  args:
+    bias_types: "suggested_answer,distractor_fact,distractor_argument_g4,post_hoc,spurious_few_shot_squares,wrong_few_shot"
+    datasets: hle
+    prompt_styles: no_cot
+    limit: 400
+    max_tokens: 24576
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/consistency_hle_qwen/eval_logs
+    hash_file: artifacts/eval_suites/consistency_hle_qwen/eval_logs/common_hashes_base.json
+    base_model: Qwen/Qwen3.6-35B-A3B
+    renderer: qwen3_5
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+    variance_across: seed

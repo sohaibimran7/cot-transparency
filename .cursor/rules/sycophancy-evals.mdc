@@ -1,0 +1,67 @@
+---
+description: How to run sycophancy bias evals on Tinker model checkpoints
+globs: sycophancy_eval_inspect/**
+alwaysApply: false
+---
+
+# Running Sycophancy Evals
+
+## Getting Tinker Checkpoints from WandB
+
+To get the tinker checkpoint path from a wandb run:
+
+```python
+import wandb
+api = wandb.Api()
+run = api.run('<entity>/<project>/<run_id>')
+checkpoint = run.config.get('final_checkpoint')  # tinker://... path
+```
+
+Note: the local `wandb/` directory shadows the real package. If running outside conda, filter it from `sys.path`.
+
+## Running Tinker Evals
+
+```bash
+python -m sycophancy_eval_inspect.run_tinker_evals \
+    --checkpoint "tinker://..." \
+    --base-model meta-llama/Llama-3.1-8B-Instruct \
+    --name <model-name> \
+    --prompt-styles cot \
+    --limit 100 \
+    --log-dir sycophancy_eval_inspect/logs/cot_100samples \
+    --hash-file sycophancy_eval_inspect/logs/cot_100samples/common_hashes.json \
+    --datasets hellaswag,logiqa \
+    --bias-types distractor_argument,distractor_fact,spurious_few_shot_squares,suggested_answer,wrong_few_shot
+```
+
+## Current Eval Configuration
+
+We currently use these filters (12 eval files per checkpoint evaluated):
+
+- `--datasets hellaswag,logiqa` (2 datasets)
+- `--bias-types distractor_argument,distractor_fact,spurious_few_shot_squares,suggested_answer,wrong_few_shot` (5 bias types)
+- `--hash-file sycophancy_eval_inspect/logs/cot_100samples/common_hashes.json`
+
+This gives: 2 datasets x 5 bias types = 10 biased + 2 unbiased = **12 eval files**.
+
+## Key Flags
+
+- `--hash-file`: Pre-computed hashes for consistent samples across bias types (required for BRR). Always use `common_hashes.json`.
+- `--bias-types`: Filter bias types (comma-separated)
+- `--datasets`: Filter datasets (comma-separated)
+- `--prompt-styles`: `cot` or `no_cot` (comma-separated)
+- `--max-tasks`: Parallelism (default 10)
+- `--dry-run`: Preview without running
+
+## Naming Convention
+
+Log dirs in `sycophancy_eval_inspect/logs/cot_100samples/` follow: `llama-{method}-{details}`
+
+Examples: `llama-base`, `llama-bct-mti-bs16-4k`, `llama-bct-mt-2k`, `llama-rlct-s50`
+
+## Other Eval Runners
+
+- `run_fireworks_evals.py` — for Fireworks-hosted models
+- `run_suite.py` — for general models via inspect CLI (e.g. `openai/gpt-4o`)
+- `compare_responses.py` — compare model responses side-by-side
+- `visualize_results.py` — generate plots and BIR tables

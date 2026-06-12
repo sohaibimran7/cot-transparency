@@ -1,0 +1,72 @@
+# BCT (SFT) on Llama-3.1-8B-Instruct
+# Bias: distractor_argument_g4 only, on logiqa + hellaswag (1024 each)
+# + 2048 instruct samples mixed in (main only; control uses raw unbiased files)
+# Training: bs=128, ~32 steps, save_every=16 (midway); final checkpoint evaluated
+
+name: bct_da_llama
+model: meta-llama/Llama-3.1-8B-Instruct
+
+data_generation:
+  script: generate_bct_from_test
+  args:
+    bias: distractor_argument_g4
+    datasets: [logiqa, hellaswag]
+    limits: [1024, 1024]
+    max_tokens: 16384
+    temperature: 1.0
+    batch_size: 64
+    output_dir: dataset_dumps/train-from-test-logiqa-hellaswag/da-g4/llama_3_1_8b_instruct
+
+data_preparation:
+  enabled: true
+  args:
+    inputs:
+      - "dataset_dumps/train-from-test-logiqa-hellaswag/da-g4/llama_3_1_8b_instruct/bct_cot.jsonl"
+      - "dataset_dumps/train_seed_42/llama-3-1-8b-instruct/instruct_samples.jsonl:2048"
+    control_inputs:
+      - "dataset_dumps/train-from-test-logiqa-hellaswag/da-g4/llama_3_1_8b_instruct/control_cot.jsonl"
+      - "dataset_dumps/train_seed_42/llama-3-1-8b-instruct/instruct_samples.jsonl:2048"
+    shuffle: true
+    seed: 42
+    output: dataset_dumps/train-from-test-logiqa-hellaswag/da-g4/llama_3_1_8b_instruct/bct_cot_instruct.jsonl
+    control_output: dataset_dumps/train-from-test-logiqa-hellaswag/da-g4/llama_3_1_8b_instruct/control_cot_instruct.jsonl
+
+training:
+  method: sft
+  seeds: [0, 42, 123]
+  include_control: true
+  args:
+    experiment_name: bct_da_llama
+    run_name: llama-bct-da
+    data: auto
+    batch_size: 128
+    epochs: 1
+    lora_rank: 8
+    lr: 1.0e-4
+    save_every: 16  # midway for main (~32 steps)
+
+evaluation:
+  include_base: false  # base handled by base_hle_llama.yaml
+  args:
+    bias_types: "suggested_answer,are_you_sure,distractor_fact,distractor_argument_g4,post_hoc,spurious_few_shot_squares,wrong_few_shot"
+    datasets: hle
+    prompt_styles: cot
+    limit: 100
+    max_tokens: 16384
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/consistency_hle_llama/eval_logs
+    base_model: meta-llama/Llama-3.1-8B-Instruct
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+    variance_across: seed
+
+viz_registration:
+  dir_suffix: bct-da
+  display_name: "BCT (DA)"
+  color: "#2171b5"
+  control_color: "#bdd7e7"
+  training_biases: [distractor_argument_g4]

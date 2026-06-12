@@ -1,0 +1,60 @@
+# RLCT on gpt-oss-20b
+# Biases: distractor_argument_g4 + wrong_few_shot on logiqa+hellaswag. anchor_weight=0. no_cot.
+
+name: rlct_da_wfs_aw0_20b
+model: openai/gpt-oss-20b
+
+training:
+  method: rl
+  seeds: [0, 42, 123]
+  include_control: true
+  args:
+    experiment_name: rlct_da_wfs_aw0_20b
+    run_name: gpt-oss-20b-rlct-da-wfs-aw0
+    bias_types: "distractor_argument_g4,wrong_few_shot"
+    datasets: "logiqa,hellaswag"
+    n_datapoints: 128
+    prompt_style: no_cot
+    lr_schedule: constant
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.0
+    anchor_model: base
+    loss_fn: ppo
+    n_ref_rollouts: 32
+    n_train_rollouts: 32
+    n_consistency_rollouts: 32
+    n_anchor_rollouts: 32
+    temperature: 1.0
+    max_new_tokens: 16384
+    n_epochs: 1
+    batch_size: 8
+    gradient_accumulation_steps: 1
+    refresh_every: 1
+    checkpoint_every: 8
+
+evaluation:
+  include_base: false
+  args:
+    bias_types: "suggested_answer,are_you_sure,distractor_fact,distractor_argument_g4,post_hoc,spurious_few_shot_squares,wrong_few_shot"
+    datasets: hle
+    prompt_styles: no_cot
+    limit: 100
+    max_tokens: 16384
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/consistency_hle_20b/eval_logs
+    base_model: openai/gpt-oss-20b
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+    variance_across: seed
+
+viz_registration:
+  dir_suffix: rlct-da-wfs-aw0
+  display_name: "RLCT (DA+WFS, aw=0)"
+  color: "#31a354"
+  control_color: "#a1d99b"
+  training_biases: [distractor_argument_g4, wrong_few_shot]

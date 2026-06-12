@@ -1,0 +1,25 @@
+# Base model eval for gpt-oss-20b on HLE (7 biases, no_cot, limit 500)
+# Run in parallel with llama base + all 12 training configs.
+
+name: base_hle_20b
+model: openai/gpt-oss-20b
+
+evaluation:
+  base_only: true
+  args:
+    bias_types: "suggested_answer,are_you_sure,distractor_fact,distractor_argument_g4,post_hoc,spurious_few_shot_squares,wrong_few_shot"
+    datasets: hle
+    prompt_styles: no_cot
+    limit: 400  # HLE max common across 7 biases = 432; using 400 for buffer
+    max_tokens: 16384
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/consistency_hle_20b/eval_logs
+    hash_file: artifacts/eval_suites/consistency_hle_20b/eval_logs/common_hashes_base.json
+    base_model: openai/gpt-oss-20b
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+    variance_across: seed

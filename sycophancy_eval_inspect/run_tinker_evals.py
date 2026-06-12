@@ -50,10 +50,13 @@ class ModelConfig:
     base_model: str
     checkpoint_path: str | None
     prompt_styles: list[str]
+    renderer_override: str | None = None
 
     @property
     def renderer(self) -> str:
-        """Get recommended renderer for the base model."""
+        """Get recommended renderer for the base model, or the override if set."""
+        if self.renderer_override:
+            return self.renderer_override
         return get_recommended_renderer_name(self.base_model)
 
 
@@ -111,6 +114,7 @@ async def run(args):
             base_model=args.base_model or LLAMA_BASE,
             checkpoint_path=args.checkpoint,
             prompt_styles=args.prompt_styles.split(",") if args.prompt_styles else ["cot", "no_cot"],
+            renderer_override=args.renderer,
         )]
     else:
         configs = DEFAULT_CONFIGS
@@ -227,6 +231,7 @@ def main():
     parser.add_argument("--base-model", help="Base model name (e.g., meta-llama/Llama-3.1-8B-Instruct)")
     parser.add_argument("--name", help="Model name for logging")
     parser.add_argument("--prompt-styles", help="Prompt styles (comma-separated: cot,no_cot)")
+    parser.add_argument("--renderer", help="Override auto-detected renderer (e.g., qwen3_5, qwen3_5_disable_thinking)")
 
     # Filtering
     parser.add_argument("--models", help="Filter model configs by name (comma-separated)")
@@ -238,7 +243,11 @@ def main():
     parser.add_argument("--seed", type=int, default=None, help="Sampling seed for reproducible generation (passed to Inspect GenerateConfig)")
     parser.add_argument("--max-connections", type=int, default=None, help="Max concurrent model API connections (controls per-model concurrency)")
     parser.add_argument("--dry-run", action="store_true", help="Print tasks without running")
-    parser.add_argument("--log-dir", default="logs/tinker_evals", help="Base directory for logs")
+    parser.add_argument(
+        "--log-dir",
+        default="artifacts/runs/manual-tinker-evals/eval_logs",
+        help="Base directory for eval logs",
+    )
     parser.add_argument("--log-level", default="INFO", help="Logging level")
 
     add_common_eval_args(parser)

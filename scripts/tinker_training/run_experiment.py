@@ -21,6 +21,7 @@ Usage:
     # Preview commands without executing
     python scripts/tinker_training/run_experiment.py experiments/my_experiment.yaml --dry-run
 """
+from __future__ import annotations
 
 import argparse
 import hashlib
@@ -40,6 +41,7 @@ from typing import Callable
 import yaml
 
 _PROJECT_ROOT = Path(__file__).parent.parent.parent
+_ARTIFACT_ROOT = _PROJECT_ROOT / "artifacts"
 
 STAGES = ["data_generation", "data_preparation", "training", "evaluation", "analysis"]
 
@@ -156,11 +158,135 @@ def get_model_prefix(model: str) -> str:
 
 def state_dir(config: dict) -> Path:
     """Return the state directory for an experiment."""
-    return _PROJECT_ROOT / "experiments" / config["name"]
+    return _ARTIFACT_ROOT / "runs" / config["name"] / "metadata"
 
 
 def state_path(config: dict) -> Path:
     return state_dir(config) / "state.json"
+
+
+def legacy_state_dir(config: dict) -> Path:
+    return _PROJECT_ROOT / "experiments" / config["name"]
+
+
+def legacy_state_path(config: dict) -> Path:
+    return legacy_state_dir(config) / "state.json"
+
+
+def _project_relative(path: Path) -> str:
+    """Return a project-relative path string when possible."""
+    try:
+        return path.relative_to(_PROJECT_ROOT).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def _resolve_project_path(path: str | Path) -> Path:
+    p = Path(path)
+    return p if p.is_absolute() else _PROJECT_ROOT / p
+
+
+def artifact_run_dir(config: dict) -> Path:
+    """Canonical artifact directory for a configured experiment."""
+    override = (config.get("artifacts") or {}).get("run_dir")
+    if override:
+        return _resolve_project_path(override)
+    return _ARTIFACT_ROOT / "runs" / config["name"]
+
+
+def artifact_metadata_dir(config: dict) -> Path:
+    return artifact_run_dir(config) / "metadata"
+
+
+def artifact_stage_log_dir(config: dict) -> Path:
+    return artifact_metadata_dir(config) / "stage_logs"
+
+
+def artifact_config_path(config: dict) -> Path:
+    return artifact_metadata_dir(config) / "config.yaml"
+
+
+def artifact_manifest_path(config: dict) -> Path:
+    return artifact_metadata_dir(config) / "manifest.json"
+
+
+def default_training_log_base_dir(config: dict) -> Path:
+    return artifact_run_dir(config) / "train_logs"
+
+
+def default_eval_log_dir(config: dict) -> Path:
+    return artifact_run_dir(config) / "eval_logs"
+
+
+def default_plot_dir(config: dict) -> Path:
+    return artifact_run_dir(config) / "plots"
+
+
+def combined_plot_dir(configs: list[dict]) -> Path:
+    """Canonical plot directory for multi-config analysis."""
+    if len(configs) == 1:
+        return default_plot_dir(configs[0])
+    names = [config["name"] for config in configs]
+    stem = "__".join(names)
+    if len(stem) > 80:
+        digest = hashlib.sha256(stem.encode()).hexdigest()[:10]
+        stem = f"{names[0]}__and_{len(names) - 1}_more__{digest}"
+    return _ARTIFACT_ROOT / "runs" / f"combined-{stem}" / "plots"
+
+
+def _training_args_with_defaults(config: dict, args: dict) -> dict:
+    resolved = dict(args)
+    resolved.setdefault("log_base_dir", str(default_training_log_base_dir(config)))
+    return resolved
+
+
+def _eval_args_with_defaults(config: dict, args: dict) -> dict:
+    resolved = dict(args)
+    resolved.setdefault("log_dir", str(default_eval_log_dir(config)))
+    return resolved
+
+
+def write_artifact_manifest(config: dict, st: dict | None = None) -> None:
+    """Write a compact manifest that points to canonical and legacy locations."""
+    manifest = {
+        "schema_version": 1,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "experiment": config["name"],
+        "model": config.get("model"),
+        "config_hash": config_hash(config),
+        "artifact_run_dir": _project_relative(artifact_run_dir(config)),
+        "canonical_paths": {
+            "train_logs": _project_relative(default_training_log_base_dir(config)),
+            "eval_logs": _project_relative(default_eval_log_dir(config)),
+            "plots": _project_relative(default_plot_dir(config)),
+            "metadata": _project_relative(artifact_metadata_dir(config)),
+            "stage_logs": _project_relative(artifact_stage_log_dir(config)),
+            "config": _project_relative(artifact_config_path(config)),
+            "state": _project_relative(state_path(config)),
+        },
+        "legacy_paths": {
+            "state": _project_relative(legacy_state_path(config)),
+            "experiment_dir": _project_relative(legacy_state_dir(config)),
+        },
+        "configured_paths": {
+            "training_log_base_dir": _training_args_with_defaults(
+                config, config.get("training", {}).get("args", {})
+            ).get("log_base_dir"),
+            "eval_log_dir": _eval_args_with_defaults(
+                config, config.get("evaluation", {}).get("args", {})
+            ).get("log_dir"),
+            "plot_dir": str(
+                config.get("analysis", {}).get("args", {}).get(
+                    "output_dir", default_plot_dir(config)
+                )
+            ),
+        },
+        "stages": (st or {}).get("stages", {}),
+        "tasks": (st or {}).get("tasks", {}),
+    }
+    artifact_metadata_dir(config).mkdir(parents=True, exist_ok=True)
+    with open(artifact_manifest_path(config), "w") as f:
+        json.dump(manifest, f, indent=2, default=str)
 
 
 def load_state(config: dict) -> dict:
@@ -168,6 +294,10 @@ def load_state(config: dict) -> dict:
     p = state_path(config)
     if p.exists():
         with open(p) as f:
+            return json.load(f)
+    legacy = legacy_state_path(config)
+    if legacy.exists():
+        with open(legacy) as f:
             return json.load(f)
     return {
         "experiment": config["name"],
@@ -241,7 +371,7 @@ def run_stage_command(
         return 0, ""
 
     # Log output to file as well
-    log_dir = state_dir(config) / "logs"
+    log_dir = artifact_stage_log_dir(config)
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / f"{stage_name}.log"
 
@@ -298,7 +428,7 @@ def run_parallel_commands(
     if len(commands) == 1:
         # Single command — run without label prefix for cleaner output
         cmd, label = commands[0]
-        log_dir = state_dir(config) / "logs"
+        log_dir = artifact_stage_log_dir(config)
         log_dir.mkdir(parents=True, exist_ok=True)
         log_file = log_dir / f"{stage_name}_{label}.log"
 
@@ -316,7 +446,7 @@ def run_parallel_commands(
         return [(proc.returncode, "".join(captured))]
 
     # Multiple commands — run in parallel with label prefixes
-    log_dir = state_dir(config) / "logs"
+    log_dir = artifact_stage_log_dir(config)
     log_dir.mkdir(parents=True, exist_ok=True)
 
     procs = []
@@ -501,6 +631,8 @@ def build_data_prep_cmd(config: dict, st: dict, for_control: bool = False) -> li
         cmd.append("--shuffle")
     if "seed" in args:
         cmd += ["--seed", str(args["seed"])]
+    if "repeat_to" in args:
+        cmd += ["--repeat-to", str(args["repeat_to"])]
 
     return cmd
 
@@ -572,7 +704,7 @@ def build_training_cmd(
     """
     tr = config.get("training", {})
     method = tr.get("method", "sft")
-    args = tr.get("args", {})
+    args = _training_args_with_defaults(config, tr.get("args", {}))
 
     run_name = str(args.get("run_name", "default"))
     if seed is not None:
@@ -584,10 +716,15 @@ def build_training_cmd(
         cmd = [sys.executable, "scripts/tinker_training/train_sft.py"]
         cmd += ["--model", config["model"]]
 
-        # Data files - resolve from prior stages or explicit config
-        data_files = args.get("data", [])
-        if not data_files or data_files == "auto":
-            data_files = _resolve_training_data(config, st, is_control)
+        # Data files - resolve from prior stages or explicit config.
+        # When data_preparation is skipped, allow `control_data` to specify
+        # control inputs distinct from the main `data` field.
+        if is_control and args.get("control_data"):
+            data_files = args["control_data"]
+        else:
+            data_files = args.get("data", [])
+            if not data_files or data_files == "auto":
+                data_files = _resolve_training_data(config, st, is_control)
 
         if isinstance(data_files, str):
             data_files = [data_files]
@@ -602,6 +739,7 @@ def build_training_cmd(
         # Naming
         cmd += ["--experiment-name", str(args.get("experiment_name", "sft_experiment"))]
         cmd += ["--run-name", run_name]
+        cmd += ["--log-base-dir", str(args["log_base_dir"])]
 
         # Hyperparams
         for key in ("lr", "batch_size", "epochs", "lora_rank", "save_every", "skip_near_final"):
@@ -628,6 +766,7 @@ def build_training_cmd(
         # Required args
         cmd += ["--experiment-name", str(args.get("experiment_name", "rl_experiment"))]
         cmd += ["--run-name", run_name]
+        cmd += ["--log-base-dir", str(args["log_base_dir"])]
 
         if "bias_types" in args:
             bt = args["bias_types"]
@@ -653,6 +792,8 @@ def build_training_cmd(
 
         if args.get("save_state"):
             cmd.append("--save-state")
+        if args.get("recompute_old_logprobs"):
+            cmd.append("--recompute-old-logprobs")
         if is_control or args.get("control"):
             cmd.append("--control")
 
@@ -706,7 +847,7 @@ def build_sequential_training_cmds(
     Returns list of (cmd, label) to run IN ORDER (not parallel).
     """
     tr = config.get("training", {})
-    args = tr.get("args", {})
+    args = _training_args_with_defaults(config, tr.get("args", {}))
     base_run_name = str(args.get("run_name", "default"))
 
     cmds = []
@@ -719,6 +860,7 @@ def build_sequential_training_cmds(
         cmd += ["--data", data_path]
         cmd += ["--experiment-name", str(args.get("experiment_name", "sft_experiment"))]
         cmd += ["--run-name", run_name]
+        cmd += ["--log-base-dir", str(args["log_base_dir"])]
 
         for key in ("lr", "batch_size", "epochs", "lora_rank", "save_every", "skip_near_final"):
             if key in args:
@@ -749,6 +891,10 @@ def parse_training_output(output: str) -> dict:
         m = re.search(r"Final checkpoint:\s*(.+)", line)
         if m:
             results["checkpoint"] = m.group(1).strip()
+        for ckpt in re.findall(r"sampler_path['\"]:\s*['\"]([^'\"]+)['\"]", line):
+            step = re.search(r"_step(\d+)(?:$|[^0-9])", ckpt)
+            if step:
+                results[f"step_{step.group(1)}_checkpoint"] = ckpt
     return results
 
 
@@ -767,7 +913,7 @@ def _eval_name(config: dict, suffix: str = "") -> str:
     return f"{name}{suffix}"
 
 
-def _resolve_base_eval_args(ev: dict) -> dict:
+def _resolve_base_eval_args(config: dict, ev: dict, default_args: dict | None = None) -> dict:
     """Merge evaluation.base_args over evaluation.args for base-model eval.
 
     If base_args overrides any hash-affecting key (limit, datasets, bias_types)
@@ -775,15 +921,16 @@ def _resolve_base_eval_args(ev: dict) -> dict:
     common_hashes_base.json so its question set matches its limit rather than
     reusing the checkpoint eval's hash file.
     """
-    args = ev.get("args", {})
+    args = default_args or _eval_args_with_defaults(config, ev.get("args", {}))
     base_overrides = ev.get("base_args") or {}
     if not base_overrides:
         return args
 
     merged = {**args, **base_overrides}
+    merged.setdefault("log_dir", str(default_eval_log_dir(config)))
     hash_affecting = {"limit", "datasets", "bias_types"}
     if any(k in base_overrides for k in hash_affecting) and "hash_file" not in base_overrides:
-        log_dir = merged.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+        log_dir = merged.get("log_dir", str(default_eval_log_dir(config)))
         merged["hash_file"] = str(Path(log_dir) / "common_hashes_base.json")
     return merged
 
@@ -812,8 +959,8 @@ def _build_single_eval_cmd(
     if "datasets" in args:
         ds = args["datasets"]
         cmd += ["--datasets", ds if isinstance(ds, str) else ",".join(ds)]
-    if "log_dir" in args:
-        cmd += ["--log-dir", str(args["log_dir"])]
+    log_dir = args.get("log_dir", str(default_eval_log_dir(config)))
+    cmd += ["--log-dir", str(log_dir)]
     if "max_tokens" in args:
         cmd += ["--max-tokens", str(args["max_tokens"])]
     if "limit" in args:
@@ -826,12 +973,13 @@ def _build_single_eval_cmd(
     if "hash_file" in args:
         cmd += ["--hash-file", str(args["hash_file"])]
     else:
-        log_dir = args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
         cmd += ["--hash-file", str(Path(log_dir) / "common_hashes.json")]
     if args.get("biased_only"):
         cmd.append("--biased-only")
     if args.get("unbiased_only"):
         cmd.append("--unbiased-only")
+    if "renderer" in args:
+        cmd += ["--renderer", str(args["renderer"])]
 
     return cmd
 
@@ -849,7 +997,7 @@ def _precompute_hash_file_for_eval(args: dict) -> None:
     if "hash_file" in args:
         hash_path = Path(args["hash_file"])
     else:
-        log_dir = args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+        log_dir = args.get("log_dir", "artifacts/runs/manual/eval_logs")
         hash_path = Path(log_dir) / "common_hashes.json"
 
     if hash_path.exists():
@@ -884,7 +1032,7 @@ def build_eval_cmds(
     """
     ev = config.get("evaluation", {})
     tr = config.get("training", {})
-    args = ev.get("args", {})
+    args = _eval_args_with_defaults(config, ev.get("args", {}))
     base_only = ev.get("base_only", False)
     include_base = ev.get("include_base", False) or base_only
 
@@ -898,7 +1046,7 @@ def build_eval_cmds(
     # eval once per seed with a matching sampling seed so variance across base is
     # comparable to variance across trained runs.
     if include_base:
-        base_args = _resolve_base_eval_args(ev)
+        base_args = _resolve_base_eval_args(config, ev, args)
         if base_args is not args:
             _precompute_hash_file_for_eval(base_args)
 
@@ -977,8 +1125,8 @@ def build_analysis_cmd(config: dict, st: dict) -> list[str]:
     cmd = [sys.executable, "-m", "sycophancy_eval_inspect.visualize_results"]
 
     # Resolve log dir
-    ev_args = config.get("evaluation", {}).get("args", {})
-    log_dir = args.get("log_dir") or ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+    ev_args = _eval_args_with_defaults(config, config.get("evaluation", {}).get("args", {}))
+    log_dir = args.get("log_dir") or ev_args.get("log_dir")
     cmd += ["--log-dir", str(log_dir)]
 
     if args.get("bir"):
@@ -987,8 +1135,14 @@ def build_analysis_cmd(config: dict, st: dict) -> list[str]:
         cmd.append("--ba")
     if args.get("plot"):
         cmd.append("--plot")
-    if "output_dir" in args:
-        cmd += ["--output-dir", str(args["output_dir"])]
+    if args.get("plot") or "output_dir" in args:
+        cmd += ["--output-dir", str(args.get("output_dir", default_plot_dir(config)))]
+    if args.get("no_controls"):
+        cmd.append("--no-controls")
+    if args.get("no_n"):
+        cmd.append("--no-n")
+    if args.get("no_splits"):
+        cmd.append("--no-splits")
     if "model" in args:
         models = args["model"] if isinstance(args["model"], list) else [args["model"]]
         for m in models:
@@ -1003,6 +1157,9 @@ def build_analysis_cmd(config: dict, st: dict) -> list[str]:
         cmd.append("--common-questions")
     if args.get("variance_across"):
         cmd += ["--variance-across", str(args["variance_across"])]
+    if "training_biases" in args:
+        biases = args["training_biases"] if isinstance(args["training_biases"], list) else [args["training_biases"]]
+        cmd += ["--training-biases"] + [str(b) for b in biases]
 
     return cmd
 
@@ -1066,6 +1223,20 @@ def update_model_registry(config: dict) -> None:
                     "edgecolor": "black",
                     "training_biases": [],
                 }
+
+    for extra in viz.get("extra_models", []):
+        extra_suffix = extra.get("dir_suffix")
+        if not extra_suffix:
+            continue
+        extra_training_type = extra.get("training_type", extra_suffix.replace("-", "_"))
+        registry["models"][extra_suffix] = {
+            "training_type": extra_training_type,
+            "display_name": extra.get("display_name", extra_training_type),
+            "color": extra.get("color", viz.get("color", "#888888")),
+            "hatch": extra.get("hatch", viz.get("hatch", "")),
+            "edgecolor": extra.get("edgecolor", viz.get("edgecolor", "black")),
+            "training_biases": extra.get("training_biases", viz.get("training_biases", [])),
+        }
 
     with open(registry_path, "w") as f:
         json.dump(registry, f, indent=2)
@@ -1132,7 +1303,7 @@ def validate_config(config: dict, stages_to_run: list[str], st: dict, checkpoint
                 )
 
     if "analysis" in stages_to_run:
-        ev_args = config.get("evaluation", {}).get("args", {})
+        ev_args = _eval_args_with_defaults(config, config.get("evaluation", {}).get("args", {}))
         an_args = config.get("analysis", {}).get("args", {})
         log_dir = an_args.get("log_dir") or ev_args.get("log_dir")
         if log_dir and not Path(log_dir).exists() and "evaluation" not in stages_to_run:
@@ -1393,8 +1564,8 @@ class TaskGraph:
                         cond.notify_all()
                     return
 
-                # Reuse run_stage_command for subprocess + per-task log file
-                # The log file lands at logs/{stage}_{label}.log
+                # Reuse run_stage_command for subprocess + per-task log file.
+                # The log file lands under artifacts/runs/.../metadata/stage_logs.
                 log_label = f"{t.stage}_{t.label}"
                 rc, out = run_stage_command(cmd, log_label, config, dry_run=False)
 
@@ -1531,6 +1702,7 @@ def build_task_graph(
     stages_to_run: list[str],
     checkpoint_override: str | None,
     force: bool = False,
+    dry_run: bool = False,
 ) -> TaskGraph:
     """Construct the task DAG for one experiment config.
 
@@ -1667,6 +1839,9 @@ def build_task_graph(
             include_control = tr.get("include_control", False) or control_only
             seeds = tr.get("seeds")
             seed_list: list[int | None] = list(seeds) if seeds else [None]
+            intermediate_steps = [
+                int(s) for s in config.get("evaluation", {}).get("intermediate_steps", [])
+            ]
 
             for seed in seed_list:
                 if not control_only:
@@ -1696,7 +1871,13 @@ def build_task_graph(
                         deps=list(base_train_deps),
                         build_cmd=_make_train_builder(seed, False),
                         parse_output=parse_training_output,
-                        dry_run_outputs={"checkpoint": f"tinker://dry-run-{label}"},
+                        dry_run_outputs={
+                            "checkpoint": f"tinker://dry-run-{label}",
+                            **{
+                                f"step_{step}_checkpoint": f"tinker://dry-run-{label}-step{step}"
+                                for step in intermediate_steps
+                            },
+                        },
                     ))
                     train_units.append((tid, label, False, seed))
 
@@ -1731,29 +1912,37 @@ def build_task_graph(
                         deps=list(ctrl_train_deps),
                         build_cmd=_make_train_builder_ctrl(seed, True),
                         parse_output=parse_training_output,
-                        dry_run_outputs={"checkpoint": f"tinker://dry-run-{label}"},
+                        dry_run_outputs={
+                            "checkpoint": f"tinker://dry-run-{label}",
+                            **{
+                                f"step_{step}_checkpoint": f"tinker://dry-run-{label}-step{step}"
+                                for step in intermediate_steps
+                            },
+                        },
                     ))
                     train_units.append((tid, label, True, seed))
 
     # ----- evaluation -----
     if "evaluation" in stages_to_run:
         ev = config.get("evaluation", {})
-        ev_args = ev.get("args", {})
+        ev_args = _eval_args_with_defaults(config, ev.get("args", {}))
         base_only = ev.get("base_only", False)
         include_base = ev.get("include_base", False) or base_only
+        intermediate_steps = [int(s) for s in ev.get("intermediate_steps", [])]
 
         # Precompute the main hash file synchronously so every eval subprocess
         # (checkpoint evals, and any base eval that shares this args dict)
         # finds it at dispatch time. Base evals that route to a distinct
         # hash_file via base_args are precomputed separately below.
-        _precompute_hash_file_for_eval(ev_args)
+        if not dry_run:
+            _precompute_hash_file_for_eval(ev_args)
 
         if include_base:
-            base_ev_args = _resolve_base_eval_args(ev)
+            base_ev_args = _resolve_base_eval_args(config, ev, ev_args)
             # If base_args routed the base eval to a separate hash file (e.g.
             # because base overrides `limit`), precompute that file now so the
             # base-eval command finds it at dispatch time.
-            if base_ev_args is not ev_args:
+            if base_ev_args is not ev_args and not dry_run:
                 _precompute_hash_file_for_eval(base_ev_args)
             model_prefix = get_model_prefix(config["model"])
             # When training.seeds is set, fire one base eval per seed so base
@@ -1775,9 +1964,7 @@ def build_task_graph(
                     wanted_biases = _csv_to_list(base_ev_args.get("bias_types"))
                     wanted_datasets = _csv_to_list(base_ev_args.get("datasets"))
                     if wanted_biases and wanted_datasets:
-                        log_dir = Path(
-                            base_ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
-                        )
+                        log_dir = Path(base_ev_args.get("log_dir", default_eval_log_dir(config)))
                         coverage = _load_base_eval_coverage(log_dir, base_name)
                         wanted = {(b, d) for b in wanted_biases for d in wanted_datasets}
                         missing = wanted - coverage
@@ -1845,6 +2032,34 @@ def build_task_graph(
                         deps=[tid],
                         build_cmd=_make_eval_builder(tid, label, is_ctrl, seed),
                     ))
+
+                    for step in intermediate_steps:
+                        step_eval_id = f"eval:{label}-step{step}"
+                        step_label = f"{label}-step{step}"
+
+                        def _make_step_eval_builder(_train_tid, _label, _is_ctrl, _seed, _step):
+                            def _build(deps_outs):
+                                ckpt = deps_outs.get(_train_tid, {}).get(f"step_{_step}_checkpoint")
+                                if not ckpt:
+                                    raise RuntimeError(
+                                        f"No step {_step} checkpoint available for eval:{_label} "
+                                        f"(upstream {_train_tid} produced none)"
+                                    )
+                                return _build_single_eval_cmd(
+                                    config, ev_args, checkpoint=ckpt,
+                                    eval_name=_eval_name(
+                                        config, suffix=f"{_eval_suffix_for(_seed, _is_ctrl)}-step{_step}",
+                                    ),
+                                )
+                            return _build
+
+                        tasks.append(Task(
+                            id=step_eval_id,
+                            stage="evaluation",
+                            label=step_label,
+                            deps=[tid],
+                            build_cmd=_make_step_eval_builder(tid, label, is_ctrl, seed, step),
+                        ))
             else:
                 # No training in this run — fall back to checkpoint sources
                 # already in state or supplied via --checkpoint.
@@ -2163,7 +2378,9 @@ def run_pipeline(
     # Build the DAG. Analysis is intentionally outside the graph (handled by
     # main() so multi-config runs can combine analysis at the end).
     graph_stages = [s for s in stages_to_run if s != "analysis"]
-    graph = build_task_graph(config, st, graph_stages, checkpoint_override, force=force)
+    graph = build_task_graph(
+        config, st, graph_stages, checkpoint_override, force=force, dry_run=dry_run
+    )
 
     if not graph.tasks:
         _print(f"  No tasks to run for {config['name']}")
@@ -2206,10 +2423,12 @@ def run_pipeline(
     _rollup_stage_status(st, graph, results)
     save_state(config, st)
 
-    # Save config alongside state for reference
-    config_copy = state_dir(config) / "config.yaml"
+    # Save config and manifest in the canonical artifact tree for reference.
+    artifact_metadata_dir(config).mkdir(parents=True, exist_ok=True)
+    config_copy = artifact_config_path(config)
     with open(config_copy, "w") as f:
         yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+    write_artifact_manifest(config, st)
 
     # Report
     failed = [tid for tid, r in results.items() if r["status"] == "failed"]
@@ -2231,7 +2450,7 @@ def run_pipeline(
             _print(f"    - {tid}")
 
     if failed or cancelled:
-        _print(f"\n  Check logs: {state_dir(config)}/logs/")
+        _print(f"\n  Check logs: {artifact_stage_log_dir(config)}/")
         _print(f"  Fix the issue and re-run the same command — completed tasks will skip.")
         return False
 
@@ -2243,9 +2462,9 @@ def _build_combined_analysis_cmd(configs: list[dict]) -> list[str]:
     # Collect unique log dirs
     log_dirs: list[str] = []
     for config in configs:
-        ev_args = config.get("evaluation", {}).get("args", {})
+        ev_args = _eval_args_with_defaults(config, config.get("evaluation", {}).get("args", {}))
         an_args = config.get("analysis", {}).get("args", {})
-        log_dir = an_args.get("log_dir") or ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+        log_dir = an_args.get("log_dir") or ev_args.get("log_dir")
         if str(log_dir) not in log_dirs:
             log_dirs.append(str(log_dir))
 
@@ -2267,8 +2486,14 @@ def _build_combined_analysis_cmd(configs: list[dict]) -> list[str]:
         cmd.append("--ba")
     if args.get("plot"):
         cmd.append("--plot")
-    if "output_dir" in args:
-        cmd += ["--output-dir", str(args["output_dir"])]
+    if args.get("plot") or "output_dir" in args:
+        cmd += ["--output-dir", str(args.get("output_dir", combined_plot_dir(configs)))]
+    if args.get("no_controls"):
+        cmd.append("--no-controls")
+    if args.get("no_n"):
+        cmd.append("--no-n")
+    if args.get("no_splits"):
+        cmd.append("--no-splits")
     if "model" in args:
         models = args["model"] if isinstance(args["model"], list) else [args["model"]]
         for m in models:
@@ -2283,6 +2508,9 @@ def _build_combined_analysis_cmd(configs: list[dict]) -> list[str]:
         cmd.append("--common-questions")
     if args.get("variance_across"):
         cmd += ["--variance-across", str(args["variance_across"])]
+    if "training_biases" in args:
+        biases = args["training_biases"] if isinstance(args["training_biases"], list) else [args["training_biases"]]
+        cmd += ["--training-biases"] + [str(b) for b in biases]
 
     return cmd
 
@@ -2447,6 +2675,7 @@ def main():
             st = load_state(config)
             if not args.dry_run:
                 mark_stage(st, "analysis", "completed")
+                write_artifact_manifest(config, st)
             save_state(config, st)
 
     _print(f"\n{'='*60}")

@@ -31,7 +31,7 @@ evaluation:
     bias_types: "distractor_fact,distractor_argument,suggested_answer,wrong_few_shot,spurious_few_shot_squares"
     datasets: truthfulqa
     prompt_styles: "no_cot"
-    log_dir: sycophancy_eval_inspect/logs/tinker_evals
+    log_dir: artifacts/eval_suites/tinker_evals/eval_logs
     base_model: openai/gpt-oss-20b
 
 analysis:

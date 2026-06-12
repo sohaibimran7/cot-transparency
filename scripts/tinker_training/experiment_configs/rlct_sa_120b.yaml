@@ -33,7 +33,7 @@ evaluation:
     datasets: hellaswag
     prompt_styles: "no_cot"
     limit: 200
-    log_dir: sycophancy_eval_inspect/logs/rlct_sa_120b_test
+    log_dir: artifacts/eval_suites/rlct_sa_120b_test/eval_logs
     base_model: openai/gpt-oss-120b
 
 analysis:

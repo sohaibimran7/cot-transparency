@@ -1,0 +1,67 @@
+%% bct_sa_tqa_120b — BCT Pure
+flowchart TD
+  DG["🟦 datagen\ngenerate_bct_from_test\n800×TQA, non-cot"]
+  EB["🟩 eval:base\ngpt-base"]
+
+  DG --> TM0["🟥 train:main-s0"]
+  DG --> TC0["🟥 train:ctrl-s0"]
+  DG --> TM42["🟥 train:main-s42"]
+  DG --> TC42["🟥 train:ctrl-s42"]
+  DG --> TM123["🟥 train:main-s123"]
+  DG --> TC123["🟥 train:ctrl-s123"]
+
+  TM0  --> EM0["🟩 eval:main-s0"]
+  TC0  --> EC0["🟩 eval:ctrl-s0"]
+  TM42 --> EM42["🟩 eval:main-s42"]
+  TC42 --> EC42["🟩 eval:ctrl-s42"]
+  TM123 --> EM123["🟩 eval:main-s123"]
+  TC123 --> EC123["🟩 eval:ctrl-s123"]
+
+  EM0 & EC0 & EM42 & EC42 & EM123 & EC123 & EB --> ANA["⬜ analysis\nBIR + BA + variance plots"]
+
+---
+
+%% bct_sa_tqa_120b_inst — BCT + Instruct Mix
+flowchart TD
+  DG2["🟦 datagen\ngenerate_bct_from_test\n800×TQA, non-cot"]
+  EB2["🟩 eval:base"]
+
+  DG2 --> DP["🟨 dataprep\nbct_non_cot + instruct:half\n→ mixed.jsonl"]
+
+  DP --> TM0b["🟥 train:main-s0\n(mixed.jsonl)"]
+  DP --> TC0b["🟥 train:ctrl-s0"]
+  DP --> TM42b["🟥 train:main-s42"]
+  DP --> TC42b["🟥 train:ctrl-s42"]
+  DP --> TM123b["🟥 train:main-s123"]
+  DP --> TC123b["🟥 train:ctrl-s123"]
+
+  TM0b  --> EM0b["🟩 eval:main-s0"]
+  TC0b  --> EC0b["🟩 eval:ctrl-s0"]
+  TM42b --> EM42b["🟩 eval:main-s42"]
+  TC42b --> EC42b["🟩 eval:ctrl-s42"]
+  TM123b --> EM123b["🟩 eval:main-s123"]
+  TC123b --> EC123b["🟩 eval:ctrl-s123"]
+
+  EM0b & EC0b & EM42b & EC42b & EM123b & EC123b & EB2 --> ANA2["⬜ analysis\nBIR + BA + variance plots"]
+
+---
+
+%% rlct_sa_tqa_120b — RLCT
+flowchart TD
+  EB3["🟩 eval:base"]
+
+  TM0c["🟥 train:main-s0\ntrain_rl.py bs=8"]
+  TC0c["🟥 train:ctrl-s0\n--control"]
+  TM42c["🟥 train:main-s42"]
+  TC42c["🟥 train:ctrl-s42"]
+  TM123c["🟥 train:main-s123"]
+  TC123c["🟥 train:ctrl-s123"]
+
+  TM0c  --> EM0c["🟩 eval:main-s0"]
+  TC0c  --> EC0c["🟩 eval:ctrl-s0"]
+  TM42c --> EM42c["🟩 eval:main-s42"]
+  TC42c --> EC42c["🟩 eval:ctrl-s42"]
+  TM123c --> EM123c["🟩 eval:main-s123"]
+  TC123c --> EC123c["🟩 eval:ctrl-s123"]
+
+  EM0c & EC0c & EM42c & EC42c & EM123c & EC123c & EB3 --> ANA3["⬜ analysis\nBIR + BA + variance plots"]

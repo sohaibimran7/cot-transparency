@@ -120,6 +120,12 @@ Input limit syntax:
     parser.add_argument("--clean", action="store_true", help="Extract/strip channel tags from assistant messages")
     parser.add_argument("--shuffle", action="store_true", help="Shuffle the combined output")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for shuffle and half-sampling (default: 42)")
+    parser.add_argument(
+        "--repeat-to",
+        type=int,
+        default=None,
+        help="Repeat samples with replacement until the output has exactly N rows",
+    )
     args = parser.parse_args()
 
     random.seed(args.seed)
@@ -150,6 +156,19 @@ Input limit syntax:
         if removed:
             print(f"Cleaned: kept {len(cleaned)}, removed {removed} with unparseable channel tags")
         all_samples = cleaned
+
+    if args.repeat_to is not None:
+        if args.repeat_to < 0:
+            parser.error("--repeat-to must be non-negative")
+        if args.repeat_to and not all_samples:
+            parser.error("--repeat-to requires at least one input sample")
+        if len(all_samples) < args.repeat_to:
+            base = list(all_samples)
+            while len(all_samples) < args.repeat_to:
+                all_samples.append(random.choice(base))
+        else:
+            all_samples = all_samples[:args.repeat_to]
+        print(f"Repeated/truncated to {len(all_samples)} samples")
 
     # Shuffle
     if args.shuffle:

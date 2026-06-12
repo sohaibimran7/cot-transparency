@@ -48,6 +48,13 @@ class CheckpointConfig(BaseModel):
 # Utility Functions
 # =============================================================================
 
+# Models not yet registered in tinker_cookbook's model_info but compatible
+# with an existing renderer. Maps base_model -> renderer_name.
+MODEL_RENDERER_OVERRIDES: dict[str, str] = {
+    "Qwen/Qwen3.6-35B-A3B": "qwen3_5",
+}
+
+
 def get_renderer_and_tokenizer(model: str):
     """
     Get the appropriate renderer and tokenizer for a model.
@@ -58,7 +65,7 @@ def get_renderer_and_tokenizer(model: str):
     - Parse responses
     """
     tokenizer = get_tokenizer(model)
-    renderer_name = model_info.get_recommended_renderer_name(model)
+    renderer_name = MODEL_RENDERER_OVERRIDES.get(model) or model_info.get_recommended_renderer_name(model)
     renderer = renderers.get_renderer(renderer_name, tokenizer)
     return renderer, tokenizer
 
@@ -134,7 +141,7 @@ def warn_if_dirty(git_state: dict) -> None:
         )
 
 
-def get_recommended_lr(model: str, is_lora: bool = True, fallback: float = 1e-4) -> float:
+def get_recommended_lr(model: str, is_lora: bool = True, fallback: float = 2.86e-4) -> float:
     """
     Get recommended learning rate for a model using Tinker's hyperparam_utils.
 

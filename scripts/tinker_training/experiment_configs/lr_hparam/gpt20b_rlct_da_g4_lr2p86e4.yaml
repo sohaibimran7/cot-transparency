@@ -1,0 +1,56 @@
+name: lr_hp_gpt20b_rlct_da_g4_lr2p86e4
+model: openai/gpt-oss-20b
+training:
+  method: rl
+  include_control: false
+  args:
+    experiment_name: lr_hp_gpt20b_rlct_da_g4_lr2p86e4
+    run_name: gpt-oss-20b-rlct-da-g4-lr2p86e4
+    bias_types: distractor_argument_g4
+    datasets: mmlu
+    n_datapoints: 64
+    prompt_style: no_cot
+    lr: 0.000286
+    lr_schedule: constant
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.0
+    anchor_model: base
+    loss_fn: ppo
+    n_ref_rollouts: 32
+    n_train_rollouts: 32
+    n_consistency_rollouts: 32
+    n_anchor_rollouts: 32
+    temperature: 1.0
+    max_new_tokens: 24576
+    n_epochs: 1
+    batch_size: 8
+    gradient_accumulation_steps: 1
+    refresh_every: 1
+    checkpoint_every: 0
+evaluation:
+  include_base: false
+  args:
+    bias_types: distractor_argument_g4,suggested_answer,distractor_fact,wrong_few_shot,spurious_few_shot_squares
+    datasets: truthfulqa
+    prompt_styles: no_cot
+    limit: 150
+    max_tokens: 24576
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/lr_hparam_truthfulqa/eval_logs
+    hash_file: artifacts/eval_suites/lr_hparam_truthfulqa/eval_logs/common_hashes.json
+analysis:
+  args:
+    training_biases:
+    - distractor_argument_g4
+    bir: true
+    ba: true
+    plot: true
+    output_dir: artifacts/eval_suites/lr_hparam_truthfulqa/plots
+viz_registration:
+  dir_suffix: rlct-da-g4-20b-lr2p86e4
+  training_type: rlct_da_g4_20b_lr2p86e4
+  display_name: GPT RLCT lr=0.000286
+  color: '#74c476'
+  training_biases:
+  - distractor_argument_g4

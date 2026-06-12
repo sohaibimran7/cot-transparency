@@ -32,7 +32,7 @@ evaluation:
     datasets: truthfulqa
     prompt_styles: "no_cot"
     limit: 200
-    log_dir: sycophancy_eval_inspect/logs/tinker_evals
+    log_dir: artifacts/eval_suites/tinker_evals/eval_logs
     base_model: openai/gpt-oss-20b
 
 analysis:

@@ -33,7 +33,7 @@ evaluation:
     datasets: logiqa
     prompt_styles: "no_cot"
     limit: 200
-    log_dir: sycophancy_eval_inspect/logs/rlct_wfs_hparam_sweep
+    log_dir: artifacts/eval_suites/rlct_wfs_hparam_sweep/eval_logs
     base_model: openai/gpt-oss-20b
 
 analysis:

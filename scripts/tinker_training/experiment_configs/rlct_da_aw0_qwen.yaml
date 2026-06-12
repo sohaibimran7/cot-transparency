@@ -1,0 +1,64 @@
+# RLCT on Qwen/Qwen3.6-35B-A3B (renderer override → qwen3_5)
+# Bias: distractor_argument_g4 on logiqa+hellaswag. anchor_weight=0.
+# 128 datapoints, bs=8, checkpoint_every=8 (midway=64). no_cot.
+# Eval skips are_you_sure bias (per user request).
+
+name: rlct_da_aw0_qwen
+model: Qwen/Qwen3.6-35B-A3B
+
+training:
+  method: rl
+  seeds: [0, 42, 123]
+  include_control: false
+  args:
+    experiment_name: rlct_da_aw0_qwen
+    run_name: qwen3-6-35b-a3b-rlct-da-aw0
+    bias_types: "distractor_argument_g4"
+    datasets: "logiqa,hellaswag"
+    n_datapoints: 64
+    prompt_style: no_cot
+    lr: 2.86e-4
+    lr_schedule: constant
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.0
+    anchor_model: base
+    loss_fn: ppo
+    n_ref_rollouts: 32
+    n_train_rollouts: 32
+    n_consistency_rollouts: 32
+    n_anchor_rollouts: 32
+    temperature: 1.0
+    max_new_tokens: 24576
+    n_epochs: 1
+    batch_size: 8
+    gradient_accumulation_steps: 1
+    refresh_every: 1
+    checkpoint_every: 8
+
+evaluation:
+  include_base: false
+  args:
+    bias_types: "suggested_answer,distractor_fact,distractor_argument_g4,post_hoc,spurious_few_shot_squares,wrong_few_shot"
+    datasets: hle
+    prompt_styles: no_cot
+    limit: 100
+    max_tokens: 24576
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/consistency_hle_qwen/eval_logs
+    base_model: Qwen/Qwen3.6-35B-A3B
+    renderer: qwen3_5
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+    variance_across: seed
+
+viz_registration:
+  dir_suffix: rlct-da-aw0
+  display_name: "RLCT (DA, aw=0)"
+  color: "#238b45"
+  control_color: "#bae4b3"
+  training_biases: [distractor_argument_g4]

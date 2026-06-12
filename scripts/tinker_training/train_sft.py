@@ -135,6 +135,8 @@ def main():
     # Naming
     parser.add_argument("--experiment-name", default="sft_experiment")
     parser.add_argument("--run-name", default="default")
+    parser.add_argument("--log-base-dir", default="logs",
+                        help="Base directory for training logs")
 
     # Hyperparameters
     parser.add_argument("--lr", type=float, default=None,
@@ -205,6 +207,7 @@ def main():
             save_state=args.save_state,
             skip_near_final_steps=args.skip_near_final,
         ),
+        log_base_dir=args.log_base_dir,
     )
 
     # Print summary

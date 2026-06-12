@@ -38,7 +38,7 @@ evaluation:
     bias_types: "suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares"
     datasets: "hellaswag,logiqa"
     prompt_styles: "cot,no_cot"
-    log_dir: sycophancy_eval_inspect/logs/tinker_evals
+    log_dir: artifacts/eval_suites/tinker_evals/eval_logs
 
 analysis:
   args:

@@ -27,13 +27,17 @@ from sycophancy_eval_inspect.visualize_results import (
 )
 
 MODEL_COLORS = {
-    "llama": "#e41a1c",        # red
-    "gpt-oss-20b": "#377eb8",  # blue
+    "llama": "#e41a1c",                         # red
+    "gpt-oss-20b": "#377eb8",                   # blue
+    "qwen3.6-35b-a3b-thinking": "#984ea3",      # purple
+    "qwen3.6-35b-a3b-no-thinking": "#f781bf",   # pink
 }
 
 MODEL_LABELS = {
     "llama": "Llama 3.1 8B",
     "gpt-oss-20b": "GPT-OSS 20B",
+    "qwen3.6-35b-a3b-thinking": "Qwen3.6 35B-A3B (thinking)",
+    "qwen3.6-35b-a3b-no-thinking": "Qwen3.6 35B-A3B (no-think)",
 }
 
 
@@ -96,7 +100,7 @@ DIFFICULTY_ORDER = [
 ]
 
 
-def plot_bir_by_dataset(bir_df, metric="bir", output_dir="plots/model_comparison_200",
+def plot_bir_by_dataset(bir_df, metric="bir", output_dir="artifacts/eval_suites/model_comparison_200/plots",
                         title_suffix="", filename="bir_all_datasets.png",
                         dataset_order=None, xlabel=None):
     out = Path(output_dir)
@@ -886,7 +890,7 @@ def main():
     parser.add_argument(
         "--output-dir",
         default=None,
-        help="Output directory for plots. Defaults to plots/model_comparison_200[_population].",
+        help="Output directory for plots. Defaults to artifacts/eval_suites/model_comparison_200/plots[_population].",
     )
     parser.add_argument(
         "--gpqa-subset",
@@ -898,8 +902,8 @@ def main():
     global aggregate_samples
 
     log_dirs = [
-        "sycophancy_eval_inspect/logs/base_200",
-        "sycophancy_eval_inspect/logs/base_200_ays",
+        "artifacts/eval_suites/base_200/eval_logs",
+        "artifacts/eval_suites/base_200_ays/eval_logs",
     ]
     print(f"Loading eval data (bir_method={args.bir_method})...")
     bir_df = compute_per_question_bir(log_dirs)
@@ -914,10 +918,10 @@ def main():
 
     if args.bir_method == "population":
         bir_df = collapse_to_population_bir(bir_df)
-        output_dir = args.output_dir or "plots/model_comparison_200_population"
+        output_dir = args.output_dir or "artifacts/eval_suites/model_comparison_200/plots_population"
         aggregate_samples = _aggregate_population
     else:
-        output_dir = args.output_dir or "plots/model_comparison_200"
+        output_dir = args.output_dir or "artifacts/eval_suites/model_comparison_200/plots"
 
     print_bir_tables(bir_df, metric="bir")
 
@@ -980,7 +984,7 @@ def main():
         ]
         plot_hle_methods_combined(
             both_dirs_groups,
-            output_dir="plots/model_comparison_200_hle_methods_both_dirs",
+            output_dir="artifacts/eval_suites/model_comparison_200/plots_hle_methods_both_dirs",
             floor_se_lookup=floor_se_lookup,
         )
 
@@ -1000,7 +1004,7 @@ def main():
         ]
         plot_hle_methods_combined(
             pro_only_groups,
-            output_dir="plots/model_comparison_200_hle_methods_pro_only",
+            output_dir="artifacts/eval_suites/model_comparison_200/plots_hle_methods_pro_only",
             floor_se_lookup=floor_se_lookup,
         )
 
@@ -1020,7 +1024,7 @@ def main():
             ]),
         ]
         plot_hle_methods_combined(method_groups,
-                                  output_dir="plots/model_comparison_200_hle_methods",
+                                  output_dir="artifacts/eval_suites/model_comparison_200/plots_hle_methods",
                                   floor_se_lookup=floor_se_lookup)
 
     # Three flavors of all-datasets view.
@@ -1071,7 +1075,7 @@ def main():
         for ds in FRONTIER_DATASETS:
             plot_methods_combined_for_dataset(
                 ds, split_groups,
-                output_dir="plots/model_comparison_200_split_y0",
+                output_dir="artifacts/eval_suites/model_comparison_200/plots_split_y0",
                 file_stem="split_y0",
             )
     print("Done!")

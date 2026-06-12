@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Run sycophancy evaluation suite with logs structured like dataset_dumps/test/:
-    logs/<experiment_name>/<bias>/<dataset>_<bias>_<variant>/
+    artifacts/runs/<experiment_name>/eval_logs/<bias>/<dataset>_<bias>_<variant>/
 
 Usage:
     python -m sycophancy_eval_inspect.run_suite --experiment my_exp --model openai/gpt-4o
@@ -11,6 +11,7 @@ Usage:
 Hash-based filtering is enabled by default to ensure consistent samples across bias types
 for proper BRR (Biased Reasoning Rate) calculation. Use --skip-hash-filter to disable.
 """
+from __future__ import annotations
 
 import argparse
 import subprocess
@@ -30,12 +31,13 @@ def get_log_dir(
     experiment_name: str,
     dataset_path: Path,
     variant: str | None = None,
+    log_base_dir: Path | None = None,
 ) -> str:
     """
     Compute log directory to match dataset_dumps structure.
 
     dataset_dumps/test/suggested_answer/mmlu_suggested_answer.jsonl
-    -> logs/<experiment>/suggested_answer/mmlu_suggested_answer_biased/
+    -> artifacts/runs/<experiment>/eval_logs/suggested_answer/mmlu_suggested_answer_biased/
     """
     bias_name = dataset_path.parent.name  # e.g., "suggested_answer"
     file_stem = dataset_path.stem  # e.g., "mmlu_suggested_answer"
@@ -45,7 +47,8 @@ def get_log_dir(
     else:
         log_subdir = file_stem
 
-    return f"logs/{experiment_name}/{bias_name}/{log_subdir}"
+    base = log_base_dir or Path("artifacts") / "runs" / experiment_name / "eval_logs"
+    return str(base / bias_name / log_subdir)
 
 
 def run_mcq_eval(
@@ -56,9 +59,10 @@ def run_mcq_eval(
     prompt_style: str = "cot",
     limit: int | None = None,
     hash_filter_file: Path | None = None,
+    log_base_dir: Path | None = None,
 ) -> int:
     """Run a single MCQ evaluation. Returns subprocess return code."""
-    log_dir = get_log_dir(experiment_name, dataset_path, variant)
+    log_dir = get_log_dir(experiment_name, dataset_path, variant, log_base_dir)
 
     cmd = [
         "inspect",
@@ -96,9 +100,10 @@ def run_positional_eval(
     model: str,
     experiment_name: str,
     limit: int | None = None,
+    log_base_dir: Path | None = None,
 ) -> int:
     """Run positional bias evaluation. Returns subprocess return code."""
-    log_dir = get_log_dir(experiment_name, dataset_path)
+    log_dir = get_log_dir(experiment_name, dataset_path, log_base_dir=log_base_dir)
 
     cmd = [
         "inspect",
@@ -131,6 +136,12 @@ def main():
     parser.add_argument("--variants", default="biased,unbiased", help="Comma-separated: biased,unbiased")
     parser.add_argument("--bias-types", default=None, help="Filter to specific bias types (comma-separated)")
     parser.add_argument("--dataset-dir", default="dataset_dumps/test", help="Base directory for datasets")
+    parser.add_argument(
+        "--log-base-dir",
+        type=Path,
+        default=None,
+        help="Base directory for eval logs. Defaults to artifacts/runs/<experiment>/eval_logs.",
+    )
     parser.add_argument("--limit", type=int, default=None, help="Limit samples per eval")
     parser.add_argument("--skip-mcq", action="store_true", help="Skip MCQ evals")
     parser.add_argument("--skip-positional", action="store_true", help="Skip positional bias eval")
@@ -158,7 +169,7 @@ def main():
         if not args.skip_hash_filter and mcq_datasets:
             print("\nComputing common hashes across bias types...")
             try:
-                hash_filter_dir = Path(f"logs/{args.experiment}")
+                hash_filter_dir = args.log_base_dir or Path("artifacts") / "runs" / args.experiment / "eval_logs"
                 hash_filter = compute_hash_filter(
                     datasets=mcq_datasets,
                     limit=args.limit,
@@ -197,6 +208,7 @@ def main():
                         prompt_style=args.prompt_style,
                         limit=args.limit,
                         hash_filter_file=hash_filter_file,
+                        log_base_dir=args.log_base_dir,
                     )
                     if ret != 0:
                         failed_evals += 1
@@ -213,6 +225,7 @@ def main():
                         prompt_style=args.prompt_style,
                         limit=args.limit,
                         hash_filter_file=hash_filter_file,
+                        log_base_dir=args.log_base_dir,
                     )
                     if ret != 0:
                         failed_evals += 1
@@ -234,6 +247,7 @@ def main():
                     model=args.model,
                     experiment_name=args.experiment,
                     limit=args.limit,
+                    log_base_dir=args.log_base_dir,
                 )
                 if ret != 0:
                     failed_evals += 1
@@ -241,7 +255,8 @@ def main():
     print(f"\n{'='*60}")
     print(f"Suite complete!")
     print(f"Total evals: {total_evals}, Failed: {failed_evals}")
-    print(f"Logs at: logs/{args.experiment}/")
+    log_base_dir = args.log_base_dir or Path("artifacts") / "runs" / args.experiment / "eval_logs"
+    print(f"Logs at: {log_base_dir}/")
     print(f"{'='*60}")
 
     return 1 if failed_evals > 0 else 0

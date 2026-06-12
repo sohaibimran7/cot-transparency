@@ -152,7 +152,8 @@ class RLConfig(BaseModel):
     checkpoint: CheckpointConfig = CheckpointConfig()
     kl_coef: float = 0.05
     kl_discount_factor: float = 0.0
-    loss_fn: Literal["ppo", "reinforce"] = "ppo"
+    loss_fn: Literal["ppo", "cispo", "importance_sampling"] = "ppo"
+    recompute_old_logprobs: bool = False  # if True, replace sampling-engine logprobs in each datum with training-engine logprobs (extra forward pass) before fwd_bwd. Mitigates inference↔training engine drift on MoE models for PPO/CISPO ratios.
     anchor_weight: float = 0.5
     anchor_model: Literal["base", "initial_policy"] = "base"
     log_base_dir: str = "logs"
@@ -762,6 +763,30 @@ class RLTrainer:
                         kl_penalty_coef=self.config.kl_coef,
                         kl_discount_factor=self.config.kl_discount_factor,
                     )
+
+                # Optionally recompute old_logprobs from training engine to remove
+                # inference↔training engine drift in the PPO/CISPO ratio. KL ran
+                # first so its sampling-engine semantics are preserved.
+                # cross_entropy expects {target_tokens, weights}; PPO datums have
+                # {target_tokens, logprobs, advantages, mask}, so build minimal
+                # datums for the recompute call.
+                if self.config.recompute_old_logprobs:
+                    ce_datums = [
+                        tinker.Datum(
+                            model_input=d.model_input,
+                            loss_fn_inputs={
+                                "target_tokens": d.loss_fn_inputs["target_tokens"],
+                                "weights": d.loss_fn_inputs["mask"],
+                            },
+                        )
+                        for d in grad_datums
+                    ]
+                    recompute_fut = await self.training_client.forward_async(
+                        ce_datums, loss_fn="cross_entropy"
+                    )
+                    recompute_res = await recompute_fut.result_async()
+                    for datum, output in zip(grad_datums, recompute_res.loss_fn_outputs):
+                        datum.loss_fn_inputs["logprobs"] = output["logprobs"]
 
                 # Submit fwd_bwd
                 fwd_bwd_future = await self.training_client.forward_backward_async(

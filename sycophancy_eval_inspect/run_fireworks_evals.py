@@ -147,7 +147,11 @@ def main():
     parser.add_argument("--max-tasks", type=int, default=10, help="Max parallel tasks")
     parser.add_argument("--max-connections", type=int, default=None, help="Max concurrent model API connections (controls per-model concurrency)")
     parser.add_argument("--dry-run", action="store_true", help="Print tasks without running")
-    parser.add_argument("--log-dir", default="logs/fireworks_evals", help="Base directory for logs")
+    parser.add_argument(
+        "--log-dir",
+        default="artifacts/runs/manual-fireworks-evals/eval_logs",
+        help="Base directory for eval logs",
+    )
     add_common_eval_args(parser)
 
     logging.basicConfig(

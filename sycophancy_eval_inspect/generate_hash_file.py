@@ -10,7 +10,7 @@ Usage:
         --datasets hellaswag,logiqa \\
         --bias-types suggested_answer,distractor_fact,post_hoc \\
         --limit 200 \\
-        --output sycophancy_eval_inspect/logs/base_200/common_hashes.json
+        --output artifacts/eval_suites/base_200/eval_logs/common_hashes.json
 """
 
 from __future__ import annotations

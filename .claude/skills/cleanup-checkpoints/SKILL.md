@@ -16,7 +16,7 @@ Delete remote Tinker LoRA checkpoints that aren't referenced by any eval log.
 
 ## How it works
 
-1. **Scan eval logs** in `sycophancy_eval_inspect/logs/` (all subdirectories). For each `.eval` (zip) or `.json` log file, extract `eval.task_args.metadata.checkpoint_path` to build the set of used `tinker://` paths.
+1. **Scan eval logs** in both canonical and legacy locations: `artifacts/runs/*/eval_logs/` first, then `sycophancy_eval_inspect/logs/` for older runs. For each `.eval` (zip) or `.json` log file, extract `eval.task_args.metadata.checkpoint_path` to build the set of used `tinker://` paths. Refresh `artifacts/catalog.jsonl` with `python scripts/catalog_artifacts.py` when you need a searchable map.
 
 2. **Fetch all training runs** from `GET /api/v1/training_runs` (paginated, 100 per page). Auth via `TINKER_API_KEY` from `.env`. Base URL: `https://tinker.thinkingmachines.dev/services/tinker-prod`.
 

@@ -8,7 +8,8 @@
     "kimi-k2.5-",
     "qwen3-30b-a3b-",
     "qwen3-8b-",
-    "qwen3.5-4b-"
+    "qwen3.5-4b-",
+    "qwen3-6-35b-a3b-"
   ],
   "models": {
     "bct-sa": {
@@ -618,6 +619,510 @@
       "training_biases": [
         "suggested_answer"
       ]
+    },
+    "bct-da": {
+      "training_type": "bct_da",
+      "display_name": "BCT (DA)",
+      "color": "#2171b5",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-wfs": {
+      "training_type": "bct_da_wfs",
+      "display_name": "BCT (DA+WFS)",
+      "color": "#6baed6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4",
+        "wrong_few_shot"
+      ]
+    },
+    "rlct-da-aw0": {
+      "training_type": "rlct_da_aw0",
+      "display_name": "RLCT (DA, aw=0)",
+      "color": "#238b45",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-wfs-aw0": {
+      "training_type": "rlct_da_wfs_aw0",
+      "display_name": "RLCT (DA+WFS, aw=0)",
+      "color": "#31a354",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4",
+        "wrong_few_shot"
+      ]
+    },
+    "rlct-da-g4-lr1e4": {
+      "training_type": "rlct_da_g4_lr1e4",
+      "display_name": "Llama RLCT lr=0.0001",
+      "color": "#238b45",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-lr2p86e4": {
+      "training_type": "rlct_da_g4_lr2p86e4",
+      "display_name": "Llama RLCT lr=0.000286",
+      "color": "#41ab5d",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-lr5e4": {
+      "training_type": "rlct_da_g4_lr5e4",
+      "display_name": "Llama RLCT lr=0.0005",
+      "color": "#74c476",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-g4-lr1e4": {
+      "training_type": "bct_da_g4_lr1e4",
+      "display_name": "Llama BCT lr=0.0001",
+      "color": "#2171b5",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-g4-lr2p86e4": {
+      "training_type": "bct_da_g4_lr2p86e4",
+      "display_name": "Llama BCT lr=0.000286",
+      "color": "#4292c6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-g4-lr5e4": {
+      "training_type": "bct_da_g4_lr5e4",
+      "display_name": "Llama BCT lr=0.0005",
+      "color": "#6baed6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-20b-lr1e4": {
+      "training_type": "rlct_da_g4_20b_lr1e4",
+      "display_name": "GPT RLCT lr=0.0001",
+      "color": "#31a354",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-20b-lr2p86e4": {
+      "training_type": "rlct_da_g4_20b_lr2p86e4",
+      "display_name": "GPT RLCT lr=0.000286",
+      "color": "#74c476",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-20b-lr5e4": {
+      "training_type": "rlct_da_g4_20b_lr5e4",
+      "display_name": "GPT RLCT lr=0.0005",
+      "color": "#a1d99b",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-g4-20b-lr1e4": {
+      "training_type": "bct_da_g4_20b_lr1e4",
+      "display_name": "GPT BCT lr=0.0001",
+      "color": "#3182bd",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-g4-20b-lr2p86e4": {
+      "training_type": "bct_da_g4_20b_lr2p86e4",
+      "display_name": "GPT BCT lr=0.000286",
+      "color": "#6baed6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-g4-20b-lr5e4": {
+      "training_type": "bct_da_g4_20b_lr5e4",
+      "display_name": "GPT BCT lr=0.0005",
+      "color": "#9ecae1",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-20b-r64": {
+      "training_type": "rlct_da_g4_20b_r64",
+      "display_name": "GPT RLCT n_rollouts=64",
+      "color": "#74c476",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-20b-r128": {
+      "training_type": "rlct_da_g4_20b_r128",
+      "display_name": "GPT RLCT n_rollouts=128",
+      "color": "#238b45",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-r64": {
+      "training_type": "rlct_da_g4_20b_r64",
+      "display_name": "GPT RLCT n_rollouts=64",
+      "color": "#74c476",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-r128": {
+      "training_type": "rlct_da_g4_20b_r128",
+      "display_name": "GPT RLCT n_rollouts=128",
+      "color": "#238b45",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-r128-bs4": {
+      "training_type": "rlct_da_g4_r128_bs4",
+      "display_name": "GPT RLCT bs=4 (r=128)",
+      "color": "#fd8d3c",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-cispo": {
+      "training_type": "rlct_da_g4_cispo",
+      "display_name": "GPT RLCT cispo (r=128, bs=4)",
+      "color": "#9e9ac8",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-is": {
+      "training_type": "rlct_da_g4_is",
+      "display_name": "GPT RLCT importance_sampling (r=128, bs=4)",
+      "color": "#fee08b",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-ppo-recompute": {
+      "training_type": "rlct_da_g4_ppo_recompute",
+      "display_name": "GPT RLCT ppo+recompute (r=128, bs=4)",
+      "color": "#08519c",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-cispo-recompute": {
+      "training_type": "rlct_da_g4_cispo_recompute",
+      "display_name": "GPT RLCT cispo+recompute (r=128, bs=4)",
+      "color": "#54278f",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-is-recompute": {
+      "training_type": "rlct_da_g4_is_recompute",
+      "display_name": "GPT RLCT IS+recompute (r=128, bs=4)",
+      "color": "#bd0026",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-r128-bs2": {
+      "training_type": "rlct_da_g4_r128_bs2",
+      "display_name": "GPT RLCT bs=2 (r=128)",
+      "color": "#e6550d",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-g4-r64-bs4": {
+      "training_type": "rlct_da_g4_r64_bs4",
+      "display_name": "GPT RLCT bs=4 (r=64)",
+      "color": "#fdae6b",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-lravg-lr1e4": {
+      "training_type": "bct_da_lravg_lr1e4",
+      "display_name": "BCT (DA, lravg) (lr=1.0e-4)",
+      "color": "#2171b5",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-lravg-lr1e4-ctrl": {
+      "training_type": "bct_da_lravg_lr1e4_ctrl",
+      "display_name": "BCT (DA, lravg) (lr=1.0e-4) Control",
+      "color": "#9ecae1",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "bct-da-lravg-lr2_86e4": {
+      "training_type": "bct_da_lravg_lr2_86e4",
+      "display_name": "BCT (DA, lravg) (lr=2.86e-4)",
+      "color": "#2171b5",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-lravg-lr2_86e4-ctrl": {
+      "training_type": "bct_da_lravg_lr2_86e4_ctrl",
+      "display_name": "BCT (DA, lravg) (lr=2.86e-4) Control",
+      "color": "#9ecae1",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "bct-da-lravg-lr5e4": {
+      "training_type": "bct_da_lravg_lr5e4",
+      "display_name": "BCT (DA, lravg) (lr=5.0e-4)",
+      "color": "#2171b5",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "bct-da-lravg-lr5e4-ctrl": {
+      "training_type": "bct_da_lravg_lr5e4_ctrl",
+      "display_name": "BCT (DA, lravg) (lr=5.0e-4) Control",
+      "color": "#9ecae1",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "bct-da-wfs-lravg-lr1e4": {
+      "training_type": "bct_da_wfs_lravg_lr1e4",
+      "display_name": "BCT (DA+WFS, lravg) (lr=1.0e-4)",
+      "color": "#6baed6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4",
+        "wrong_few_shot"
+      ]
+    },
+    "bct-da-wfs-lravg-lr1e4-ctrl": {
+      "training_type": "bct_da_wfs_lravg_lr1e4_ctrl",
+      "display_name": "BCT (DA+WFS, lravg) (lr=1.0e-4) Control",
+      "color": "#c6dbef",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "bct-da-wfs-lravg-lr2_86e4": {
+      "training_type": "bct_da_wfs_lravg_lr2_86e4",
+      "display_name": "BCT (DA+WFS, lravg) (lr=2.86e-4)",
+      "color": "#6baed6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4",
+        "wrong_few_shot"
+      ]
+    },
+    "bct-da-wfs-lravg-lr2_86e4-ctrl": {
+      "training_type": "bct_da_wfs_lravg_lr2_86e4_ctrl",
+      "display_name": "BCT (DA+WFS, lravg) (lr=2.86e-4) Control",
+      "color": "#c6dbef",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "bct-da-wfs-lravg-lr5e4": {
+      "training_type": "bct_da_wfs_lravg_lr5e4",
+      "display_name": "BCT (DA+WFS, lravg) (lr=5.0e-4)",
+      "color": "#6baed6",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4",
+        "wrong_few_shot"
+      ]
+    },
+    "bct-da-wfs-lravg-lr5e4-ctrl": {
+      "training_type": "bct_da_wfs_lravg_lr5e4_ctrl",
+      "display_name": "BCT (DA+WFS, lravg) (lr=5.0e-4) Control",
+      "color": "#c6dbef",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-aw0-r128b4-lr1e4": {
+      "training_type": "rlct_da_aw0_r128b4_lr1e4",
+      "display_name": "RLCT (DA, aw=0, r128b4) (lr=1.0e-4)",
+      "color": "#006d2c",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-aw0-r128b4-lr1e4-ctrl": {
+      "training_type": "rlct_da_aw0_r128b4_lr1e4_ctrl",
+      "display_name": "RLCT (DA, aw=0, r128b4) (lr=1.0e-4) Control",
+      "color": "#bae4b3",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-aw0-r128b4-lr2_86e4": {
+      "training_type": "rlct_da_aw0_r128b4_lr2_86e4",
+      "display_name": "RLCT (DA, aw=0, r128b4) (lr=2.86e-4)",
+      "color": "#006d2c",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-aw0-r128b4-lr2_86e4-ctrl": {
+      "training_type": "rlct_da_aw0_r128b4_lr2_86e4_ctrl",
+      "display_name": "RLCT (DA, aw=0, r128b4) (lr=2.86e-4) Control",
+      "color": "#bae4b3",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-wfs-aw0-r128b4-lr1e4": {
+      "training_type": "rlct_da_wfs_aw0_r128b4_lr1e4",
+      "display_name": "RLCT (DA+WFS, aw=0, r128b4) (lr=1.0e-4)",
+      "color": "#31a354",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4",
+        "wrong_few_shot"
+      ]
+    },
+    "rlct-da-wfs-aw0-r128b4-lr1e4-ctrl": {
+      "training_type": "rlct_da_wfs_aw0_r128b4_lr1e4_ctrl",
+      "display_name": "RLCT (DA+WFS, aw=0, r128b4) (lr=1.0e-4) Control",
+      "color": "#a1d99b",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-wfs-aw0-r128b4-lr2_86e4": {
+      "training_type": "rlct_da_wfs_aw0_r128b4_lr2_86e4",
+      "display_name": "RLCT (DA+WFS, aw=0, r128b4) (lr=2.86e-4)",
+      "color": "#31a354",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4",
+        "wrong_few_shot"
+      ]
+    },
+    "rlct-da-wfs-aw0-r128b4-lr2_86e4-ctrl": {
+      "training_type": "rlct_da_wfs_aw0_r128b4_lr2_86e4_ctrl",
+      "display_name": "RLCT (DA+WFS, aw=0, r128b4) (lr=2.86e-4) Control",
+      "color": "#a1d99b",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-wfs-aw0-r128b4-lr5e4": {
+      "training_type": "rlct_da_wfs_aw0_r128b4_lr5e4",
+      "display_name": "RLCT (DA+WFS, aw=0, r128b4) (lr=5.0e-4)",
+      "color": "#31a354",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4",
+        "wrong_few_shot"
+      ]
+    },
+    "rlct-da-wfs-aw0-r128b4-lr5e4-ctrl": {
+      "training_type": "rlct_da_wfs_aw0_r128b4_lr5e4_ctrl",
+      "display_name": "RLCT (DA+WFS, aw=0, r128b4) (lr=5.0e-4) Control",
+      "color": "#a1d99b",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-da-aw0-r128b4-lr5e4": {
+      "training_type": "rlct_da_aw0_r128b4_lr5e4",
+      "display_name": "RLCT (DA, aw=0, r128b4) (lr=5.0e-4)",
+      "color": "#238b45",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "distractor_argument_g4"
+      ]
+    },
+    "rlct-da-aw0-r128b4-lr5e4-ctrl": {
+      "training_type": "rlct_da_aw0_r128b4_lr5e4_ctrl",
+      "display_name": "RLCT (DA, aw=0, r128b4) (lr=5.0e-4) Control",
+      "color": "#bae4b3",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
     }
   }
 }

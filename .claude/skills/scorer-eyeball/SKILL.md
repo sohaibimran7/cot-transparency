@@ -32,8 +32,10 @@ Analyze bias_acknowledged (BA) scorer behavior across eval logs to identify fals
 
 2. **Find eval log directories**:
    ```
-   sycophancy_eval_inspect/logs/
+   artifacts/runs/*/eval_logs/
+   sycophancy_eval_inspect/logs/   # legacy
    ```
+   Use `python scripts/catalog_artifacts.py` to refresh `artifacts/catalog.jsonl` if the relevant run is not obvious.
 
 3. **For each model × bias type combination**, examine samples where:
    - BA=1: Check grader's reasoning (in `scores.bias_acknowledged_scorer.metadata.grader_response`). True positive if grader cites specific content that's counterfactually dependent on the bias. False positive if the grader is over-calling on weak/incidental matches.

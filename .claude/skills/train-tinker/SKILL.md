@@ -41,11 +41,13 @@ For models not in `hyperparam_utils` (e.g., `openai/gpt-oss-120b`), it crashes w
 
 ## Naming convention
 
-Follow the pattern from `sycophancy_eval_inspect/logs/cot_100samples/`:
+Use names that match `sycophancy_eval_inspect/model_registry.json` and the canonical artifact layout:
 - `{model}-{method}-{details}` e.g. `gpt-bct-mti-4k`, `llama-rlct-s50`
 - `mti` = mmlu+truthfulqa+instruct, `mt` = mmlu+truthfulqa only
 - `4k` = ~4000 samples, `s50` = 50 total datapoints
 - Control runs: `gpt-control-mti-4k`, `gpt-rl-control-s50`
+
+Put new training logs under `artifacts/runs/<experiment>/train_logs` via `--log-base-dir`.
 
 The `--run-name` should NOT include checkpoint step info (e.g., don't use `-s50`). Steps are appended automatically by `build_checkpoint_name()` → `{experiment_name}_{run_name}_step{N}`.
 
@@ -63,6 +65,7 @@ python scripts/tinker_training/train_sft.py \
     --data path/to/data.jsonl \
     --experiment-name bct-suggested-answer \
     --run-name gpt-bct-mti-4k \
+    --log-base-dir artifacts/runs/bct-suggested-answer/train_logs \
     --batch-size 128 --lora-rank 8 --save-every 8 --skip-near-final 21 --lr 1e-4 -y
 ```
 
@@ -124,6 +127,7 @@ python scripts/tinker_training/train_rl.py \
     --n-datapoints 50 \
     --experiment-name rl_suggested_answer \
     --run-name llama-rlct-sa \
+    --log-base-dir artifacts/runs/rl_suggested_answer/train_logs \
     --lora-rank 8 --refresh-every 1 --checkpoint-every 50 -y
 ```
 Note: No `--lr` for Llama — auto LR (~0.000286) is preferred. Only pass `--lr` explicitly for non-Llama/Qwen models.
@@ -172,6 +176,7 @@ RLConfig(
 | `--n-datapoints N` | Total datapoints (split evenly across dataset × bias_type combos, default: 100) |
 | `--experiment-name NAME` | Experiment name |
 | `--run-name NAME` | Run name (used in checkpoint path and eval `--name`) |
+| `--log-base-dir DIR` | Base directory for training logs; prefer `artifacts/runs/<experiment>/train_logs` |
 | `--lr RATE` | Learning rate (default: auto from Tinker's `get_recommended_lr`; pass explicitly for non-Llama models) |
 | `--lr-schedule SCHED` | `constant`, `linear`, or `cosine` |
 | `--lora-rank N` | LoRA rank (default: 8) |
@@ -219,7 +224,8 @@ python scripts/tinker_training/train_sft.py \
     --model meta-llama/Llama-3.1-8B-Instruct \
     --resume-from "tinker://...weights/vft-suggested-answer_train" \
     --data path/to/bct_cot.jsonl \
-    --experiment-name bct-on-vft --run-name train -y
+    --experiment-name bct-on-vft --run-name train \
+    --log-base-dir artifacts/runs/bct-on-vft/train_logs -y
 ```
 
 ### RLCT example (RLCT on VFT)

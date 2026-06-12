@@ -46,8 +46,12 @@ python scripts/tinker_training/run_experiment.py CONFIG [OPTIONS]
 ## Config file format (YAML)
 
 ```yaml
-name: experiment-name          # Used for state directory
+name: experiment-name          # Used for artifacts/runs/<name> and legacy state
 model: meta-llama/Llama-3.1-8B-Instruct
+
+artifacts:
+  # Optional override. Defaults to artifacts/runs/<name>.
+  run_dir: artifacts/runs/experiment-name
 
 data_generation:
   script: generate_bct_from_test   # or generate_bct_data
@@ -78,7 +82,8 @@ evaluation:
     bias_types: "suggested_answer,distractor_argument,..."
     datasets: "hellaswag,logiqa"
     prompt_styles: "cot,no_cot"
-    log_dir: sycophancy_eval_inspect/logs/tinker_evals
+    # Optional. Defaults to artifacts/runs/<name>/eval_logs.
+    log_dir: artifacts/runs/experiment-name/eval_logs
   base_args:                       # Optional: overrides merged on top of args for base eval only
     limit: 500                     # e.g. smaller limit for the base model
 
@@ -87,6 +92,8 @@ analysis:
     bir: true
     ba: true
     plot: true
+    # Optional. Defaults to artifacts/runs/<name>/plots.
+    output_dir: artifacts/runs/experiment-name/plots
     variance_across: seed          # Optional: generate variance plots split by column
 ```
 
@@ -127,7 +134,7 @@ training:
 ### Parallel execution (task DAG)
 The pipeline is executed as a task DAG, **not** strict stages. Each subprocess (data-gen step, training run, eval run) is a node with explicit deps. As soon as a training task finishes, its eval task fires — independent of whether other training tasks (e.g., other seeds) are still running. `eval:base` (when `include_base: true`) has no deps and starts immediately. Cap concurrency with `--max-parallel N` or top-level `parallelism: N` in the YAML if you're hitting Tinker rate limits.
 
-State is per-task in `experiments/{name}/state.json` under the `tasks` key. A failed task cancels only its transitive descendants — sibling branches keep running. Re-run the same command to skip completed tasks.
+Canonical outputs are written under `artifacts/runs/{name}/`: training logs in `train_logs/`, eval logs in `eval_logs/`, plots in `plots/`, and a manifest at `metadata/manifest.json`. Legacy pipeline state remains in `experiments/{name}/state.json` under the `tasks` key. A failed task cancels only its transitive descendants — sibling branches keep running. Re-run the same command to skip completed tasks.
 
 ## Example configs
 
@@ -170,7 +177,7 @@ Manual precomputation (e.g. if you want to pre-warm for a shared `log_dir`):
 ```bash
 python -m sycophancy_eval_inspect.generate_hash_file \
     --datasets hellaswag,logiqa --bias-types suggested_answer,... \
-    --limit 200 --output sycophancy_eval_inspect/logs/EVAL_DIR/common_hashes.json
+    --limit 200 --output artifacts/runs/EXPERIMENT_NAME/eval_logs/common_hashes.json
 ```
 
 ### Custom dataset filenames (gotcha)
@@ -183,7 +190,7 @@ The eval pipeline derives the "original dataset name" by stripping the bias suff
 
 ## State and resumption
 
-Pipeline state is saved to `experiments/{name}/state.json`. If a stage fails:
+Pipeline state is saved to `experiments/{name}/state.json`, while the canonical run manifest is saved to `artifacts/runs/{name}/metadata/manifest.json`. If a stage fails:
 1. Fix the issue
 2. Re-run the same command — completed stages auto-skip
 3. Or use `--start-from {failed_stage}` to be explicit
@@ -226,7 +233,7 @@ Data generation steps with different scripts run in parallel. Args are passed th
 
 **Always include `viz_registration`** when using a new model or training type that hasn't been used before. Without it, the analysis stage will fail because `visualize_results.py` won't recognize the model directory names.
 
-The config must register:
+The config should register:
 1. The **model prefix** (e.g., `qwen3-`) — derived automatically from the model name
 2. Each **training type suffix** (e.g., `bct-sa`, `rlct-sa-ctrl`) — the part after the model prefix in the run name
 
@@ -239,6 +246,6 @@ viz_registration:
   training_biases: [suggested_answer]  # which biases this was trained on
 ```
 
-For experiments with `include_control: true`, you need **two** registry entries (main + ctrl). Use the experiment runner's auto-registration or manually add to `sycophancy_eval_inspect/model_registry.json`.
+For experiments with `include_control: true`, the experiment runner auto-registers the `-ctrl` variant when `viz_registration` is present. Manually edit `sycophancy_eval_inspect/model_registry.json` only when registering legacy/manual eval dirs.
 
-**Tip**: Check existing entries in `model_registry.json` and `_DIR_TO_TRAINING_TYPE` in `visualize_results.py` before adding — the suffix may already be registered.
+**Tip**: Check existing entries in `model_registry.json` before adding — the suffix may already be registered. Avoid hand-editing `visualize_results.py` style mappings for normal new runs.

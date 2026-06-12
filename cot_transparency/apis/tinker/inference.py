@@ -20,10 +20,17 @@ from cot_transparency.data_models.messages import StrictChatMessage, StrictMessa
 load_dotenv()
 
 
+# Models not yet registered in tinker_cookbook's model_info but compatible
+# with an existing renderer. Maps base_model -> renderer_name.
+MODEL_RENDERER_OVERRIDES: dict[str, str] = {
+    "Qwen/Qwen3.6-35B-A3B": "qwen3_5",
+}
+
+
 def get_renderer_for_model(model: str):
     """Get the appropriate renderer for a model."""
     tokenizer = get_tokenizer(model)
-    renderer_name = model_info.get_recommended_renderer_name(model)
+    renderer_name = MODEL_RENDERER_OVERRIDES.get(model) or model_info.get_recommended_renderer_name(model)
     return renderers.get_renderer(renderer_name, tokenizer), tokenizer
 
 

@@ -49,6 +49,7 @@ This gives: 5 biased + 1 unbiased per dataset x 2 datasets = **12 eval files per
 - The full command
 - Number of eval tasks that will run
 - Checkpoint being evaluated
+- The eval artifact root, preferably `artifacts/runs/EXPERIMENT_NAME/eval_logs`
 
 ## Command template
 
@@ -59,7 +60,7 @@ python -m sycophancy_eval_inspect.generate_hash_file \
     --datasets hellaswag,logiqa \
     --bias-types suggested_answer,distractor_argument,distractor_fact,wrong_few_shot,spurious_few_shot_squares \
     --limit 200 \
-    --output sycophancy_eval_inspect/logs/EVAL_DIR/common_hashes.json
+    --output artifacts/runs/EXPERIMENT_NAME/eval_logs/common_hashes.json
 ```
 
 The command is idempotent (no-op if the file already exists with identical content, errors out if it exists with different content unless you pass `--overwrite`).
@@ -76,8 +77,8 @@ python -m sycophancy_eval_inspect.run_tinker_evals \
     --datasets hellaswag,logiqa \
     --prompt-styles cot,no_cot \
     --limit 200 \
-    --hash-file sycophancy_eval_inspect/logs/EVAL_DIR/common_hashes.json \
-    --log-dir sycophancy_eval_inspect/logs/EVAL_DIR
+    --hash-file artifacts/runs/EXPERIMENT_NAME/eval_logs/common_hashes.json \
+    --log-dir artifacts/runs/EXPERIMENT_NAME/eval_logs
 ```
 
 ### Base model (no checkpoint)
@@ -89,8 +90,8 @@ python -m sycophancy_eval_inspect.run_tinker_evals \
     --datasets hellaswag,logiqa \
     --prompt-styles cot,no_cot \
     --limit 200 \
-    --hash-file sycophancy_eval_inspect/logs/EVAL_DIR/common_hashes.json \
-    --log-dir sycophancy_eval_inspect/logs/EVAL_DIR
+    --hash-file artifacts/runs/EXPERIMENT_NAME/eval_logs/common_hashes.json \
+    --log-dir artifacts/runs/EXPERIMENT_NAME/eval_logs
 ```
 
 ### Multiple checkpoints in parallel
@@ -133,7 +134,7 @@ The eval pipeline derives the "original dataset name" by stripping the bias suff
 
 - Use the full stem-minus-bias as the dataset name in `--datasets`, both for `generate_hash_file` and `run_tinker_evals`
 - Custom-named files do not collide/group with the canonical ones (e.g. `mmlu_7000samples` is a separate dataset from `mmlu`)
-- The visualizer will show the custom name verbatim; register it in `visualize_results.py` display configs if you want a nicer label
+- The visualizer will show the custom dataset name verbatim unless a display label exists; prefer adding labels/config through registry-backed config paths rather than editing plot code
 
 **Important**: When running all 8 biases, include `hindsight_neglect` in `--datasets`:
 ```bash
@@ -173,20 +174,15 @@ The `common_hashes.json` file in each log directory contains curated hashes per 
 
 ## After running: register for visualization
 
-New model directories must be registered in `sycophancy_eval_inspect/visualize_results.py` to appear in plots and BIR tables. Update **all four** mappings:
-
-1. `_DIR_TO_TRAINING_TYPE` — maps directory suffix to internal key (e.g., `"vft-mt-1675": "vft_mt_1675"`)
-2. `COLORS` — color for plots (e.g., `"vft_mt_1675": "#9467bd"`)
-3. `TRAINING_TYPE_ORDER` — append to list to control column ordering
-4. `TRAINING_TYPE_NAMES` — display name for tables (e.g., `"vft_mt_1675": "VFT MT 1675"`)
+New model directories should be registered in `sycophancy_eval_inspect/model_registry.json`, preferably through `viz_registration` in the experiment config when using `scripts/tinker_training/run_experiment.py`.
 
 If you skip this, the model's eval logs will be silently ignored by the visualizer.
 
 ## Naming convention
 
-The `--name` flag sets the log subdirectory name (e.g., `llama-vft-mt-1675`). The visualizer strips the model prefix (`llama-`, `gpt-`) and looks up the remainder in `_DIR_TO_TRAINING_TYPE`. So `llama-vft-mt-1675` -> strips `llama-` -> looks up `vft-mt-1675`.
+The `--name` flag sets the log subdirectory name (e.g., `llama-vft-mt-1675`). The visualizer strips the registered model prefix (`llama-`, `gpt-oss-20b-`, `gpt-oss-120b-`, `qwen3-`, etc.) and looks up the remainder in `model_registry.json` plus legacy mappings. So `llama-vft-mt-1675` -> strips `llama-` -> looks up `vft-mt-1675`.
 
-When re-running evals with different sample counts or parameters, append a suffix to avoid collisions with existing directories (e.g., `gpt-bct-mti-4k-100samples`). Register the suffixed name in `_DIR_TO_TRAINING_TYPE` too.
+When re-running evals with different sample counts or parameters, append a suffix to avoid collisions with existing directories (e.g., `gpt-bct-mti-4k-100samples`) and register that suffix in `model_registry.json` if it should appear in plots.
 
 ## Script location
 
@@ -202,4 +198,4 @@ python -c "import openai; print(openai.__version__)"   # must be >= 2.8.0
 pip install 'openai>=2.8.0'                             # upgrade if needed
 ```
 
-If a run already failed due to this, delete/archive the tiny `.eval` files (they contain `status=error` and 0 samples) before rerunning, otherwise the visualizer will try to load them.
+If a run already failed due to this, archive the tiny `.eval` files into an `_archive/` subtree before rerunning, otherwise the visualizer will try to load them. Do not use destructive recursive deletion.

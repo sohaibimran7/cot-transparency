@@ -49,7 +49,7 @@ evaluation:
     limit: 100
     max_tokens: 8192
     max_tasks: 50
-    log_dir: sycophancy_eval_inspect/logs/bct_sa_tqa_120b_inst
+    log_dir: artifacts/eval_suites/bct_sa_tqa_120b_inst/eval_logs
     base_model: openai/gpt-oss-120b
 
 analysis:

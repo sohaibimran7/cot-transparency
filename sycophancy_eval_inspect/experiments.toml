@@ -1,0 +1,670 @@
+# Single source of truth for the visualization layer.
+#
+# - [biases.X]            — bias type metadata
+# - [models.X]            — model family metadata (display name, dir prefix, prompt styles)
+# - [training_types.X]    — per-training-run color, training biases, etc.
+# - [ordering]            — ordered list of training_types for x-axis sort
+# - [aggregate_names]     — display names for aggregate-mode groups
+#
+# Per-experiment training types are also auto-discovered from
+# `viz_registration:` blocks in `scripts/tinker_training/experiment_configs/*.yaml`.
+# This TOML is the place for global config (biases, models) and for legacy
+# entries that don't have a corresponding YAML.
+
+# ── Biases ────────────────────────────────────────────────────────────────
+[biases.suggested_answer]
+display_name = "Suggested Answer"
+publication_label = "Suggested\nAnswer"
+
+[biases.wrong_few_shot]
+display_name = "Wrong Few-Shot"
+publication_label = "Wrong\nFew-Shot"
+
+[biases.distractor_argument]
+display_name = "Distractor Argument"
+publication_label = "Distractor\nArgument"
+
+[biases.distractor_argument_g4]
+display_name = "Distractor Argument"
+publication_label = "Distractor\nArgument"
+
+[biases.distractor_fact]
+display_name = "Distractor Fact"
+publication_label = "Distractor\nFact"
+
+[biases.spurious_few_shot_hindsight]
+display_name = "Spurious: Hindsight"
+publication_label = "Spurious:\nHindsight"
+
+[biases.spurious_few_shot_squares]
+display_name = "Spurious: Squares"
+publication_label = "Spurious:\nSquares"
+
+[biases.post_hoc]
+display_name = "Post-Hoc"
+publication_label = "Post-Hoc"
+
+[biases.are_you_sure]
+display_name = "Are You Sure?"
+publication_label = "Are You\nSure?"
+
+# ── Models ────────────────────────────────────────────────────────────────
+[models.llama]
+display_name = "Llama-3.1-8B"
+dir_prefix = "llama-"
+prompt_styles = ["cot", "no_cot"]
+
+[models.gpt]
+display_name = "GPT-OSS-20B"
+dir_prefix = "gpt-"
+prompt_styles = ["no_cot"]
+
+[models."gpt-oss-20b"]
+display_name = "GPT-OSS-20B"
+dir_prefix = "gpt-oss-20b-"
+prompt_styles = ["no_cot"]
+
+[models."gpt-oss-120b"]
+display_name = "GPT-OSS-120B"
+dir_prefix = "gpt-oss-120b-"
+prompt_styles = ["no_cot"]
+
+[models.qwen3]
+display_name = "QWEN3"
+dir_prefix = "qwen3-"
+prompt_styles = ["no_cot"]
+
+[models."qwen3-8b"]
+display_name = "QWEN3-8B"
+dir_prefix = "qwen3-8b-"
+prompt_styles = ["no_cot"]
+
+[models."qwen3-30b-a3b"]
+display_name = "QWEN3-30B-A3B"
+dir_prefix = "qwen3-30b-a3b-"
+prompt_styles = ["no_cot"]
+
+[models."qwen3.5-4b"]
+display_name = "QWEN3.5-4B"
+dir_prefix = "qwen3.5-4b-"
+prompt_styles = ["no_cot"]
+
+[models."kimi-k2.5"]
+display_name = "KIMI-K2.5"
+dir_prefix = "kimi-k2.5-"
+prompt_styles = ["no_cot"]
+
+# ── Training types ────────────────────────────────────────────────────────
+[training_types.base]
+display_name = "Base"
+color = "#969696"
+method = "base"
+dir_aliases = ["base", "base-tqa-659"]
+
+[training_types.bct_sa]
+display_name = "BCT SA"
+color = "#4292c6"
+training_biases = ["suggested_answer"]
+dir_aliases = ["bct-sa"]
+
+[training_types.bct_sa_ctrl]
+display_name = "BCT SA Control"
+color = "#9ecae1"
+hatch = "//"
+is_control = true
+dir_aliases = ["bct-sa-ctrl"]
+
+[training_types.rlct_sa]
+display_name = "RMCT SA"
+color = "#41ab5d"
+training_biases = ["suggested_answer"]
+dir_aliases = ["rlct-sa"]
+
+[training_types.rlct_sa_ctrl]
+display_name = "RMCT SA Control"
+color = "#a1d99b"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-sa-ctrl"]
+
+[training_types.rlct_da_bs1]
+display_name = "RMCT DA bs1"
+color = "#4292c6"
+training_biases = ["distractor_argument"]
+dir_aliases = ["rlct-da-bs1"]
+
+[training_types.rlct_da_bs1_ctrl]
+display_name = "RMCT DA bs1 Control"
+color = "#8dbddc"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-bs1-ctrl"]
+
+[training_types.rlct_da_bs2]
+display_name = "RMCT DA bs2"
+color = "#6baed6"
+training_biases = ["distractor_argument"]
+dir_aliases = ["rlct-da-bs2"]
+
+[training_types.rlct_da_bs2_ctrl]
+display_name = "RMCT DA bs2 Control"
+color = "#a6cee6"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-bs2-ctrl"]
+
+[training_types.rlct_da_bs4]
+display_name = "RMCT DA bs4"
+color = "#9ecae1"
+training_biases = ["distractor_argument"]
+dir_aliases = ["rlct-da-bs4"]
+
+[training_types.rlct_da_bs4_ctrl]
+display_name = "RMCT DA bs4 Control"
+color = "#c4dfed"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-bs4-ctrl"]
+
+[training_types.rlct_da_bs8]
+display_name = "RMCT DA bs8"
+color = "#c6dbef"
+training_biases = ["distractor_argument"]
+dir_aliases = ["rlct-da-bs8"]
+
+[training_types.rlct_da_bs8_ctrl]
+display_name = "RMCT DA bs8 Control"
+color = "#dce9f5"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-bs8-ctrl"]
+
+[training_types.rlct_wfs_bs1]
+display_name = "RMCT WFS bs1"
+color = "#4292c6"
+training_biases = ["wrong_few_shot"]
+dir_aliases = ["rlct-wfs-bs1"]
+
+[training_types.rlct_wfs_bs1_ctrl]
+display_name = "RMCT WFS bs1 Control"
+color = "#8dbddc"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-wfs-bs1-ctrl"]
+
+[training_types.rlct_wfs_bs2]
+display_name = "RMCT WFS bs2"
+color = "#6baed6"
+training_biases = ["wrong_few_shot"]
+dir_aliases = ["rlct-wfs-bs2"]
+
+[training_types.rlct_wfs_bs2_ctrl]
+display_name = "RMCT WFS bs2 Control"
+color = "#a6cee6"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-wfs-bs2-ctrl"]
+
+[training_types.rlct_wfs_bs4]
+display_name = "RMCT WFS bs4"
+color = "#9ecae1"
+training_biases = ["wrong_few_shot"]
+dir_aliases = ["rlct-wfs-bs4"]
+
+[training_types.rlct_wfs_bs4_ctrl]
+display_name = "RMCT WFS bs4 Control"
+color = "#c4dfed"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-wfs-bs4-ctrl"]
+
+[training_types.rlct_wfs_bs8]
+display_name = "RMCT WFS bs8"
+color = "#c6dbef"
+training_biases = ["wrong_few_shot"]
+dir_aliases = ["rlct-wfs-bs8"]
+
+[training_types.rlct_wfs_bs8_ctrl]
+display_name = "RMCT WFS bs8 Control"
+color = "#dce9f5"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-wfs-bs8-ctrl"]
+
+[training_types.bct_sa_tqa_120b]
+display_name = "BCT"
+color = "#2171b5"
+training_biases = ["suggested_answer"]
+dir_aliases = ["bct_sa_tqa_120b", "gpt-bct-sa-tqa"]
+
+[training_types.bct_sa_tqa_120b_ctrl]
+display_name = "BCT Control"
+color = "#bdd7e7"
+hatch = "//"
+is_control = true
+dir_aliases = ["bct_sa_tqa_120b-ctrl", "gpt-bct-sa-tqa-ctrl"]
+
+[training_types.rlct_sa_tqa_120b]
+display_name = "RMCT"
+color = "#238b45"
+training_biases = ["suggested_answer"]
+dir_aliases = ["rlct_sa_tqa_120b", "gpt-rlct-sa-tqa"]
+
+[training_types.rlct_sa_tqa_120b_ctrl]
+display_name = "RMCT Control"
+color = "#bae4b3"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct_sa_tqa_120b-ctrl", "gpt-rlct-sa-tqa-ctrl"]
+
+[training_types.bct_da]
+display_name = "BCT (DA)"
+color = "#2171b5"
+training_biases = ["distractor_argument_g4"]
+dir_aliases = ["bct-da"]
+
+[training_types.bct_da_ctrl]
+display_name = "BCT (DA) Control"
+color = "#bdd7e7"
+hatch = "//"
+is_control = true
+dir_aliases = ["bct-da-ctrl"]
+
+[training_types.bct_da_wfs]
+display_name = "BCT (DA+WFS)"
+color = "#6baed6"
+training_biases = ["distractor_argument_g4", "wrong_few_shot"]
+dir_aliases = ["bct-da-wfs"]
+
+[training_types.bct_da_wfs_ctrl]
+display_name = "BCT (DA+WFS) Control"
+color = "#c6dbef"
+hatch = "//"
+is_control = true
+dir_aliases = ["bct-da-wfs-ctrl"]
+
+[training_types.rlct_da_aw0]
+display_name = "RMCT (DA, aw=0)"
+color = "#238b45"
+training_biases = ["distractor_argument_g4"]
+dir_aliases = ["rlct-da-aw0"]
+
+[training_types.rlct_da_aw0_ctrl]
+display_name = "RMCT (DA, aw=0) Control"
+color = "#bae4b3"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-aw0-ctrl"]
+
+[training_types.rlct_da_aw05]
+display_name = "RMCT (DA, aw=0.5)"
+color = "#74c476"
+training_biases = ["distractor_argument_g4"]
+dir_aliases = ["rlct-da-aw05"]
+
+[training_types.rlct_da_aw05_ctrl]
+display_name = "RMCT (DA, aw=0.5) Control"
+color = "#c7e9c0"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-aw05-ctrl"]
+
+[training_types.rlct_da_wfs_aw0]
+display_name = "RMCT (DA+WFS, aw=0)"
+color = "#31a354"
+training_biases = ["distractor_argument_g4", "wrong_few_shot"]
+dir_aliases = ["rlct-da-wfs-aw0"]
+
+[training_types.rlct_da_wfs_aw0_ctrl]
+display_name = "RMCT (DA+WFS, aw=0) Control"
+color = "#a1d99b"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-wfs-aw0-ctrl"]
+
+[training_types.rlct_da_wfs_aw05]
+display_name = "RMCT (DA+WFS, aw=0.5)"
+color = "#78c679"
+training_biases = ["distractor_argument_g4", "wrong_few_shot"]
+dir_aliases = ["rlct-da-wfs-aw05"]
+
+[training_types.rlct_da_wfs_aw05_ctrl]
+display_name = "RMCT (DA+WFS, aw=0.5) Control"
+color = "#d9f0a3"
+hatch = "//"
+is_control = true
+dir_aliases = ["rlct-da-wfs-aw05-ctrl"]
+
+[training_types.vft_mt_1675]
+display_name = "VFT MT 1675"
+color = "#9e9ac8"
+training_biases = ["suggested_answer"]
+dir_aliases = ["vft-mt-1675"]
+
+[training_types.bct_control_mt_2k]
+display_name = "BCT Control MT 2k"
+color = "#c0c0c8"
+is_control = true
+aggregate_group = "control_agg"
+dir_aliases = ["bct-control-mt-2k"]
+
+[training_types.control]
+display_name = "Control SFT"
+color = "#b0b0b8"
+is_control = true
+aggregate_group = "control_agg"
+dir_aliases = ["control", "control-mti-4k", "control-mti-4k-100samples"]
+
+[training_types.rlct_control_step50]
+display_name = "RL Control s50"
+color = "#b0b5b0"
+is_control = true
+aggregate_group = "control_agg"
+dir_aliases = ["rl-control-s50", "rl-control-s50-100samples"]
+
+[training_types.rl_control_step50]
+display_name = "RL Control s50"
+color = "#b0b5b0"
+is_control = true
+aggregate_group = "control_agg"
+dir_aliases = ["rl-control-step50"]
+
+[training_types.rlct_control_step100]
+display_name = "RL Control s100"
+color = "#a0a5a0"
+is_control = true
+aggregate_group = "control_agg"
+dir_aliases = ["rl-control-s100-100samples"]
+
+[training_types.bct_old_20k]
+display_name = "BCT 20k (old)"
+color = "#08519c"
+training_biases = ["suggested_answer"]
+aggregate_group = "bct_agg"
+dir_aliases = ["bct-old-20k"]
+
+[training_types.bct_mti_1k]
+display_name = "BCT MTI 1k"
+color = "#c6dbef"
+hatch = "//"
+training_biases = ["suggested_answer"]
+aggregate_group = "bct_agg"
+dir_aliases = ["bct-mti-1k"]
+
+[training_types.bct_mti_4k]
+display_name = "BCT MTI 4k"
+color = "#4292c6"
+hatch = "//"
+training_biases = ["suggested_answer"]
+aggregate_group = "bct_agg"
+dir_aliases = ["bct-mti-4k", "bct-mti-4k-100samples"]
+
+[training_types.bct_mt_2k]
+display_name = "BCT MT 2k"
+color = "#9ecae1"
+training_biases = ["suggested_answer"]
+aggregate_group = "bct_agg"
+dir_aliases = ["bct-mt-2k"]
+
+[training_types.bct_mt_b16_2k]
+display_name = "BCT MT b16 2k"
+color = "#6baed6"
+training_biases = ["suggested_answer"]
+aggregate_group = "bct_agg"
+dir_aliases = ["bct-mt-b16-2k"]
+
+[training_types.bct_mti_b16_4k]
+display_name = "BCT MTI b16 4k"
+color = "#2171b5"
+hatch = "//"
+training_biases = ["suggested_answer"]
+aggregate_group = "bct_agg"
+dir_aliases = ["bct-mti-b16-4k", "bct-mti-bs16-4k"]
+
+[training_types.rlct_step50]
+display_name = "RMCT s50"
+color = "#a1d99b"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s50", "rlct-s50-100samples"]
+
+[training_types.rlct_step50_v2]
+display_name = "RMCT s50 v2"
+color = "#8ed18e"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s50-v2"]
+
+[training_types.rlct_step25_r3]
+display_name = "RMCT s25 r3"
+color = "#bae4b3"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s25-r3"]
+
+[training_types.rlct_step50_v3]
+display_name = "RMCT s50 v3 (skip empty)"
+color = "#82c982"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s50-v3"]
+
+[training_types.rlct_step50_v4]
+display_name = "RMCT s50 v4 (original)"
+color = "#76c176"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s50-v4"]
+
+[training_types.rlct_step50_v5]
+display_name = "RMCT s50 v5 (auto LR)"
+color = "#6ab96a"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s50-v5"]
+
+[training_types.rlct_step50_v6]
+display_name = "RMCT s50 v6 (auto LR+pipe r1)"
+color = "#5eb15e"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s50-v6"]
+
+[training_types.rlct_step50_v7]
+display_name = "RMCT s50 v7 (auto LR+pipe r3)"
+color = "#52a952"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s50-v7"]
+
+[training_types.rlct_s50_noempty]
+display_name = "RMCT s50 noempty"
+color = "#78c679"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s50-noempty"]
+
+[training_types.rlct_sa_g1_r1]
+display_name = "RMCT SA g1 r1"
+color = "#c7e9c0"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-sa-g1-r1"]
+
+[training_types.rlct_sa_g16_r16]
+display_name = "RMCT SA g16 r16"
+color = "#a1d99b"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-sa-g16-r16"]
+
+[training_types.rlct_sa_g16_t16_r128]
+display_name = "RMCT SA g16 t16 r128"
+color = "#74c476"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-sa-g16-t16-r128"]
+
+[training_types.rlct_sa_g16_r128]
+display_name = "RMCT SA g16 r128"
+color = "#74c476"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-sa-g16-r128"]
+
+[training_types.rlct_s50_re_eval]
+display_name = "RMCT s50 re-eval"
+color = "#31a354"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s50-re-eval"]
+
+[training_types.rlct_s50_a]
+display_name = "RMCT s50 A"
+color = "#a1d99b"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s50-a"]
+
+[training_types.rlct_s50_b]
+display_name = "RMCT s50 B"
+color = "#41ab5d"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s50-b"]
+
+[training_types.rlct_step100]
+display_name = "RMCT s100"
+color = "#41ab5d"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s100", "rlct-s100-100samples"]
+
+[training_types.rlct_step200]
+display_name = "RMCT s200"
+color = "#238b45"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-s200"]
+
+[training_types.bct_da_4k]
+display_name = "BCT DA 4k"
+color = "#4292c6"
+hatch = "/"
+training_biases = ["distractor_argument"]
+aggregate_group = "bct_agg"
+dir_aliases = ["bct-da-4k"]
+
+[training_types.bct_da_wfs_6k]
+display_name = "BCT DA+WFS 6k"
+color = "#2171b5"
+hatch = "x"
+training_biases = ["distractor_argument", "wrong_few_shot"]
+aggregate_group = "bct_agg"
+dir_aliases = ["bct-da-wfs-6k"]
+
+[training_types.rlct_da]
+display_name = "RMCT DA"
+color = "#41ab5d"
+hatch = "/"
+training_biases = ["distractor_argument"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-da"]
+
+[training_types.rlct_da_wfs]
+display_name = "RMCT DA+WFS"
+color = "#238b45"
+hatch = "x"
+training_biases = ["distractor_argument", "wrong_few_shot"]
+aggregate_group = "rlct_agg"
+dir_aliases = ["rlct-da-wfs"]
+
+[training_types.rlct_a0_r1]
+display_name = "RMCT α=0 r1"
+color = "#006d2c"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_a0_agg"
+dir_aliases = ["rlct-a0-r1"]
+
+[training_types.rlct_a0_r2]
+display_name = "RMCT α=0 r2"
+color = "#00441b"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_a0_agg"
+dir_aliases = ["rlct-a0-r2"]
+
+[training_types.rlct_a0_ctrl]
+display_name = "RL Ctrl α=0"
+color = "#b0b5b0"
+is_control = true
+aggregate_group = "control_agg"
+dir_aliases = ["rlct-a0-ctrl"]
+
+[training_types.rlct_a05_r1]
+display_name = "RMCT α=0.5 r1"
+color = "#238b45"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_a05_agg"
+dir_aliases = ["rlct-a05-r1"]
+
+[training_types.rlct_a05_r2]
+display_name = "RMCT α=0.5 r2"
+color = "#1a7a3a"
+training_biases = ["suggested_answer"]
+aggregate_group = "rlct_a05_agg"
+dir_aliases = ["rlct-a05-r2"]
+
+[training_types.rlct_a05_ctrl]
+display_name = "RL Ctrl α=0.5"
+color = "#a0a8a0"
+is_control = true
+aggregate_group = "control_agg"
+dir_aliases = ["rlct-a05-ctrl"]
+
+[training_types.rlct_a1_ctrl]
+display_name = "RL Ctrl α=1"
+color = "#909890"
+is_control = true
+aggregate_group = "control_agg"
+dir_aliases = ["rlct-a1-ctrl"]
+
+[training_types.control_agg]
+display_name = "Control (avg)"
+color = "#b0b0b0"
+is_control = true
+
+[training_types.bct_agg]
+display_name = "BCT (avg)"
+color = "#3182bd"
+training_biases = ["suggested_answer"]
+
+[training_types.rlct_agg]
+display_name = "RMCT (avg)"
+color = "#31a354"
+training_biases = ["suggested_answer"]
+
+[training_types.rlct_a0_agg]
+display_name = "RMCT α=0 (avg)"
+color = "#006d2c"
+training_biases = ["suggested_answer"]
+
+[training_types.rlct_a05_agg]
+display_name = "RMCT α=0.5 (avg)"
+color = "#238b45"
+training_biases = ["suggested_answer"]
+
+[ordering]
+training_types = [
+    "base",
+    "bct_da", "bct_da_ctrl",
+    "bct_da_wfs", "bct_da_wfs_ctrl",
+    "rlct_da_aw0", "rlct_da_aw0_ctrl",
+    "rlct_da_wfs_aw0", "rlct_da_wfs_aw0_ctrl",
+]
+aggregates = ["base", "control_agg", "bct_agg", "rlct_agg"]
+
+[aggregate_names]
+base = "Base"
+control_agg = "Control (avg)"
+bct_agg = "BCT (avg)"
+rlct_agg = "RMCT (avg)"

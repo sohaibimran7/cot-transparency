@@ -133,7 +133,7 @@ The eval pipeline derives the "original dataset name" by stripping the bias suff
 
 - Use the full stem-minus-bias as the dataset name in `--datasets`, both for `generate_hash_file` and `run_tinker_evals`
 - Custom-named files do not collide/group with the canonical ones (e.g. `mmlu_7000samples` is a separate dataset from `mmlu`)
-- The visualizer will show the custom name verbatim; register it in `visualize_results.py` display configs if you want a nicer label
+- The visualizer will show the custom name verbatim; add a `[training_types.<key>]` block to `sycophancy_eval_inspect/experiments.toml` if you want a nicer label
 
 **Important**: When running all 8 biases, include `hindsight_neglect` in `--datasets`:
 ```bash
@@ -173,20 +173,19 @@ The `common_hashes.json` file in each log directory contains curated hashes per 
 
 ## After running: register for visualization
 
-New model directories must be registered in `sycophancy_eval_inspect/visualize_results.py` to appear in plots and BIR tables. Update **all four** mappings:
+New training types must appear in the registry to be plotted/tabled. Two ways:
 
-1. `_DIR_TO_TRAINING_TYPE` — maps directory suffix to internal key (e.g., `"vft-mt-1675": "vft_mt_1675"`)
-2. `COLORS` — color for plots (e.g., `"vft_mt_1675": "#9467bd"`)
-3. `TRAINING_TYPE_ORDER` — append to list to control column ordering
-4. `TRAINING_TYPE_NAMES` — display name for tables (e.g., `"vft_mt_1675": "VFT MT 1675"`)
+1. **Per-experiment** (preferred for new training runs): add a `viz_registration:` block to the experiment YAML under `scripts/tinker_training/experiment_configs/`. It's auto-discovered at viz import time. Block fields: `dir_suffix`, `display_name`, `color`, optional `hatch`, optional `control_color`, `training_biases`.
 
-If you skip this, the model's eval logs will be silently ignored by the visualizer.
+2. **Global**: add a `[training_types.<key>]` block to `sycophancy_eval_inspect/experiments.toml`. Fields: `display_name`, `color`, `dir_aliases`, `training_biases`, `is_control`.
+
+If a model directory's training type is unregistered, those rows are silently dropped from plots/tables (with a warning printed by the loader).
 
 ## Naming convention
 
-The `--name` flag sets the log subdirectory name (e.g., `llama-vft-mt-1675`). The visualizer strips the model prefix (`llama-`, `gpt-`) and looks up the remainder in `_DIR_TO_TRAINING_TYPE`. So `llama-vft-mt-1675` -> strips `llama-` -> looks up `vft-mt-1675`.
+The `--name` flag sets the log subdirectory name (e.g., `llama-vft-mt-1675`). The loader strips the model prefix (`llama-`, `gpt-`) via `REGISTRY.models[*].dir_prefix` and looks the remainder up in `REGISTRY.dir_to_training_type`. So `llama-vft-mt-1675` → strips `llama-` → looks up `vft-mt-1675`.
 
-When re-running evals with different sample counts or parameters, append a suffix to avoid collisions with existing directories (e.g., `gpt-bct-mti-4k-100samples`). Register the suffixed name in `_DIR_TO_TRAINING_TYPE` too.
+When re-running evals with different sample counts or parameters, append a suffix to avoid collisions (e.g., `gpt-bct-mti-4k-100samples`) and add the suffix to `dir_aliases` of the relevant `[training_types.*]` block.
 
 ## Script location
 

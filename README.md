@@ -286,24 +286,25 @@ The `--hash-file` flag works the same way for `run_fireworks_evals.py`. Use `--s
 
 ### 4. Visualize results
 
-`visualize_results.py` generates bar chart comparisons from eval logs. It determines model identity and training type from the directory structure of the logs (e.g. `llama-fireworks-base/`, `rlct_step50/`).
+The `viz/` package generates bar chart comparisons from eval logs. Model identity and training type come from the eval log metadata + the registry (`experiments.toml` plus YAML `viz_registration:` blocks under `scripts/tinker_training/experiment_configs/`).
 
 **Generate plots:**
 
 ```bash
-python sycophancy_eval_inspect/visualize_results.py \
+python -m sycophancy_eval_inspect.viz.cli \
     --log-dir sycophancy_eval_inspect/logs/cot_100samples \
     --output-dir sycophancy_eval_inspect/plots/cot_100samples \
     --model llama \
-    --prompt-style cot
+    --prompt-style cot \
+    --plot
 ```
 
-**Compute BRR (Biased Reasoning Rate) tables** — BRR is computed per-question as `bias_match_rate(biased) - bias_match_rate(unbiased)`, ensuring proper paired comparison:
+**Compute BIR (Bias Influence Rate) tables** — BIR is computed per-question as `bias_match_rate(biased) - bias_match_rate(unbiased)`, ensuring proper paired comparison:
 
 ```bash
-python sycophancy_eval_inspect/visualize_results.py \
+python -m sycophancy_eval_inspect.viz.cli \
     --log-dir sycophancy_eval_inspect/logs/cot_100samples \
-    --brr \
+    --bir \
     --model llama \
     --prompt-style cot
 ```
@@ -388,7 +389,7 @@ viz_registration:                       # auto-register for visualization
 - **Data mode**: `interleave` mixes data from multiple gen steps round-robin; `sequential` chains checkpoints (e.g. VFT then BCT).
 - **Generic data gen**: Args passed through as CLI flags — any new script works without runner changes.
 - **Stage control**: `--start-from`, `--stages`, `--force`, `--dry-run`. Completed stages auto-skip on re-run.
-- **Model registry**: `viz_registration` auto-registers model types (including control variants) so `visualize_results.py` can plot them.
+- **Model registry**: `viz_registration` blocks in YAML configs are auto-discovered by the viz registry so the new model types (including control variants) appear in plots and tables without code changes.
 
 ### Combining methods
 
@@ -431,6 +432,11 @@ sycophancy_eval_inspect/          # Evaluation suite (Inspect AI)
     mcq/                          #   MCQ bias evaluation (dataset, scorer, task)
     run_tinker_evals.py           #   Run evals on Tinker checkpoints
     run_fireworks_evals.py        #   Run evals on Fireworks deployments
-    visualize_results.py          #   Generate comparison plots and BRR tables
-    model_registry.json           #   Dynamic model type registry for visualization
+    experiments.toml              #   Single-source registry: biases, models, training types
+    viz/                          #   Visualization pipeline (replaces visualize_results.py)
+        cli.py                    #     `python -m sycophancy_eval_inspect.viz.cli`
+        loaders.py / frame.py     #     Inspect-API → wide → long-form pipeline
+        plot.py / theme.py        #     Bar plotter + publication theme
+        tables.py / aggregations.py
+        recipes.py / variance.py
 ```

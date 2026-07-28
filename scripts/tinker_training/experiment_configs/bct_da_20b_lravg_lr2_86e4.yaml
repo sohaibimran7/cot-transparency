@@ -1,0 +1,53 @@
+# BCT — BCT (DA, lravg) on openai/gpt-oss-20b
+# Variant: lr=2.86e-4, seed=42.
+# 3 LR variants ({1e-4, 2.86e-4, 5e-4}) share aggregate_group `bct-da-lravg`
+# so the new viz can pool them at plot time. Each variant has its own dir_suffix.
+# Reuses prepared data from earlier `_newlr` / original BCT runs (data_prep skipped).
+# 6 eval biases (skip ays). Eval max_tokens=20480.
+
+name: bct_da_20b_lravg_lr2_86e4
+model: openai/gpt-oss-20b
+
+data_preparation:
+  enabled: false  # reusing prepared files from earlier runs
+
+training:
+  method: sft
+  seeds: [42]
+  include_control: true
+  args:
+    experiment_name: bct_da_20b_lravg_lr2_86e4
+    run_name: gpt-oss-20b-bct-da-lravg-lr2_86e4
+    data: ["dataset_dumps/train-from-test-logiqa-hellaswag/da-g4/gpt_oss_20b/bct_non_cot_instruct.jsonl"]
+    control_data: ["dataset_dumps/train-from-test-logiqa-hellaswag/da-g4/gpt_oss_20b/control_non_cot_instruct.jsonl"]
+    batch_size: 128
+    epochs: 1
+    lr: 2.86e-4
+    lora_rank: 8
+    save_every: 16
+
+evaluation:
+  include_base: false
+  args:
+    bias_types: "suggested_answer,distractor_fact,distractor_argument_g4,post_hoc,spurious_few_shot_squares,wrong_few_shot"
+    datasets: hle
+    prompt_styles: no_cot
+    limit: 100
+    max_tokens: 20480
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/consistency_hle_20b/eval_logs
+    base_model: openai/gpt-oss-20b
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+
+viz_registration:
+  dir_suffix: bct-da-lravg-lr2_86e4
+  aggregate_group: bct-da-lravg
+  display_name: "BCT (DA, lravg) (lr=2.86e-4)"
+  color: "#08519c"
+  control_color: "#9ecae1"
+  training_biases: ['distractor_argument_g4']

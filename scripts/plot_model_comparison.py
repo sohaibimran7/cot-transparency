@@ -20,11 +20,13 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from sycophancy_eval_inspect.viz import BIAS_DISPLAY_NAMES
+from sycophancy_eval_inspect.viz.aggregations import aggregate_samples
 from sycophancy_eval_inspect.visualize_results import (
-    BIAS_DISPLAY_NAMES,
-    aggregate_samples,
+    collapse_to_population_bir,
     compute_per_question_bir,
 )
+
 
 MODEL_COLORS = {
     "llama": "#e41a1c",        # red
@@ -204,53 +206,6 @@ def print_bir_tables(bir_df, metric="bir"):
         print("".join(parts))
 
 
-def collapse_to_population_bir(bir_df: pd.DataFrame) -> pd.DataFrame:
-    """Collapse per-question rows into population-level BIR = |mean(biased) - mean(unbiased)|.
-
-    Returns a DataFrame with one row per (model, training_type, model_family,
-    prompt_style, dataset, bias_type, seed) group. The `bir` column becomes the
-    population-level gap; `n_valid` reflects the number of question pairs used.
-    For are_you_sure, bir = mean(biased_bmr) (switching rate, paper convention).
-
-    Per-question CI underestimates the switching variance at the population level,
-    so we also emit a Wald SE on the gap for downstream error bars.
-    """
-    group_cols = [
-        "model", "training_type", "model_family", "prompt_style",
-        "dataset", "bias_type", "seed",
-    ]
-    rows = []
-    for key, g in bir_df.groupby(group_cols, dropna=False):
-        bt = key[group_cols.index("bias_type")]
-        biased_valid = g["biased_bmr"].dropna()
-        unbiased_valid = g["unbiased_bmr"].dropna()
-        if len(biased_valid) == 0:
-            continue
-
-        if bt == "are_you_sure":
-            gap = float(biased_valid.mean())
-            n = int(len(biased_valid))
-            var = biased_valid.var(ddof=1) if n > 1 else 0.0
-            se = float(np.sqrt(var / n)) if n > 1 else 0.0
-        else:
-            if len(unbiased_valid) == 0:
-                continue
-            m_b = float(biased_valid.mean())
-            m_u = float(unbiased_valid.mean())
-            gap = abs(m_b - m_u)
-            nb, nu = len(biased_valid), len(unbiased_valid)
-            vb = biased_valid.var(ddof=1) if nb > 1 else 0.0
-            vu = unbiased_valid.var(ddof=1) if nu > 1 else 0.0
-            se = float(np.sqrt(vb / nb + vu / nu))
-            n = min(nb, nu)
-
-        rec = {col: val for col, val in zip(group_cols, key)}
-        rec.update({"bir": gap, "bir_se": se, "n_valid": n})
-        rows.append(rec)
-
-    return pd.DataFrame(rows)
-
-
 def collapse_to_pro_bias_excess(
     bir_df: pd.DataFrame,
     second_unbiased: dict | None = None,
@@ -428,10 +383,31 @@ def compute_noise_floor(noise_dir: str):
     """
     from collections import defaultdict
     from inspect_ai.log import read_eval_log
-    from sycophancy_eval_inspect.visualize_results import (
-        _get_model_family_from_dir,
-        _iter_model_dirs,
-    )
+    from sycophancy_eval_inspect.viz.registry import REGISTRY
+
+    def _iter_model_dirs(log_dirs):
+        for log_dir in log_dirs:
+            log_path = Path(log_dir)
+            if not log_path.exists():
+                print(f"Warning: {log_dir} does not exist")
+                continue
+            if any(log_path.glob("*.eval")):
+                yield log_path, log_path.name
+            else:
+                for d in sorted(log_path.iterdir()):
+                    if d.is_dir():
+                        yield d, d.name
+
+    def _get_model_family_from_dir(dir_name):
+        lower = dir_name.lower()
+        prefixes = sorted(
+            (info.dir_prefix for info in REGISTRY.models.values() if info.dir_prefix),
+            key=len, reverse=True,
+        )
+        for prefix in prefixes:
+            if lower.startswith(prefix):
+                return prefix.rstrip("-")
+        return None
 
     second_unbiased = defaultdict(dict)  # (model_family, prompt_style, dataset) -> {hash: bmr}
     for model_dir, dir_name in _iter_model_dirs([noise_dir]):
@@ -554,7 +530,7 @@ def print_bir_tables_with_floor(bir_df: pd.DataFrame, floor_df: pd.DataFrame, me
         m_agg = agg[agg["model_family"] == model]
         print(f"\n{'=' * 80}")
         print(f"  {MODEL_LABELS[model]} — Noise-adjusted BIR")
-        print(f"  (per-question BIR minus noise floor; clamped at 0; are_you_sure unchanged)")
+        print("  (per-question BIR minus noise floor; clamped at 0; are_you_sure unchanged)")
         print(f"{'=' * 80}")
         col_w = 14
         header = f"{'Dataset':<12}" + "".join(f"{bl:>{col_w}}" for bl in bias_labels) + f"{'Floor':>10}"
@@ -600,7 +576,7 @@ def print_pro_excess_tables(excess_df: pd.DataFrame) -> None:
         m_df = excess_df[excess_df["model_family"] == model]
         print(f"\n{'=' * 80}")
         print(f"  {MODEL_LABELS[model]} — Pro-bias excess Δ̂ = excess/(1−q̄)")
-        print(f"  (directional flip decomposition; recovers population Δ via pro-bias channel)")
+        print("  (directional flip decomposition; recovers population Δ via pro-bias channel)")
         print(f"{'=' * 80}")
         col_w = 18
         header = f"{'Dataset':<12}" + "".join(f"{bl:>{col_w}}" for bl in bias_labels)
@@ -633,8 +609,8 @@ def print_pro_bias_tables(pro_df: pd.DataFrame) -> None:
         m_df = pro_df[pro_df["model_family"] == model]
         print(f"\n{'=' * 80}")
         print(f"  {MODEL_LABELS[model]} — Pro-bias sycophancy rate")
-        print(f"  (biased_bmr on questions where unbiased sample gave non-biased answer;")
-        print(f"   HLE uses two unbiased draws for stricter q̂=0 filter)")
+        print("  (biased_bmr on questions where unbiased sample gave non-biased answer;")
+        print("   HLE uses two unbiased draws for stricter q̂=0 filter)")
         print(f"{'=' * 80}")
         col_w = 14
         header = f"{'Dataset':<12}" + "".join(f"{bl:>{col_w}}" for bl in bias_labels) + f"{'Avg':>{col_w}}"
@@ -669,7 +645,7 @@ def _make_floor_aware_aggregator(floor_lookup_with_se):
     Combines in quadrature: sqrt(cell_se² + floor_se²). Only applies to rows whose
     bias_type is not are_you_sure (unchanged for ays).
     """
-    from sycophancy_eval_inspect.visualize_results import aggregate_samples as _base_agg
+    from sycophancy_eval_inspect.viz.aggregations import aggregate_samples as _base_agg
 
     def _agg(df, metric, group_cols):
         out = _base_agg(df, metric, group_cols)
@@ -711,7 +687,7 @@ def plot_methods_combined_for_dataset(
     method_groups: list of (group_label, methods) where methods is
         [(label, df, color, tag), ...]. Groups are separated visually.
     """
-    from sycophancy_eval_inspect.visualize_results import aggregate_samples as std_agg
+    from sycophancy_eval_inspect.viz.aggregations import aggregate_samples as std_agg
 
     all_methods = [(label, df, color, tag)
                    for _, methods in method_groups for label, df, color, tag in methods]

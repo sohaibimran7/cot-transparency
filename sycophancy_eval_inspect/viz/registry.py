@@ -4,6 +4,7 @@ Loads from `experiments.toml` for global config and from `viz_registration:`
 blocks in `scripts/tinker_training/experiment_configs/*.yaml` for
 per-experiment training types. Frozen dataclasses; no module-level mutation.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -18,18 +19,19 @@ except ModuleNotFoundError:  # py<3.11
 @dataclass(frozen=True)
 class TrainingTypeInfo:
     """One training type — one bar color, one display name, one bias-set."""
-    key: str                       # canonical key (e.g. "rlct_da_aw0")
-    display_name: str              # legend label
-    color: str                     # bar facecolor
+
+    key: str  # canonical key (e.g. "rlct_da_aw0")
+    display_name: str  # legend label
+    color: str  # bar facecolor
     hatch: str = ""
     edgecolor: str = "black"
-    method: str = "other"          # "base" | "bct" | "rlct" | "vft" | "other"
-    data_scale: str = "da"         # "da" | "dawfs" — drives panel grouping
+    method: str = "other"  # "base" | "bct" | "rlct" | "vft" | "other"
+    data_scale: str = "da"  # "da" | "dawfs" — drives panel grouping
     is_control: bool = False
     control_for: str | None = None  # if this is a control, the trained type
-                                    # it pairs with (drives panel placement).
-                                    # Explicit in TOML; auto-filled from the
-                                    # `_ctrl`/`_control` suffix as fallback.
+    # it pairs with (drives panel placement).
+    # Explicit in TOML; auto-filled from the
+    # `_ctrl`/`_control` suffix as fallback.
     training_biases: frozenset[str] = field(default_factory=frozenset)
     aggregate_group: str | None = None
     dir_aliases: tuple[str, ...] = ()
@@ -37,9 +39,9 @@ class TrainingTypeInfo:
 
 @dataclass(frozen=True)
 class ModelInfo:
-    key: str                       # "llama" | "gpt" | "gpt-oss-20b" | …
+    key: str  # "llama" | "gpt" | "gpt-oss-20b" | …
     display_name: str
-    dir_prefix: str                # e.g. "llama-"
+    dir_prefix: str  # e.g. "llama-"
     prompt_styles: tuple[str, ...] = ("no_cot",)
 
 
@@ -47,12 +49,13 @@ class ModelInfo:
 class BiasInfo:
     key: str
     display_name: str
-    publication_label: str         # may include \n
+    publication_label: str  # may include \n
 
 
 @dataclass
 class Registry:
     """All registry data. One immutable instance is built at import time."""
+
     training_types: dict[str, TrainingTypeInfo] = field(default_factory=dict)
     models: dict[str, ModelInfo] = field(default_factory=dict)
     biases: dict[str, BiasInfo] = field(default_factory=dict)
@@ -65,7 +68,7 @@ class Registry:
 def _classify_method(key: str) -> tuple[str, str, bool]:
     """Heuristic: derive (method, data_scale, is_control) from a training_type key."""
     is_control = "control" in key or "ctrl" in key or key.endswith("_ctrl")
-    if "da_wfs" in key or "dawfs" in key:
+    if "da_wfs" in key or "dawfs" in key or "da-wfs" in key:
         scale = "dawfs"
     else:
         scale = "da"
@@ -78,6 +81,11 @@ def _classify_method(key: str) -> tuple[str, str, bool]:
     if "vft" in key:
         return "vft", scale, is_control
     return "other", scale, is_control
+
+
+def _normalize_bias_key(bias: str) -> str:
+    """Map training-time bias aliases onto eval-time canonical bias keys."""
+    return bias[:-3] if bias.endswith("_g4") else bias
 
 
 def _register_yaml_viz(reg: Registry, vr: dict) -> None:
@@ -96,7 +104,16 @@ def _register_yaml_viz(reg: Registry, vr: dict) -> None:
         return  # explicit TOML/JSON entry takes precedence
 
     method, scale, _ = _classify_method(dir_suffix)
-    biases = frozenset(vr.get("training_biases") or [])
+    # Normalize the `_g4` suffix from YAML training_biases. `distractor_argument_g4`
+    # is the GPT-4-generated variant referenced at training time, but the eval
+    # pipeline stores it under the canonical `distractor_argument` bias_type.
+    # Without this normalization, the panel's highlighted_biases never match
+    # the eval bias_type column → no cream-band highlight, no left-side ordering.
+    biases = frozenset(_normalize_bias_key(b) for b in (vr.get("training_biases") or []))
+    agg_group = vr.get("aggregate_group")
+    agg_ctrl_group = f"{agg_group}-ctrl" if agg_group else None
+    # Display name with trailing " (lr=<X>)" stripped is the aggregate label
+    agg_display = (vr.get("display_name", dir_suffix) or "").split(" (lr=")[0]
     reg.training_types[dir_suffix] = TrainingTypeInfo(
         key=dir_suffix,
         display_name=vr.get("display_name", dir_suffix),
@@ -107,11 +124,31 @@ def _register_yaml_viz(reg: Registry, vr: dict) -> None:
         data_scale=scale,
         is_control=False,
         training_biases=biases,
+        aggregate_group=agg_group,
         dir_aliases=(dir_suffix,),
     )
     reg.dir_to_training_type[dir_suffix] = dir_suffix
     if dir_suffix not in reg.training_type_order:
         reg.training_type_order.append(dir_suffix)
+
+    # Auto-register the aggregate group itself so post-aggregation lookups
+    # find a sensible color/display. Idempotent across LR variants.
+    if agg_group and agg_group not in reg.training_types:
+        reg.training_types[agg_group] = TrainingTypeInfo(
+            key=agg_group,
+            display_name=agg_display or agg_group,
+            color=vr.get("color", "#888888"),
+            hatch=vr.get("hatch", ""),
+            edgecolor=vr.get("edgecolor", "black"),
+            method=method,
+            data_scale=scale,
+            is_control=False,
+            training_biases=biases,
+            dir_aliases=(agg_group,),
+        )
+        reg.dir_to_training_type[agg_group] = agg_group
+        if agg_group not in reg.training_type_order:
+            reg.training_type_order.append(agg_group)
 
     # Control variant: only created when YAML supplies a control_color,
     # signalling the experiment runs a paired control.
@@ -130,11 +167,31 @@ def _register_yaml_viz(reg: Registry, vr: dict) -> None:
                 is_control=True,
                 control_for=dir_suffix,
                 training_biases=frozenset(),  # controls don't carry trained biases
+                aggregate_group=agg_ctrl_group,
                 dir_aliases=(ctrl_key,),
             )
             reg.dir_to_training_type[ctrl_key] = ctrl_key
             if ctrl_key not in reg.training_type_order:
                 reg.training_type_order.append(ctrl_key)
+
+        # Auto-register the control aggregate-group entry too
+        if agg_ctrl_group and agg_ctrl_group not in reg.training_types:
+            reg.training_types[agg_ctrl_group] = TrainingTypeInfo(
+                key=agg_ctrl_group,
+                display_name=f"{agg_display} Control",
+                color=ctrl_color,
+                hatch="",
+                edgecolor=vr.get("color", "black"),
+                method=method,
+                data_scale=scale,
+                is_control=True,
+                control_for=agg_group,
+                training_biases=frozenset(),
+                dir_aliases=(agg_ctrl_group,),
+            )
+            reg.dir_to_training_type[agg_ctrl_group] = agg_ctrl_group
+            if agg_ctrl_group not in reg.training_type_order:
+                reg.training_type_order.append(agg_ctrl_group)
 
 
 def _build_registry(toml_path: Path) -> Registry:
@@ -172,16 +229,14 @@ def _build_registry(toml_path: Path) -> Registry:
                 data_scale=scale,
                 is_control=is_control,
                 control_for=info.get("control_for"),
-                training_biases=frozenset(info.get("training_biases", [])),
+                training_biases=frozenset(_normalize_bias_key(b) for b in info.get("training_biases", [])),
                 aggregate_group=info.get("aggregate_group"),
                 dir_aliases=tuple(info.get("dir_aliases", [])),
             )
             for alias in info.get("dir_aliases", []):
                 reg.dir_to_training_type[alias] = key
-        reg.training_type_order = list(toml_data.get("ordering", {})
-                                       .get("training_types", []))
-        reg.aggregate_order = list(toml_data.get("ordering", {})
-                                   .get("aggregates", []))
+        reg.training_type_order = list(toml_data.get("ordering", {}).get("training_types", []))
+        reg.aggregate_order = list(toml_data.get("ordering", {}).get("aggregates", []))
         reg.aggregate_names = dict(toml_data.get("aggregate_names") or {})
 
     # ── 2. Scan experiment-config YAMLs for viz_registration blocks ─────────
@@ -222,10 +277,16 @@ def _build_registry(toml_path: Path) -> Registry:
             if key.endswith(suffix):
                 base = key[: -len(suffix)]
                 if base in reg.training_types:
-                    reg.training_types[key] = TrainingTypeInfo(
-                        **{**info.__dict__, "control_for": base}
-                    )
+                    reg.training_types[key] = TrainingTypeInfo(**{**info.__dict__, "control_for": base})
                 break
+
+    # ``ordering.training_types`` is a preferred prefix, not an allow-list.
+    # Explicit TOML registrations omitted from that hand-curated list must
+    # still render; append them in declaration order after the preferred
+    # entries. YAML registrations already do this as they are discovered.
+    for key in reg.training_types:
+        if key not in reg.training_type_order:
+            reg.training_type_order.append(key)
 
     return reg
 
@@ -236,8 +297,12 @@ def training_type_info(key: str) -> TrainingTypeInfo:
         # Synthesize a fallback so unknown training types render with neutral grey
         method, scale, is_control = _classify_method(key)
         return TrainingTypeInfo(
-            key=key, display_name=key, color="#888888",
-            method=method, data_scale=scale, is_control=is_control,
+            key=key,
+            display_name=key,
+            color="#888888",
+            method=method,
+            data_scale=scale,
+            is_control=is_control,
         )
     return info
 

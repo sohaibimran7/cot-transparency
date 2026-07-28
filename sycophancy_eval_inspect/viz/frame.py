@@ -8,13 +8,11 @@ Aggregated DataFrame columns:
     model_family, training_type, prompt_style, bias_type, metric,
     value, stderr, n
 """
-from __future__ import annotations
 
-from dataclasses import dataclass
+from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-
 
 # Type alias for clarity. We don't subclass DataFrame to keep things boring.
 MetricFrame = pd.DataFrame
@@ -23,40 +21,59 @@ MetricFrame = pd.DataFrame
 # Wide → long melt for the per-question BIR/BSR/BA frame.
 # These metric columns are emitted by visualize_results.compute_per_question_bir.
 PER_QUESTION_METRIC_COLUMNS = (
-    "pro_bsr", "anti_bsr", "net_bsr", "total_bsr", "bir",
-    "lenient_pro_bsr", "lenient_anti_bsr", "lenient_net_bsr", "lenient_total_bsr",
+    "pro_bsr",
+    "anti_bsr",
+    "net_bsr",
+    "total_bsr",
+    "bir",
+    "lenient_pro_bsr",
+    "lenient_anti_bsr",
+    "lenient_net_bsr",
+    "lenient_total_bsr",
     "lenient_bir",
-    "biased_bmr", "unbiased_bmr",
-    "biased_lenient_bmr", "unbiased_lenient_bmr",
+    "biased_bmr",
+    "unbiased_bmr",
+    "biased_lenient_bmr",
+    "unbiased_lenient_bmr",
     "bias_acknowledged",
 )
 
 ID_COLUMNS = (
-    "model", "training_type", "model_family", "prompt_style",
-    "hash", "dataset", "bias_type", "seed",
+    "model",
+    "training_type",
+    "model_family",
+    "prompt_style",
+    "hash",
+    "dataset",
+    "bias_type",
+    "seed",
 )
 
 
-def melt_per_question(wide: pd.DataFrame,
-                      metric_columns: tuple[str, ...] = PER_QUESTION_METRIC_COLUMNS,
-                      ) -> MetricFrame:
+def melt_per_question(
+    wide: pd.DataFrame,
+    metric_columns: tuple[str, ...] = PER_QUESTION_METRIC_COLUMNS,
+) -> MetricFrame:
     """Convert wide per-question frame (one column per metric) to long form.
 
     Returns one row per (sample × metric). Drops rows where the metric is NaN.
     """
     metrics = [m for m in metric_columns if m in wide.columns]
     id_cols = [c for c in ID_COLUMNS if c in wide.columns]
-    long = wide.melt(id_vars=id_cols, value_vars=metrics,
-                     var_name="metric", value_name="value")
+    long = wide.melt(id_vars=id_cols, value_vars=metrics, var_name="metric", value_name="value")
     return long
 
 
-def aggregate_metric(long: MetricFrame,
-                     group_cols: tuple[str, ...] = (
-                         "model_family", "training_type", "prompt_style",
-                         "bias_type", "metric",
-                     ),
-                     ) -> MetricFrame:
+def aggregate_metric(
+    long: MetricFrame,
+    group_cols: tuple[str, ...] = (
+        "model_family",
+        "training_type",
+        "prompt_style",
+        "bias_type",
+        "metric",
+    ),
+) -> MetricFrame:
     """Aggregate long-form per-question frame to (mean, stderr, n) per group.
 
     Binomial SE for binary-valued metrics; sample SEM for continuous.
@@ -80,12 +97,14 @@ def aggregate_metric(long: MetricFrame,
     return pd.DataFrame(rows)
 
 
-def filter_metric(long: MetricFrame, *,
-                  metric: str | None = None,
-                  model_family: str | None = None,
-                  prompt_style: str | None = None,
-                  variant_predicate=None,
-                  ) -> MetricFrame:
+def filter_metric(
+    long: MetricFrame,
+    *,
+    metric: str | None = None,
+    model_family: str | None = None,
+    prompt_style: str | None = None,
+    variant_predicate=None,
+) -> MetricFrame:
     """Slice a long-form frame by common selectors. Returns a copy."""
     out = long
     if metric is not None:

@@ -22,21 +22,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sycophancy_eval_inspect.viz import BIAS_DISPLAY_NAMES
 from sycophancy_eval_inspect.viz.aggregations import aggregate_samples
-from sycophancy_eval_inspect.viz.loaders import (
-    compute_per_question_bsr,
-    load_samples,
+from sycophancy_eval_inspect.visualize_results import (
+    collapse_to_population_bir,
+    compute_per_question_bir,
 )
 
-
-def compute_per_question_bir(log_dirs):
-    """Back-compat wrapper: load_samples → compute_per_question_bsr.
-
-    Legacy `compute_per_question_bir(log_dirs)` read eval logs directly. The
-    new pipeline splits that into (load_samples, compute_per_question_bsr);
-    this wrapper preserves the old call site.
-    """
-    samples = load_samples(log_dirs)
-    return compute_per_question_bsr(samples)
 
 MODEL_COLORS = {
     "llama": "#e41a1c",        # red
@@ -214,53 +204,6 @@ def print_bir_tables(bir_df, metric="bir"):
         else:
             parts.append(f"{'—':>{col_w}}")
         print("".join(parts))
-
-
-def collapse_to_population_bir(bir_df: pd.DataFrame) -> pd.DataFrame:
-    """Collapse per-question rows into population-level BIR = |mean(biased) - mean(unbiased)|.
-
-    Returns a DataFrame with one row per (model, training_type, model_family,
-    prompt_style, dataset, bias_type, seed) group. The `bir` column becomes the
-    population-level gap; `n_valid` reflects the number of question pairs used.
-    For are_you_sure, bir = mean(biased_bmr) (switching rate, paper convention).
-
-    Per-question CI underestimates the switching variance at the population level,
-    so we also emit a Wald SE on the gap for downstream error bars.
-    """
-    group_cols = [
-        "model", "training_type", "model_family", "prompt_style",
-        "dataset", "bias_type", "seed",
-    ]
-    rows = []
-    for key, g in bir_df.groupby(group_cols, dropna=False):
-        bt = key[group_cols.index("bias_type")]
-        biased_valid = g["biased_bmr"].dropna()
-        unbiased_valid = g["unbiased_bmr"].dropna()
-        if len(biased_valid) == 0:
-            continue
-
-        if bt == "are_you_sure":
-            gap = float(biased_valid.mean())
-            n = int(len(biased_valid))
-            var = biased_valid.var(ddof=1) if n > 1 else 0.0
-            se = float(np.sqrt(var / n)) if n > 1 else 0.0
-        else:
-            if len(unbiased_valid) == 0:
-                continue
-            m_b = float(biased_valid.mean())
-            m_u = float(unbiased_valid.mean())
-            gap = abs(m_b - m_u)
-            nb, nu = len(biased_valid), len(unbiased_valid)
-            vb = biased_valid.var(ddof=1) if nb > 1 else 0.0
-            vu = unbiased_valid.var(ddof=1) if nu > 1 else 0.0
-            se = float(np.sqrt(vb / nb + vu / nu))
-            n = min(nb, nu)
-
-        rec = {col: val for col, val in zip(group_cols, key)}
-        rec.update({"bir": gap, "bir_se": se, "n_valid": n})
-        rows.append(rec)
-
-    return pd.DataFrame(rows)
 
 
 def collapse_to_pro_bias_excess(
@@ -587,7 +530,7 @@ def print_bir_tables_with_floor(bir_df: pd.DataFrame, floor_df: pd.DataFrame, me
         m_agg = agg[agg["model_family"] == model]
         print(f"\n{'=' * 80}")
         print(f"  {MODEL_LABELS[model]} — Noise-adjusted BIR")
-        print(f"  (per-question BIR minus noise floor; clamped at 0; are_you_sure unchanged)")
+        print("  (per-question BIR minus noise floor; clamped at 0; are_you_sure unchanged)")
         print(f"{'=' * 80}")
         col_w = 14
         header = f"{'Dataset':<12}" + "".join(f"{bl:>{col_w}}" for bl in bias_labels) + f"{'Floor':>10}"
@@ -633,7 +576,7 @@ def print_pro_excess_tables(excess_df: pd.DataFrame) -> None:
         m_df = excess_df[excess_df["model_family"] == model]
         print(f"\n{'=' * 80}")
         print(f"  {MODEL_LABELS[model]} — Pro-bias excess Δ̂ = excess/(1−q̄)")
-        print(f"  (directional flip decomposition; recovers population Δ via pro-bias channel)")
+        print("  (directional flip decomposition; recovers population Δ via pro-bias channel)")
         print(f"{'=' * 80}")
         col_w = 18
         header = f"{'Dataset':<12}" + "".join(f"{bl:>{col_w}}" for bl in bias_labels)
@@ -666,8 +609,8 @@ def print_pro_bias_tables(pro_df: pd.DataFrame) -> None:
         m_df = pro_df[pro_df["model_family"] == model]
         print(f"\n{'=' * 80}")
         print(f"  {MODEL_LABELS[model]} — Pro-bias sycophancy rate")
-        print(f"  (biased_bmr on questions where unbiased sample gave non-biased answer;")
-        print(f"   HLE uses two unbiased draws for stricter q̂=0 filter)")
+        print("  (biased_bmr on questions where unbiased sample gave non-biased answer;")
+        print("   HLE uses two unbiased draws for stricter q̂=0 filter)")
         print(f"{'=' * 80}")
         col_w = 14
         header = f"{'Dataset':<12}" + "".join(f"{bl:>{col_w}}" for bl in bias_labels) + f"{'Avg':>{col_w}}"

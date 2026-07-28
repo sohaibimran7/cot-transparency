@@ -10,13 +10,13 @@ Output formatting matches the legacy module byte-for-byte. Constants
 (`TRAINING_TYPE_ORDER`, `TRAINING_TYPE_NAMES`, `BIAS_DISPLAY_NAMES`,
 `DEFAULT_TRAINING_BIASES`) are sourced from `viz.registry.REGISTRY`.
 """
+
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 
 from .registry import REGISTRY
-
 
 # Default training-bias set for held-out vs trained partitioning.
 # Matches legacy `DEFAULT_TRAINING_BIASES`.
@@ -47,9 +47,10 @@ def _training_type_order() -> list[str]:
     return list(REGISTRY.training_type_order)
 
 
-def _split_biases(bias_list: list[str],
-                  training_biases: set[str] | None = None,
-                  ) -> tuple[list[str], list[str]]:
+def _split_biases(
+    bias_list: list[str],
+    training_biases: set[str] | None = None,
+) -> tuple[list[str], list[str]]:
     """Split bias list into (trained_on, held_out), preserving order within each group."""
     tb = training_biases if training_biases is not None else DEFAULT_TRAINING_BIASES
     trained = [b for b in bias_list if b in tb]
@@ -108,8 +109,7 @@ def print_bir_table(
     training_biases: set[str] | None = None,
 ):
     """Print pivot table in formatted style (used for BIR, BA, and other per-question metrics)."""
-    bir, counts = compute_bir_table(bir_df, model_family, prompt_style,
-                                    metric_col=metric_col, baseline=baseline)
+    bir, counts = compute_bir_table(bir_df, model_family, prompt_style, metric_col=metric_col, baseline=baseline)
     if bir.empty:
         return
 
@@ -270,8 +270,7 @@ def save_bir_tables(
             for metric_col, filt_fn, filt_label in table_variants:
                 sub_df = bir_df if filt_fn is None else bir_df[filt_fn(bir_df)]
 
-                tbl, _ = compute_bir_table(sub_df, model_family, style,
-                                           metric_col=metric_col, baseline=baseline)
+                tbl, _ = compute_bir_table(sub_df, model_family, style, metric_col=metric_col, baseline=baseline)
                 if tbl.empty:
                     continue
 
@@ -292,9 +291,7 @@ def save_bir_tables(
                         )
                         if tt != baseline:
                             rv = tbl.loc[bt, f"{tt}_ratio"]
-                            row_data[f"{tt_names.get(tt, tt)} Ratio"] = (
-                                round(rv, 2) if pd.notna(rv) else None
-                            )
+                            row_data[f"{tt_names.get(tt, tt)} Ratio"] = round(rv, 2) if pd.notna(rv) else None
                     all_rows.append(row_data)
 
     result_df = pd.DataFrame(all_rows)
@@ -316,14 +313,13 @@ def save_bir_tables(
             f.write("\n\n")
         f.write("## Notes\n\n")
         tr_bias_names = ", ".join(
-            f"**{bias_display.get(b, b)}**"
-            for b in sorted(training_biases or DEFAULT_TRAINING_BIASES)
+            f"**{bias_display.get(b, b)}**" for b in sorted(training_biases or DEFAULT_TRAINING_BIASES)
         )
         f.write(f"- Training bias(es): {tr_bias_names}\n")
         f.write("- **Verbalised** = model mentions the bias in CoT\n")
         f.write("- **Unverbalised** = model does not mention the bias in CoT\n")
-        f.write("- **(Strict BA)** = strict bias_acknowledged (NaN-out few-shot confused samples)\n")
-        f.write("- **(Lenient BA)** = lenient bias_acknowledged (all samples)\n")
+        f.write("- **(Strict BV)** = strict bias_verbalised (NaN-out few-shot confused samples)\n")
+        f.write("- **(Lenient BV)** = lenient bias_verbalised (all samples)\n")
         f.write("- **(Lenient)** = uses fallback parser which recovers some unparseable responses\n")
         f.write(f"- Ratio < 1.0 indicates improvement over {tt_names.get(baseline, baseline)} model\n")
     print(f"Saved BIR tables to {md_path}")
@@ -344,12 +340,16 @@ def print_summary_table(sample_df: pd.DataFrame):
             print("  (no biased data)")
             continue
 
-        summary = biased.groupby("training_type").agg(
-            correct_mean=("correct", "mean"),
-            correct_std=("correct", "std"),
-            matches_bias_mean=("matches_bias", "mean"),
-            matches_bias_std=("matches_bias", "std"),
-            n=("correct", "count"),
-        ).round(3)
+        summary = (
+            biased.groupby("training_type")
+            .agg(
+                correct_mean=("correct", "mean"),
+                correct_std=("correct", "std"),
+                matches_bias_mean=("matches_bias", "mean"),
+                matches_bias_std=("matches_bias", "std"),
+                n=("correct", "count"),
+            )
+            .round(3)
+        )
 
         print(summary.to_string())

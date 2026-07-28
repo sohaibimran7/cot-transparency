@@ -8,11 +8,11 @@ renderer (`bar_plot`) can be used.
 
 `n=` labels here count groups (not total samples).
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from .plot import bar_plot
@@ -62,16 +62,18 @@ def _aggregate_variance(
         k = len(means)
         if k == 0:
             continue
-        rows.append({
-            "model_family": model_family,
-            "prompt_style": prompt_style,
-            "training_type": tt,
-            "bias_type": bt,
-            "metric": metric,
-            "value": float(means.mean()),
-            "stderr": float(means.std(ddof=1) / k**0.5) if k > 1 else 0.0,
-            "n": int(k),
-        })
+        rows.append(
+            {
+                "model_family": model_family,
+                "prompt_style": prompt_style,
+                "training_type": tt,
+                "bias_type": bt,
+                "metric": metric,
+                "value": float(means.mean()),
+                "stderr": float(means.std(ddof=1) / k**0.5) if k > 1 else 0.0,
+                "n": int(k),
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -91,6 +93,7 @@ def render_variance_across(
     prompt_styles: list[str] | None = None,
     variants: list[str] | None = None,
     training_biases: frozenset[str] | None = None,
+    n_labels: bool = True,
 ) -> int:
     """Render one variance figure per (model, prompt_style[, variant], metric).
 
@@ -125,8 +128,12 @@ def render_variance_across(
             for variant in iter_variants:
                 for metric in metrics:
                     agg = _aggregate_variance(
-                        wide, metric, split_by, mf,
-                        variant=variant, prompt_style=ps,
+                        wide,
+                        metric,
+                        split_by,
+                        mf,
+                        variant=variant,
+                        prompt_style=ps,
                     )
                     if agg.empty:
                         continue
@@ -146,7 +153,7 @@ def render_variance_across(
                         theme=PUBLICATION_THEME,
                         output_path=output_dir / out_name,
                         ylabel=ylabel_full,
-                        n_labels=True,
+                        n_labels=n_labels,
                     )
                     n_written += 1
     return n_written

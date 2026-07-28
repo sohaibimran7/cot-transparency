@@ -1,0 +1,64 @@
+# RLCT — RLCT (DA, aw=0, r128b4) on meta-llama/Llama-3.1-8B-Instruct
+# Variant: bs=4, n_rollouts=128 each, n_datapoints=64, lr=2.86e-4, seed=42.
+# 3 LR variants ({1e-4, 2.86e-4, 5e-4}) share aggregate_group `rlct-da-aw0-r128b4`
+# so the new viz can pool them at plot time. Each variant has its own dir_suffix.
+# 6 eval biases (skip ays). Midway checkpoint kept (step 8) but not evaluated.
+
+name: rlct_da_aw0_llama_r128b4_lr2_86e4
+model: meta-llama/Llama-3.1-8B-Instruct
+
+training:
+  method: rl
+  seeds: [42]
+  include_control: true
+  args:
+    experiment_name: rlct_da_aw0_llama_r128b4_lr2_86e4
+    run_name: llama-rlct-da-aw0-r128b4-lr2_86e4
+    bias_types: "distractor_argument_g4"
+    datasets: "logiqa,hellaswag"
+    n_datapoints: 64
+    prompt_style: cot
+    lr: 2.86e-4
+    lr_schedule: constant
+    lora_rank: 8
+    kl_coef: 0.05
+    anchor_weight: 0.0
+    anchor_model: base
+    loss_fn: ppo
+    n_ref_rollouts: 128
+    n_train_rollouts: 128
+    n_consistency_rollouts: 128
+    n_anchor_rollouts: 128
+    temperature: 1.0
+    max_new_tokens: 20480
+    n_epochs: 1
+    batch_size: 4
+    gradient_accumulation_steps: 1
+    refresh_every: 1
+    checkpoint_every: 8  # midway (step 8 of 16) saved but not evaluated
+
+evaluation:
+  include_base: false
+  args:
+    bias_types: "suggested_answer,distractor_fact,distractor_argument_g4,post_hoc,spurious_few_shot_squares,wrong_few_shot"
+    datasets: hle
+    prompt_styles: cot
+    limit: 100
+    max_tokens: 20480
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/consistency_hle_llama/eval_logs
+    base_model: meta-llama/Llama-3.1-8B-Instruct
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+
+viz_registration:
+  dir_suffix: rlct-da-aw0-r128b4-lr2_86e4
+  aggregate_group: rlct-da-aw0-r128b4
+  display_name: "RMCT (DA, aw=0, r128b4) (lr=2.86e-4)"
+  color: "#006d2c"
+  control_color: "#bae4b3"
+  training_biases: ['distractor_argument_g4']

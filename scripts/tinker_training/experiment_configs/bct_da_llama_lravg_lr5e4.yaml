@@ -1,0 +1,53 @@
+# BCT — BCT (DA, lravg) on meta-llama/Llama-3.1-8B-Instruct
+# Variant: lr=5.0e-4, seed=42.
+# 3 LR variants ({1e-4, 2.86e-4, 5e-4}) share aggregate_group `bct-da-lravg`
+# so the new viz can pool them at plot time. Each variant has its own dir_suffix.
+# Reuses prepared data from earlier `_newlr` / original BCT runs (data_prep skipped).
+# 6 eval biases (skip ays). Eval max_tokens=20480.
+
+name: bct_da_llama_lravg_lr5e4
+model: meta-llama/Llama-3.1-8B-Instruct
+
+data_preparation:
+  enabled: false  # reusing prepared files from earlier runs
+
+training:
+  method: sft
+  seeds: [42]
+  include_control: true
+  args:
+    experiment_name: bct_da_llama_lravg_lr5e4
+    run_name: llama-bct-da-lravg-lr5e4
+    data: ["dataset_dumps/train-from-test-logiqa-hellaswag/da-g4/llama_3_1_8b_instruct/bct_cot_instruct.jsonl"]
+    control_data: ["dataset_dumps/train-from-test-logiqa-hellaswag/da-g4/llama_3_1_8b_instruct/control_cot_instruct.jsonl"]
+    batch_size: 128
+    epochs: 1
+    lr: 5.0e-4
+    lora_rank: 8
+    save_every: 16
+
+evaluation:
+  include_base: false
+  args:
+    bias_types: "suggested_answer,distractor_fact,distractor_argument_g4,post_hoc,spurious_few_shot_squares,wrong_few_shot"
+    datasets: hle
+    prompt_styles: cot
+    limit: 100
+    max_tokens: 20480
+    max_tasks: 50
+    log_dir: artifacts/eval_suites/consistency_hle_llama/eval_logs
+    base_model: meta-llama/Llama-3.1-8B-Instruct
+
+analysis:
+  args:
+    bir: true
+    ba: true
+    plot: true
+
+viz_registration:
+  dir_suffix: bct-da-lravg-lr5e4
+  aggregate_group: bct-da-lravg
+  display_name: "BCT (DA, lravg) (lr=5.0e-4)"
+  color: "#08519c"
+  control_color: "#9ecae1"
+  training_biases: ['distractor_argument_g4']

@@ -10,6 +10,7 @@ Three pure DataFrame helpers:
 All registry-derived constants (training_type → aggregate group, training type
 ordering) come from `viz.registry.REGISTRY` rather than legacy module globals.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -57,20 +58,14 @@ def _aggregate_map() -> dict[str, str]:
     `aggregate_group` attribute (set in `experiments.toml`). Entries without
     an aggregate_group are left as-is by `aggregate_training_types`.
     """
-    return {
-        key: info.aggregate_group
-        for key, info in REGISTRY.training_types.items()
-        if info.aggregate_group
-    }
+    return {key: info.aggregate_group for key, info in REGISTRY.training_types.items() if info.aggregate_group}
 
 
 def aggregate_training_types(df: pd.DataFrame) -> pd.DataFrame:
     """Remap training_type column to aggregate groups."""
     df = df.copy()
     agg_map = _aggregate_map()
-    df["training_type"] = df["training_type"].map(
-        lambda t: agg_map.get(t, t)
-    )
+    df["training_type"] = df["training_type"].map(lambda t: agg_map.get(t, t))
     return df
 
 

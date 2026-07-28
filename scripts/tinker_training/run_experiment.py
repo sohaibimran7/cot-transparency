@@ -444,18 +444,28 @@ def parse_data_gen_output(output: str) -> dict:
 # Stage: data_preparation
 # ---------------------------------------------------------------------------
 
-def build_data_prep_cmd(config: dict, st: dict) -> list[str] | None:
-    """Build command for data preparation (optional stage)."""
+def build_data_prep_cmd(config: dict, st: dict, for_control: bool = False) -> list[str] | None:
+    """Build command for data preparation (optional stage).
+
+    When for_control=True, uses control_inputs/control_output instead of
+    inputs/output, letting the same mix (e.g. instruct data) be applied to
+    both main and control training.
+    """
     dp = config.get("data_preparation", {})
     if not dp.get("enabled", False):
         return None
 
     args = dp.get("args", {})
+    inputs_key = "control_inputs" if for_control else "inputs"
+    output_key = "control_output" if for_control else "output"
+    raw_inputs = args.get(inputs_key, [])
+    if for_control and not raw_inputs:
+        return None
+
     cmd = [sys.executable, "scripts/prepare_datasets.py"]
 
     # Resolve inputs - "auto:*" references use data_gen outputs
     dg_outputs = stage_outputs(st, "data_generation")
-    raw_inputs = args.get("inputs", [])
     for inp in raw_inputs:
         if inp.startswith("auto:"):
             # auto:bct_cot, auto:instruct:half etc.
@@ -463,18 +473,19 @@ def build_data_prep_cmd(config: dict, st: dict) -> list[str] | None:
             key = parts[1]  # e.g. bct_cot, instruct
             limit = parts[2] if len(parts) > 2 else None
             # Derive path from data_gen output dirs
-            train_dir = dg_outputs.get("train_dir")
-            if not train_dir:
+            dir_key = "control_dir" if for_control else "train_dir"
+            base_dir = dg_outputs.get(dir_key)
+            if not base_dir:
                 path = f"<auto:{key}>"
             else:
-                path = f"{train_dir}/{key}.jsonl"
+                path = f"{base_dir}/{key}.jsonl"
             spec = f"{path}:{limit}" if limit else path
             cmd += ["--input", spec]
         else:
             cmd += ["--input", inp]
 
-    if "output" in args:
-        cmd += ["--output", str(args["output"])]
+    if output_key in args:
+        cmd += ["--output", str(args[output_key])]
     if args.get("clean"):
         cmd.append("--clean")
     if args.get("shuffle"):
@@ -483,6 +494,16 @@ def build_data_prep_cmd(config: dict, st: dict) -> list[str] | None:
         cmd += ["--seed", str(args["seed"])]
 
     return cmd
+
+
+def parse_data_prep_output(output: str, key: str = "output_path") -> dict:
+    """Parse prepare_datasets stdout for the final output JSONL path."""
+    results = {}
+    for line in output.splitlines():
+        m = re.search(r"Saved \d+ samples to (.+\.jsonl)", line)
+        if m:
+            results[key] = m.group(1).strip()
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -498,7 +519,9 @@ def _resolve_training_data(config: dict, st: dict, is_control: bool) -> list[str
     dp_outputs = stage_outputs(st, "data_preparation")
     dg_outputs = stage_outputs(st, "data_generation")
 
-    if dp_outputs.get("output_path") and not is_control:
+    if is_control and dp_outputs.get("control_output_path"):
+        return [dp_outputs["control_output_path"]]
+    if not is_control and dp_outputs.get("output_path"):
         return [dp_outputs["output_path"]]
 
     # Use data_files list if available (all saved JSONL paths from data gen)
@@ -735,6 +758,27 @@ def _eval_name(config: dict, suffix: str = "") -> str:
     return f"{name}{suffix}"
 
 
+def _resolve_base_eval_args(ev: dict) -> dict:
+    """Merge evaluation.base_args over evaluation.args for base-model eval.
+
+    If base_args overrides any hash-affecting key (limit, datasets, bias_types)
+    without pinning its own hash_file, route the base eval to a separate
+    common_hashes_base.json so its question set matches its limit rather than
+    reusing the checkpoint eval's hash file.
+    """
+    args = ev.get("args", {})
+    base_overrides = ev.get("base_args") or {}
+    if not base_overrides:
+        return args
+
+    merged = {**args, **base_overrides}
+    hash_affecting = {"limit", "datasets", "bias_types"}
+    if any(k in base_overrides for k in hash_affecting) and "hash_file" not in base_overrides:
+        log_dir = merged.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+        merged["hash_file"] = str(Path(log_dir) / "common_hashes_base.json")
+    return merged
+
+
 def _build_single_eval_cmd(
     config: dict, args: dict, checkpoint: str | None, eval_name: str,
     seed: int | None = None,
@@ -845,18 +889,22 @@ def build_eval_cmds(
     # eval once per seed with a matching sampling seed so variance across base is
     # comparable to variance across trained runs.
     if include_base:
+        base_args = _resolve_base_eval_args(ev)
+        if base_args is not args:
+            _precompute_hash_file_for_eval(base_args)
+
         model_prefix = get_model_prefix(config["model"])
         base_seeds = tr.get("seeds")
         if base_seeds:
             for seed in base_seeds:
                 base_name = f"{model_prefix}-base-s{seed}"
                 cmd = _build_single_eval_cmd(
-                    config, args, checkpoint=None, eval_name=base_name, seed=seed,
+                    config, base_args, checkpoint=None, eval_name=base_name, seed=seed,
                 )
                 cmds.append((cmd, f"base-s{seed}"))
         else:
             base_name = f"{model_prefix}-base"
-            cmd = _build_single_eval_cmd(config, args, checkpoint=None, eval_name=base_name)
+            cmd = _build_single_eval_cmd(config, base_args, checkpoint=None, eval_name=base_name)
             cmds.append((cmd, "base"))
 
     if not base_only:
@@ -1471,6 +1519,7 @@ def build_task_graph(
 
     # ----- data_preparation -----
     dp_task_id: str | None = None
+    dp_ctrl_task_id: str | None = None
     dp_cfg = config.get("data_preparation", {})
     if (
         "data_preparation" in stages_to_run
@@ -1494,8 +1543,32 @@ def build_task_graph(
             label="dataprep",
             deps=list(dg_task_ids),
             build_cmd=_build_dp,
+            parse_output=lambda out: parse_data_prep_output(out, "output_path"),
             dry_run_outputs={"output_path": "<dry-run-dataprep-output>"},
         ))
+
+        # Optional: second data_prep for control (symmetric instruct mix etc.)
+        if dp_cfg.get("args", {}).get("control_inputs"):
+            dp_ctrl_task_id = "dataprep:control"
+
+            def _build_dp_ctrl(deps_outs):
+                local_st = _overlay_stage_outputs(
+                    st, data_generation=_merged_dg_outputs(deps_outs)
+                )
+                cmd = build_data_prep_cmd(config, local_st, for_control=True)
+                if cmd is None:
+                    raise RuntimeError("data_preparation control_inputs set but build_data_prep_cmd returned None")
+                return cmd
+
+            tasks.append(Task(
+                id=dp_ctrl_task_id,
+                stage="data_preparation",
+                label="dataprep-control",
+                deps=list(dg_task_ids),
+                build_cmd=_build_dp_ctrl,
+                parse_output=lambda out: parse_data_prep_output(out, "control_output_path"),
+                dry_run_outputs={"control_output_path": "<dry-run-dataprep-control-output>"},
+            ))
 
     # ----- training -----
     train_units: list[tuple[str, str, bool, int | None]] = []  # (task_id, label, is_control, seed)
@@ -1503,6 +1576,10 @@ def build_task_graph(
     if "training" in stages_to_run and tr:
         data_mode = tr.get("data_mode", "concat")
         base_train_deps = [dp_task_id] if dp_task_id else list(dg_task_ids)
+        ctrl_train_deps = (
+            [t for t in [dp_task_id, dp_ctrl_task_id] if t]
+            if dp_ctrl_task_id else base_train_deps
+        )
 
         if data_mode == "sequential":
             train_units.extend(
@@ -1554,14 +1631,18 @@ def build_task_graph(
 
                     def _make_train_builder_ctrl(_seed, _is_ctrl):
                         def _build(deps_outs):
+                            # Merge main and control data_prep outputs so
+                            # _resolve_training_data can see both output_path
+                            # (main) and control_output_path (control).
+                            dp_merged: dict = {}
+                            if dp_task_id and dp_task_id in deps_outs:
+                                dp_merged.update(deps_outs[dp_task_id])
+                            if dp_ctrl_task_id and dp_ctrl_task_id in deps_outs:
+                                dp_merged.update(deps_outs[dp_ctrl_task_id])
                             local_st = _overlay_stage_outputs(
                                 st,
                                 data_generation=_merged_dg_outputs(deps_outs),
-                                data_preparation=(
-                                    deps_outs.get(dp_task_id, {})
-                                    if dp_task_id and dp_task_id in deps_outs
-                                    else None
-                                ),
+                                data_preparation=dp_merged or None,
                             )
                             return build_training_cmd(
                                 config, local_st, is_control=_is_ctrl, seed=_seed,
@@ -1572,7 +1653,7 @@ def build_task_graph(
                         id=tid,
                         stage="training",
                         label=label,
-                        deps=list(base_train_deps),
+                        deps=list(ctrl_train_deps),
                         build_cmd=_make_train_builder_ctrl(seed, True),
                         parse_output=parse_training_output,
                         dry_run_outputs={"checkpoint": f"tinker://dry-run-{label}"},
@@ -1586,7 +1667,19 @@ def build_task_graph(
         base_only = ev.get("base_only", False)
         include_base = ev.get("include_base", False) or base_only
 
+        # Precompute the main hash file synchronously so every eval subprocess
+        # (checkpoint evals, and any base eval that shares this args dict)
+        # finds it at dispatch time. Base evals that route to a distinct
+        # hash_file via base_args are precomputed separately below.
+        _precompute_hash_file_for_eval(ev_args)
+
         if include_base:
+            base_ev_args = _resolve_base_eval_args(ev)
+            # If base_args routed the base eval to a separate hash file (e.g.
+            # because base overrides `limit`), precompute that file now so the
+            # base-eval command finds it at dispatch time.
+            if base_ev_args is not ev_args:
+                _precompute_hash_file_for_eval(base_ev_args)
             model_prefix = get_model_prefix(config["model"])
             # When training.seeds is set, fire one base eval per seed so base
             # variance/precision matches the trained runs.
@@ -1604,11 +1697,11 @@ def build_task_graph(
                 # can force a re-run with --force.
                 should_fire_base = True
                 if not force:
-                    wanted_biases = _csv_to_list(ev_args.get("bias_types"))
-                    wanted_datasets = _csv_to_list(ev_args.get("datasets"))
+                    wanted_biases = _csv_to_list(base_ev_args.get("bias_types"))
+                    wanted_datasets = _csv_to_list(base_ev_args.get("datasets"))
                     if wanted_biases and wanted_datasets:
                         log_dir = Path(
-                            ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
+                            base_ev_args.get("log_dir", "sycophancy_eval_inspect/logs/tinker_evals")
                         )
                         coverage = _load_base_eval_coverage(log_dir, base_name)
                         wanted = {(b, d) for b in wanted_biases for d in wanted_datasets}
@@ -1631,7 +1724,7 @@ def build_task_graph(
 
                 if should_fire_base:
                     base_cmd = _build_single_eval_cmd(
-                        config, ev_args, checkpoint=None, eval_name=base_name, seed=seed,
+                        config, base_ev_args, checkpoint=None, eval_name=base_name, seed=seed,
                     )
 
                     def _make_base_builder(_cmd):
@@ -1951,6 +2044,11 @@ def _resolve_stages(config: dict, args) -> list[str]:
     dp = config.get("data_preparation", {})
     if not dp.get("enabled", False) and "data_preparation" in stages:
         stages.remove("data_preparation")
+
+    # Skip training if evaluation.base_only is set (no checkpoint needed)
+    ev = config.get("evaluation", {})
+    if ev.get("base_only", False) and "training" in stages:
+        stages.remove("training")
 
     return stages
 

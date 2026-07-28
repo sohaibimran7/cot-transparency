@@ -263,116 +263,361 @@
       "edgecolor": "black",
       "training_biases": []
     },
-    "bct-da": {
-      "training_type": "bct_da",
-      "display_name": "BCT (DA)",
-      "color": "#2171b5",
+    "rlct-kl0.01": {
+      "training_type": "rlct_kl0.01",
+      "display_name": "RLCT kl=0.01",
+      "color": "#e41a1c",
       "hatch": "",
       "edgecolor": "black",
       "training_biases": [
-        "distractor_argument_g4"
+        "suggested_answer"
       ]
     },
-    "bct-da-ctrl": {
-      "training_type": "bct_da_ctrl",
-      "display_name": "BCT (DA) Control",
-      "color": "#bdd7e7",
+    "rlct-kl0.01-ctrl": {
+      "training_type": "rlct_kl0.01_ctrl",
+      "display_name": "RLCT kl=0.01 Control",
+      "color": "#ee7576",
       "hatch": "//",
       "edgecolor": "black",
       "training_biases": []
     },
-    "bct-da-wfs": {
-      "training_type": "bct_da_wfs",
-      "display_name": "BCT (DA+WFS)",
-      "color": "#6baed6",
+    "rlct-nr32": {
+      "training_type": "rlct_nr32",
+      "display_name": "RLCT 32roll",
+      "color": "#66c2a5",
       "hatch": "",
       "edgecolor": "black",
       "training_biases": [
-        "distractor_argument_g4",
-        "wrong_few_shot"
+        "suggested_answer"
       ]
     },
-    "bct-da-wfs-ctrl": {
-      "training_type": "bct_da_wfs_ctrl",
-      "display_name": "BCT (DA+WFS) Control",
-      "color": "#c6dbef",
+    "rlct-nr32-ctrl": {
+      "training_type": "rlct_nr32_ctrl",
+      "display_name": "RLCT 32roll Control",
+      "color": "#a3dac9",
       "hatch": "//",
       "edgecolor": "black",
       "training_biases": []
     },
-    "rlct-da-aw0": {
-      "training_type": "rlct_da_aw0",
-      "display_name": "RLCT (DA, aw=0)",
-      "color": "#238b45",
+    "rlct-nr64": {
+      "training_type": "rlct_nr64",
+      "display_name": "RLCT 64roll",
+      "color": "#fc8d62",
       "hatch": "",
       "edgecolor": "black",
       "training_biases": [
-        "distractor_argument_g4"
+        "suggested_answer"
       ]
     },
-    "rlct-da-aw0-ctrl": {
-      "training_type": "rlct_da_aw0_ctrl",
-      "display_name": "RLCT (DA, aw=0) Control",
-      "color": "#bae4b3",
+    "rlct-nr64-ctrl": {
+      "training_type": "rlct_nr64_ctrl",
+      "display_name": "RLCT 64roll Control",
+      "color": "#fdbaa0",
       "hatch": "//",
       "edgecolor": "black",
       "training_biases": []
     },
-    "rlct-da-aw05": {
-      "training_type": "rlct_da_aw05",
-      "display_name": "RLCT (DA, aw=0.5)",
-      "color": "#74c476",
+    "rlct-nr128": {
+      "training_type": "rlct_nr128",
+      "display_name": "RLCT 128roll",
+      "color": "#8da0cb",
       "hatch": "",
       "edgecolor": "black",
       "training_biases": [
-        "distractor_argument_g4"
+        "suggested_answer"
       ]
     },
-    "rlct-da-aw05-ctrl": {
-      "training_type": "rlct_da_aw05_ctrl",
-      "display_name": "RLCT (DA, aw=0.5) Control",
-      "color": "#c7e9c0",
+    "rlct-nr128-ctrl": {
+      "training_type": "rlct_nr128_ctrl",
+      "display_name": "RLCT 128roll Control",
+      "color": "#bac6df",
       "hatch": "//",
       "edgecolor": "black",
       "training_biases": []
     },
-    "rlct-da-wfs-aw0": {
-      "training_type": "rlct_da_wfs_aw0",
-      "display_name": "RLCT (DA+WFS, aw=0)",
-      "color": "#31a354",
+    "rlct-re1": {
+      "training_type": "rlct_re1",
+      "display_name": "RLCT re=1",
+      "color": "#e41a1c",
       "hatch": "",
       "edgecolor": "black",
       "training_biases": [
-        "distractor_argument_g4",
-        "wrong_few_shot"
+        "suggested_answer"
       ]
     },
-    "rlct-da-wfs-aw0-ctrl": {
-      "training_type": "rlct_da_wfs_aw0_ctrl",
-      "display_name": "RLCT (DA+WFS, aw=0) Control",
-      "color": "#a1d99b",
+    "rlct-re1-ctrl": {
+      "training_type": "rlct_re1_ctrl",
+      "display_name": "RLCT re=1 Control",
+      "color": "#ee7576",
       "hatch": "//",
       "edgecolor": "black",
       "training_biases": []
     },
-    "rlct-da-wfs-aw05": {
-      "training_type": "rlct_da_wfs_aw05",
-      "display_name": "RLCT (DA+WFS, aw=0.5)",
-      "color": "#78c679",
+    "rlct-nd64": {
+      "training_type": "rlct_nd64",
+      "display_name": "RLCT nd=64",
+      "color": "#e41a1c",
       "hatch": "",
       "edgecolor": "black",
       "training_biases": [
-        "distractor_argument_g4",
-        "wrong_few_shot"
+        "suggested_answer"
       ]
     },
-    "rlct-da-wfs-aw05-ctrl": {
-      "training_type": "rlct_da_wfs_aw05_ctrl",
-      "display_name": "RLCT (DA+WFS, aw=0.5) Control",
-      "color": "#d9f0a3",
+    "rlct-nd64-ctrl": {
+      "training_type": "rlct_nd64_ctrl",
+      "display_name": "RLCT nd=64 Control",
+      "color": "#ee7576",
       "hatch": "//",
       "edgecolor": "black",
       "training_biases": []
+    },
+    "rlct-nc64": {
+      "training_type": "rlct_nc64",
+      "display_name": "RLCT nc=64",
+      "color": "#4daf4a",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-nc64-ctrl": {
+      "training_type": "rlct_nc64_ctrl",
+      "display_name": "RLCT nc=64 Control",
+      "color": "#94cf92",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-nc16": {
+      "training_type": "rlct_nc16",
+      "display_name": "RLCT nc=16",
+      "color": "#e41a1c",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-nc16-ctrl": {
+      "training_type": "rlct_nc16_ctrl",
+      "display_name": "RLCT nc=16 Control",
+      "color": "#ee7576",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-kl0.05": {
+      "training_type": "rlct_kl0.05",
+      "display_name": "RLCT kl=0.05",
+      "color": "#ff7f00",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-kl0.05-ctrl": {
+      "training_type": "rlct_kl0.05_ctrl",
+      "display_name": "RLCT kl=0.05 Control",
+      "color": "#ffb266",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-re5": {
+      "training_type": "rlct_re5",
+      "display_name": "RLCT re=5",
+      "color": "#ff7f00",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-re5-ctrl": {
+      "training_type": "rlct_re5_ctrl",
+      "display_name": "RLCT re=5 Control",
+      "color": "#ffb266",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-re10": {
+      "training_type": "rlct_re10",
+      "display_name": "RLCT re=10",
+      "color": "#4daf4a",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-nc32": {
+      "training_type": "rlct_nc32",
+      "display_name": "RLCT nc=32",
+      "color": "#ff7f00",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-nc32-ctrl": {
+      "training_type": "rlct_nc32_ctrl",
+      "display_name": "RLCT nc=32 Control",
+      "color": "#ffb266",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-nd128": {
+      "training_type": "rlct_nd128",
+      "display_name": "RLCT nd=128",
+      "color": "#ff7f00",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-kl0.1": {
+      "training_type": "rlct_kl0.1",
+      "display_name": "RLCT kl=0.1",
+      "color": "#4daf4a",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-kl0.1-ctrl": {
+      "training_type": "rlct_kl0.1_ctrl",
+      "display_name": "RLCT kl=0.1 Control",
+      "color": "#94cf92",
+      "hatch": "//",
+      "edgecolor": "black",
+      "training_biases": []
+    },
+    "rlct-kl0.5": {
+      "training_type": "rlct_kl0.5",
+      "display_name": "RLCT kl=0.5",
+      "color": "#377eb8",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "rlct-nd256": {
+      "training_type": "rlct_nd256",
+      "display_name": "RLCT nd=256",
+      "color": "#4daf4a",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct-noinst": {
+      "training_type": "bct_noinst",
+      "display_name": "BCT (no instruct)",
+      "color": "#377eb8",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct-inst": {
+      "training_type": "bct_inst",
+      "display_name": "BCT + Instruct",
+      "color": "#4daf4a",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct-nd500": {
+      "training_type": "bct_nd500",
+      "display_name": "BCT nd=500",
+      "color": "#e41a1c",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct-bs32": {
+      "training_type": "bct_bs32",
+      "display_name": "BCT bs=32",
+      "color": "#e41a1c",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct-bs64": {
+      "training_type": "bct_bs64",
+      "display_name": "BCT bs=64",
+      "color": "#ff7f00",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct-nd1000": {
+      "training_type": "bct_nd1000",
+      "display_name": "BCT nd=1000",
+      "color": "#ff7f00",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct-bs128": {
+      "training_type": "bct_bs128",
+      "display_name": "BCT bs=128",
+      "color": "#4daf4a",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct-nd2000": {
+      "training_type": "bct_nd2000",
+      "display_name": "BCT nd=2000",
+      "color": "#4daf4a",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct-bs256": {
+      "training_type": "bct_bs256",
+      "display_name": "BCT bs=256",
+      "color": "#984ea3",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
+    },
+    "bct-nd5000": {
+      "training_type": "bct_nd5000",
+      "display_name": "BCT nd=5000",
+      "color": "#984ea3",
+      "hatch": "",
+      "edgecolor": "black",
+      "training_biases": [
+        "suggested_answer"
+      ]
     }
   }
 }
